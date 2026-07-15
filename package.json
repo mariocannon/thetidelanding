@@ -1,0 +1,14 @@
+{
+  "name": "the-tide-landing",
+  "version": "1.0.0",
+  "description": "Landing page for The Tide email newsletter",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^7.0.9"
+  }
+}
