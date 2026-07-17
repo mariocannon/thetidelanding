@@ -17,7 +17,7 @@ const description =
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#04121f" />
+    <meta name="theme-color" content="#f0e7d6" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
@@ -53,11 +53,11 @@ const description =
 
     <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
       <path
-        fill="#0b2c44"
+        fill="#cde2ed"
         d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
       ></path>
       <path
-        fill="#0e3a58"
+        fill="#a9cfe2"
         opacity="0.8"
         d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
       ></path>
@@ -95,7 +95,7 @@ const description =
 
 <style>
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   * {
@@ -112,8 +112,8 @@ const description =
     display: grid;
     place-items: center;
     background:
-      radial-gradient(120% 90% at 50% 0%, #0a2b45 0%, #04121f 60%);
-    color: #e8f1f8;
+      radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
     font-family:
       system-ui,
       -apple-system,
@@ -135,7 +135,7 @@ const description =
     font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: #6fc3e8;
+    color: #1f7fae;
   }
 
   h1 {
@@ -144,7 +144,7 @@ const description =
     font-weight: 800;
     line-height: 1.05;
     letter-spacing: -0.02em;
-    background: linear-gradient(100deg, #eaf6ff 30%, #7fd0f5 70%, #3ea8dd);
+    background: linear-gradient(100deg, #123a52 30%, #1f6f9c 70%, #2f95c6);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -155,7 +155,7 @@ const description =
     max-width: 34rem;
     font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
     line-height: 1.6;
-    color: #a9c2d4;
+    color: #5a6672;
     text-wrap: balance;
   }
 
@@ -176,28 +176,28 @@ const description =
     padding: 0.9rem 1.1rem;
     font: inherit;
     color: inherit;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
     border-radius: 0.65rem;
     transition: border-color 0.15s;
   }
 
   input::placeholder {
-    color: #7d95a7;
+    color: #9aa4ac;
   }
 
   input:focus-visible {
     outline: none;
-    border-color: #6fc3e8;
-    box-shadow: 0 0 0 3px rgba(111, 195, 232, 0.25);
+    border-color: #1f7fae;
+    box-shadow: 0 0 0 3px rgba(31, 127, 174, 0.2);
   }
 
   button {
     padding: 0.9rem 1.6rem;
     font: inherit;
     font-weight: 700;
-    color: #04121f;
-    background: linear-gradient(120deg, #8fd8f8, #4db2e4);
+    color: #fffdf8;
+    background: linear-gradient(120deg, #2b8fbe, #176e99);
     border: 0;
     border-radius: 0.65rem;
     cursor: pointer;
@@ -207,7 +207,7 @@ const description =
   button:hover,
   button:focus-visible {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(77, 178, 228, 0.35);
+    box-shadow: 0 6px 18px rgba(23, 110, 153, 0.3);
   }
 
   button:active {
@@ -217,16 +217,16 @@ const description =
   .note {
     margin-top: 1rem;
     font-size: 0.9rem;
-    color: #7d95a7;
+    color: #8a8272;
   }
 
   .note.error {
-    color: #ffb3ad;
+    color: #b3372c;
   }
 
   .note.success {
     font-size: 1.05rem;
-    color: #9fe6c3;
+    color: #1e7a4d;
   }
 
   .visually-hidden {
