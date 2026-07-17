@@ -68,7 +68,11 @@ const description =
       const email = document.getElementById('email');
       const note = document.getElementById('form-note');
 
-      form.addEventListener('submit', (event) => {
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      form.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!email.checkValidity()) {
           note.textContent = 'Please enter a valid email address.';
@@ -76,11 +80,36 @@ const description =
           email.focus();
           return;
         }
-        // Wire this up to your email provider (Buttondown, ConvertKit,
-        // Supabase, …) — for now the form confirms locally.
-        form.hidden = true;
-        note.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
-        note.className = 'note success';
+
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Signing up…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ email: email.value.trim().toLowerCase() }),
+          });
+
+          // 409 = duplicate email: already subscribed, treat as success.
+          if (response.ok || response.status === 409) {
+            form.hidden = true;
+            note.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
+            note.className = 'note success';
+            return;
+          }
+          throw new Error(`Signup failed with status ${response.status}`);
+        } catch {
+          note.textContent = "Something went wrong — please try again in a moment.";
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Sign up';
+        }
       });
 
       email.addEventListener('input', () => {

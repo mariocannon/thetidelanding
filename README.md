@@ -19,6 +19,17 @@ npm run dev
 npm run build   # output in dist/
 ```
 
-The signup form validates the email and confirms client-side. Wire the
-`submit` handler in `src/pages/index.astro` to your email provider
-(Buttondown, ConvertKit, Supabase, …) to store subscribers.
+## Subscribers
+
+Signups are stored in the `subscribers` table of the **the-tide** Supabase
+project (`jykpoupjvcmvoihujfkc`, ap-southeast-2) via a direct PostgREST
+`fetch` — no client library. The embedded key is the project's publishable
+key; row-level security allows anonymous inserts only, so subscriber emails
+can never be read from the browser. Duplicate signups (unique on
+`lower(email)`) are treated as already subscribed.
+
+To view subscribers, use the Supabase dashboard or query with a secret key:
+
+```sql
+select email, created_at from public.subscribers order by created_at desc;
+```
