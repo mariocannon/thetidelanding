@@ -1,0 +1,332 @@
+---
+// Questions — one random yes/no question per visit; answers land in the
+// question_answers table in Supabase. Same self-contained approach as
+// the landing page: no web fonts, no external CSS/JS.
+const title = 'The Tide — quick question';
+const description =
+  'One quick yes-or-no question from The Tide. Your answer helps shape the newsletter.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">A quick question</p>
+      <h1 id="question">&nbsp;</h1>
+
+      <form id="answer-form" method="post" action="#" novalidate>
+        <fieldset>
+          <legend class="visually-hidden">Your answer</legend>
+          <label class="pill"><input type="radio" name="answer" value="yes" required /><span>Yes</span></label>
+          <label class="pill"><input type="radio" name="answer" value="no" required /><span>No</span></label>
+        </fieldset>
+        <label class="visually-hidden" for="comment">Comment (optional)</label>
+        <textarea
+          id="comment"
+          name="comment"
+          rows="3"
+          maxlength="2000"
+          placeholder="Add a comment (optional)"></textarea>
+        <button type="submit">Send answer</button>
+      </form>
+      <p class="note" id="form-note" role="status" aria-live="polite">
+        Anonymous. One tap and you're done.
+      </p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const QUESTIONS = [
+        'Do you read newsletters on your phone?',
+        'Would you read The Tide if it came out twice a week?',
+        'Do you finish most newsletters you open?',
+        'Should The Tide include links to further reading?',
+        'Do you prefer short issues over deep dives?',
+        'Would you share The Tide with a friend?',
+        'Do you read newsletters the day they arrive?',
+        'Should The Tide have an occasional audio version?',
+      ];
+
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const question = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+      const heading = document.getElementById('question');
+      heading.textContent = question;
+
+      const form = document.getElementById('answer-form');
+      const note = document.getElementById('form-note');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const choice = form.querySelector('input[name="answer"]:checked');
+        if (!choice) {
+          note.textContent = 'Pick yes or no first.';
+          note.className = 'note error';
+          return;
+        }
+
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        const comment = form.comment.value.trim();
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/question_answers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              question,
+              answer: choice.value === 'yes',
+              comment: comment || null,
+            }),
+          });
+          if (!response.ok) throw new Error(`Answer failed with status ${response.status}`);
+          form.hidden = true;
+          note.textContent = 'Thanks — answer received.';
+          note.className = 'note success';
+        } catch {
+          note.textContent = "Something went wrong — please try again in a moment.";
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Send answer';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(40rem, 100% - 3rem);
+    padding-block: 3rem 8rem;
+  }
+
+  .home img {
+    width: min(8rem, 30vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.6rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    min-height: 2.5em;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  form {
+    display: grid;
+    gap: 0.9rem;
+    margin: 2rem auto 0;
+    max-width: 28rem;
+  }
+
+  fieldset {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    border: 0;
+    padding: 0;
+  }
+
+  .pill {
+    flex: 1;
+    max-width: 10rem;
+    cursor: pointer;
+  }
+
+  .pill input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pill span {
+    display: block;
+    padding: 0.8rem 0;
+    font-weight: 700;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .pill input:checked + span {
+    background: #a2c5d3;
+    border-color: #45758c;
+  }
+
+  .pill input:focus-visible + span {
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  textarea {
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+
+  textarea::placeholder {
+    color: #9aa4ac;
+  }
+
+  textarea:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    font-size: 1.05rem;
+    color: #1e7a4d;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    .pill span {
+      transition: none;
+    }
+  }
+</style>
