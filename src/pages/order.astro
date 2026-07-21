@@ -1,0 +1,390 @@
+---
+
+const title = 'The Tide — get started';
+const description =
+  'Tell us your details and pick the option that suits you best.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+
+      <section id="details-step">
+        <p class="eyebrow">Get started</p>
+        <h1>Your details</h1>
+
+        <form id="details-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="name">Name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            placeholder="Your name"
+            required
+          />
+          <label class="visually-hidden" for="address">Address</label>
+          <input
+            id="address"
+            name="address"
+            type="text"
+            autocomplete="street-address"
+            placeholder="Your address"
+            required
+          />
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <button type="submit">Continue</button>
+        </form>
+        <p class="note" id="form-note" role="status" aria-live="polite">
+          We only use these details to get in touch about your order.
+        </p>
+      </section>
+
+      <section id="products-step" hidden>
+        <p class="eyebrow">One last step</p>
+        <h1>Choose your option</h1>
+
+        <!--
+          PLACEHOLDER PRODUCTS — replace the three names, prices, blurbs and
+          the href Stripe payment links below with the real ones.
+        -->
+        <div class="products">
+          <article class="product">
+            <h2>Product One</h2>
+            <p class="price">$10</p>
+            <p class="blurb">A short description of the first option.</p>
+            <a class="buy" href="https://buy.stripe.com/REPLACE_ME_1">Choose</a>
+          </article>
+          <article class="product">
+            <h2>Product Two</h2>
+            <p class="price">$20</p>
+            <p class="blurb">A short description of the second option.</p>
+            <a class="buy" href="https://buy.stripe.com/REPLACE_ME_2">Choose</a>
+          </article>
+          <article class="product">
+            <h2>Product Three</h2>
+            <p class="price">$30</p>
+            <p class="blurb">A short description of the third option.</p>
+            <a class="buy" href="https://buy.stripe.com/REPLACE_ME_3">Choose</a>
+          </article>
+        </div>
+        <p class="note">Secure checkout powered by Stripe.</p>
+      </section>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const form = document.getElementById('details-form');
+      const note = document.getElementById('form-note');
+      const detailsStep = document.getElementById('details-step');
+      const productsStep = document.getElementById('products-step');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.checkValidity()) {
+          note.textContent = 'Please fill in your name, address and a valid email.';
+          note.className = 'note error';
+          return;
+        }
+
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/customer_details`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              name: form.name.value.trim(),
+              address: form.address.value.trim(),
+              email: form.email.value.trim().toLowerCase(),
+            }),
+          });
+          if (!response.ok) throw new Error(`Submit failed with status ${response.status}`);
+          detailsStep.hidden = true;
+          productsStep.hidden = false;
+          window.scrollTo({ top: 0 });
+        } catch {
+          note.textContent = "Something went wrong — please try again in a moment.";
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Continue';
+        }
+      });
+
+      form.addEventListener('input', () => {
+        if (note.classList.contains('error')) {
+          note.textContent = 'We only use these details to get in touch about your order.';
+          note.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(48rem, 100% - 3rem);
+    padding-block: 3rem 8rem;
+  }
+
+  .home img {
+    width: min(8rem, 30vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.6rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  section[hidden] {
+    display: none;
+  }
+
+  form {
+    display: grid;
+    gap: 0.9rem;
+    margin: 2rem auto 0;
+    max-width: 28rem;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .products {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 2rem auto 0;
+  }
+
+  .product {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem 1.25rem;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+  }
+
+  .product h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .price {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #45758c;
+  }
+
+  .blurb {
+    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #5a6672;
+  }
+
+  .buy {
+    display: block;
+    margin-top: 0.75rem;
+    padding: 0.8rem 1.2rem;
+    font-weight: 700;
+    color: #23313c;
+    text-decoration: none;
+    background: #a2c5d3;
+    border-radius: 0.65rem;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .buy:hover,
+  .buy:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  .buy:active {
+    transform: translateY(0);
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (max-width: 40rem) {
+    .products {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    .buy {
+      transition: none;
+    }
+  }
+</style>
