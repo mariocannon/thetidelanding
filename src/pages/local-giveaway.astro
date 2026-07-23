@@ -1,0 +1,351 @@
+---
+
+const title = 'local-giveaway';
+const description =
+  'We are giving away $1000 worth of Coastie decals! Enter your details for a chance to win.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+
+      <section id="entry-step">
+        <p class="eyebrow">Local giveaway</p>
+        <h1>We are giving away $1000 worth of Coastie decals!</h1>
+
+        <div class="gallery">
+          <img
+            src="/coastie-decal.png"
+            alt="Coastie decal design"
+            width="1600"
+            height="1200"
+          />
+          <img
+            src="/coastie-car.jpg"
+            alt="Coastie decal on a car's rear window"
+            width="1440"
+            height="1440"
+          />
+        </div>
+
+        <form id="entry-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="name">Name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            placeholder="Your name"
+            required
+          />
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <label class="visually-hidden" for="location">Location</label>
+          <select id="location" name="location" required>
+            <option value="" disabled selected>Your location</option>
+            <option value="New South Wales">New South Wales</option>
+            <option value="Victoria">Victoria</option>
+            <option value="Queensland">Queensland</option>
+            <option value="Western Australia">Western Australia</option>
+            <option value="South Australia">South Australia</option>
+            <option value="Tasmania">Tasmania</option>
+            <option value="Australian Capital Territory">
+              Australian Capital Territory
+            </option>
+            <option value="Northern Territory">Northern Territory</option>
+          </select>
+          <button type="submit">Enter the giveaway</button>
+        </form>
+        <p class="note" id="form-note" role="status" aria-live="polite">
+          By signing up you agree to receive emails from us.
+        </p>
+      </section>
+
+      <section id="done-step" hidden>
+        <p class="eyebrow">You're in!</p>
+        <h1>Thanks for entering</h1>
+        <p class="note">
+          Keep an eye on your inbox — we'll be in touch if you're a winner.
+        </p>
+      </section>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const form = document.getElementById('entry-form');
+      const note = document.getElementById('form-note');
+      const entryStep = document.getElementById('entry-step');
+      const doneStep = document.getElementById('done-step');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!form.checkValidity()) {
+          note.textContent =
+            'Please fill in your name, a valid email and your location.';
+          note.className = 'note error';
+          return;
+        }
+
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/giveaway_entries`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              name: form.name.value.trim(),
+              email: form.email.value.trim().toLowerCase(),
+              location: form.location.value,
+            }),
+          });
+          if (!response.ok) throw new Error(`Submit failed with status ${response.status}`);
+          entryStep.hidden = true;
+          doneStep.hidden = false;
+          window.scrollTo({ top: 0 });
+        } catch {
+          note.textContent = "Something went wrong — please try again in a moment.";
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Enter the giveaway';
+        }
+      });
+
+      form.addEventListener('input', () => {
+        if (note.classList.contains('error')) {
+          note.textContent = 'By signing up you agree to receive emails from us.';
+          note.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(48rem, 100% - 3rem);
+    padding-block: 3rem 8rem;
+  }
+
+  .home img {
+    width: min(8rem, 30vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.6rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  section[hidden] {
+    display: none;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 2rem auto 0;
+    max-width: 36rem;
+  }
+
+  .gallery img {
+    width: 100%;
+    height: auto;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+  }
+
+  form {
+    display: grid;
+    gap: 0.9rem;
+    margin: 2rem auto 0;
+    max-width: 28rem;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  select:invalid {
+    color: #9aa4ac;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (max-width: 40rem) {
+    .gallery {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style>
