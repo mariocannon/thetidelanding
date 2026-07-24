@@ -1,0 +1,8 @@
+# Supabase project config for The Tide.
+# Project ref: jykpoupjvcmvoihujfkc (ap-southeast-2)
+project_id = "jykpoupjvcmvoihujfkc"
+
+[functions.beehiiv-sync]
+# Invoked by the subscribers_sync_beehiiv trigger via pg_net. The trigger
+# sends the project's anon JWT as the bearer token, so JWT verification stays on.
+verify_jwt = true
