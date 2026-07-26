@@ -3,7 +3,9 @@
 project_id = "jykpoupjvcmvoihujfkc"
 
 [functions.beehiiv-sync]
-# Called directly by the public signup form in the browser, so JWT
-# verification is off. The function validates the email and CORS itself,
-# and the Beehiiv API key lives only in the function's secrets.
+# Called two ways: directly by the home page signup form in the browser, and
+# by the subscribers_sync_beehiiv trigger (for the other pages). JWT
+# verification is off so the public form can reach it without a key; the
+# trigger still works with it off. The function validates the email and CORS
+# itself, and the Beehiiv API key lives only in the function's secrets.
 verify_jwt = false

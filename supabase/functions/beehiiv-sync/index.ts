@@ -1,6 +1,9 @@
-// Subscribes an email to Beehiiv. Called directly by the signup form on the
-// landing page (browser → this function → Beehiiv), so the Beehiiv API key
-// never touches the client.
+// Subscribes an email to Beehiiv, so the Beehiiv API key never touches the
+// client. Two callers:
+//   1. The home page signup form, POSTing { "email": "..." } directly from
+//      the browser.
+//   2. The subscribers_sync_beehiiv DB trigger (still used by other pages'
+//      signup forms), POSTing { "record": { "email": "..." } } via pg_net.
 //
 // Required secrets (Dashboard → Edge Functions → Secrets):
 //   BEEHIIV_API_KEY        — Beehiiv Settings → Integrations → API keys
@@ -37,9 +40,9 @@ Deno.serve(async (req: Request) => {
   }
 
   const payload = await req.json().catch(() => null);
-  const email = typeof payload?.email === 'string'
-    ? payload.email.trim().toLowerCase()
-    : '';
+  // Direct browser call sends { email }; the DB trigger sends { record: { email } }.
+  const raw = payload?.email ?? payload?.record?.email;
+  const email = typeof raw === 'string' ? raw.trim().toLowerCase() : '';
   if (!EMAIL_RE.test(email)) {
     return json({ error: 'A valid email is required' }, 400);
   }
