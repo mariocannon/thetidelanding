@@ -25,8 +25,22 @@ trigger always sends `{ record: { email } }`.
 - `migrations/20260717025238_create_subscribers.sql` — the table, unique index
   on `lower(email)`, and anon-insert-only RLS.
 - `migrations/20260717045106_sync_to_beehiiv.sql` — the trigger + function.
+- `migrations/20260719053241_create_question_answers.sql` — Questions-page
+  answers table (reconstructed from the live DB; originally applied remotely).
+- `migrations/20260721202917_create_customer_details.sql` — order form
+  name/address/email table (reconstructed from the live DB).
+- `migrations/20260723123509_create_giveaway_entries.sql` — giveaway entries
+  table (reconstructed from the live DB).
+- `migrations/20260727063837_harden_data_security.sql` — length/format
+  constraints on `customer_details`, unique email per giveaway entry, revokes
+  client EXECUTE on the sync trigger function, moves `pg_net` to the
+  `extensions` schema.
 - `functions/beehiiv-sync/index.ts` — validates the email, handles CORS, and
   calls Beehiiv. The Beehiiv API key stays server-side in the function secrets.
+
+All tables are insert-only for anonymous visitors: RLS is enabled everywhere
+with a single anon INSERT policy per table, so the collected emails and
+addresses are never readable through the public API.
 
 ### Required secrets
 
