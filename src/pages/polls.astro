@@ -1,0 +1,399 @@
+---
+
+const title = 'The Tide — quick poll';
+const description =
+  'One quick poll from The Tide. Tell us what you would like to see in the newsletter.';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">A quick poll</p>
+      <h1 id="question">What would you like to see in The Tide?</h1>
+
+      <form id="answer-form" method="post" action="#" novalidate>
+        <label class="visually-hidden" for="comment">Your answer</label>
+        <textarea
+          id="comment"
+          name="comment"
+          rows="3"
+          maxlength="2000"
+          placeholder="Tell us what you'd like to see…"
+          required></textarea>
+        <button type="submit">Send answer</button>
+      </form>
+      <p class="note" id="form-note" role="status" aria-live="polite">
+        Anonymous. Takes a few seconds.
+      </p>
+
+      <section id="subscribe" hidden>
+        <p class="subscribe-pitch">
+          Want the week's local stories, news and events? Join The Tide.
+        </p>
+        <form id="subscribe-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="note" id="subscribe-note" role="status" aria-live="polite">
+          Free forever. Unsubscribe any time.
+        </p>
+      </section>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const QUESTION = 'What would you like to see in The Tide?';
+
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const form = document.getElementById('answer-form');
+      const note = document.getElementById('form-note');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const comment = form.comment.value.trim();
+        if (!comment) {
+          note.textContent = 'Write a quick answer first.';
+          note.className = 'note error';
+          form.comment.focus();
+          return;
+        }
+
+        const button = form.querySelector('button');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/question_answers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              question: QUESTION,
+              answer: null,
+              comment,
+            }),
+          });
+          if (!response.ok) throw new Error(`Answer failed with status ${response.status}`);
+          form.hidden = true;
+          note.textContent = 'Thanks — answer received.';
+          note.className = 'note success';
+          document.getElementById('subscribe').hidden = false;
+        } catch {
+          note.textContent = "Something went wrong — please try again in a moment.";
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Send answer';
+        }
+      });
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      const subscribeEmail = subscribeForm.querySelector('#email');
+      const subscribeNote = document.getElementById('subscribe-note');
+
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!subscribeEmail.checkValidity()) {
+          subscribeNote.textContent = 'Please enter a valid email address.';
+          subscribeNote.className = 'note error';
+          subscribeEmail.focus();
+          return;
+        }
+
+        const subscribeButton = subscribeForm.querySelector('button');
+        subscribeButton.disabled = true;
+        subscribeButton.textContent = 'Subscribing…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ email: subscribeEmail.value.trim().toLowerCase() }),
+          });
+
+          // 409 = duplicate email: already subscribed, treat as success.
+          if (response.ok || response.status === 409) {
+            subscribeForm.hidden = true;
+            subscribeNote.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
+            subscribeNote.className = 'note success';
+            return;
+          }
+          throw new Error(`Signup failed with status ${response.status}`);
+        } catch {
+          subscribeNote.textContent = "Something went wrong — please try again in a moment.";
+          subscribeNote.className = 'note error';
+          subscribeButton.disabled = false;
+          subscribeButton.textContent = 'Subscribe';
+        }
+      });
+
+      subscribeEmail.addEventListener('input', () => {
+        if (subscribeNote.classList.contains('error')) {
+          subscribeNote.textContent = 'Free forever. Unsubscribe any time.';
+          subscribeNote.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(40rem, 100% - 3rem);
+    padding-block: 3rem 8rem;
+  }
+
+  .home img {
+    width: min(8rem, 30vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.6rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  form {
+    display: grid;
+    gap: 0.9rem;
+    margin: 2rem auto 0;
+    max-width: 28rem;
+  }
+
+  #subscribe[hidden] {
+    display: none;
+  }
+
+  .subscribe-pitch {
+    margin: 2.5rem auto 0;
+    max-width: 28rem;
+    font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: balance;
+  }
+
+  #subscribe form[hidden] {
+    display: none;
+  }
+
+  #subscribe form {
+    display: flex;
+    gap: 0.6rem;
+    margin: 1.25rem auto 0;
+    max-width: 28rem;
+  }
+
+  input[type='email'] {
+    flex: 1;
+    min-width: 0;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input[type='email']::placeholder {
+    color: #9aa4ac;
+  }
+
+  input[type='email']:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  @media (max-width: 30rem) {
+    #subscribe form {
+      flex-direction: column;
+    }
+  }
+
+  textarea {
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    resize: vertical;
+    transition: border-color 0.15s;
+  }
+
+  textarea::placeholder {
+    color: #9aa4ac;
+  }
+
+  textarea:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    font-size: 1.05rem;
+    color: #1e7a4d;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style>
