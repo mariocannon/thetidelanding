@@ -1,9 +1,9 @@
 // Subscribes an email to Beehiiv, so the Beehiiv API key never touches the
-// client. Two callers:
-//   1. The home page signup form, POSTing { "email": "..." } directly from
-//      the browser.
-//   2. The subscribers_sync_beehiiv DB trigger (still used by other pages'
-//      signup forms), POSTing { "record": { "email": "..." } } via pg_net.
+// client. Called by the subscribers_sync_beehiiv DB trigger (used by the
+// non-home-page signup forms), POSTing { "record": { "email": "..." } } via
+// pg_net. A bare { "email": "..." } payload is still accepted for backward
+// compatibility — the home page used to call this directly, but now uses
+// beehiiv's embedded subscribe form instead and no longer touches Supabase.
 //
 // Required secrets (Dashboard → Edge Functions → Secrets):
 //   BEEHIIV_API_KEY        — Beehiiv Settings → Integrations → API keys

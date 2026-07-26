@@ -1,10 +1,16 @@
 ---
 // The Tide — newsletter signup landing page.
-// Self-contained on purpose: no web fonts, no external CSS/JS, no images,
-// so the page ships as a single small HTML document.
+// The signup form is beehiiv's official embed (loader.js): it subscribes
+// visitors straight to the beehiiv publication, with no Supabase involved and
+// nothing stored on our side. Everything else on the page stays self-contained
+// — system fonts, inlined CSS, inline SVG artwork.
 const title = 'The Tide — a newsletter worth waiting for';
 const description =
   "The Tide is a weekly email newsletter bringing Coasties the week's local stories, news and events. Sign up with just your email.";
+
+// beehiiv subscribe form (Dashboard → Grow → Subscribe Forms). Swap this id if
+// the form is ever recreated; nothing else needs to change.
+const BEEHIIV_FORM_ID = 'f3068a09-eb5e-4bb2-b2d9-3b34ca2eaa83';
 ---
 
 <!doctype html>
@@ -34,23 +40,21 @@ const description =
         stories, news and events delivered every week.
       </p>
 
-      <form id="signup" method="post" action="#" novalidate>
-        <label class="visually-hidden" for="email">Email address</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          inputmode="email"
-          autocomplete="email"
-          spellcheck="false"
-          placeholder="you@example.com"
-          required
-        />
-        <button type="submit">Sign up</button>
-      </form>
-      <p class="note" id="form-note" role="status" aria-live="polite">
-        Free forever. Unsubscribe any time.
-      </p>
+      <div class="embed">
+        <script
+          is:inline
+          async
+          src="https://subscribe-forms.beehiiv.com/v3/loader.js"
+          data-beehiiv-form={BEEHIIV_FORM_ID}></script>
+        <noscript>
+          <a
+            class="embed-fallback"
+            href={`https://subscribe-forms.beehiiv.com/${BEEHIIV_FORM_ID}`}
+            >Sign up for The Tide</a
+          >
+        </noscript>
+      </div>
+      <p class="note">Free forever. Unsubscribe any time.</p>
     </main>
 
     <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
@@ -64,59 +68,6 @@ const description =
         d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
       ></path>
     </svg>
-
-    <script is:inline>
-      const form = document.getElementById('signup');
-      const email = document.getElementById('email');
-      const note = document.getElementById('form-note');
-
-      // Edge function that subscribes the email directly to Beehiiv. The
-      // Beehiiv API key stays server-side inside the function.
-      const SUBSCRIBE_URL =
-        'https://jykpoupjvcmvoihujfkc.supabase.co/functions/v1/beehiiv-sync';
-
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        if (!email.checkValidity()) {
-          note.textContent = 'Please enter a valid email address.';
-          note.className = 'note error';
-          email.focus();
-          return;
-        }
-
-        const button = form.querySelector('button');
-        button.disabled = true;
-        button.textContent = 'Signing up…';
-
-        try {
-          const response = await fetch(SUBSCRIBE_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email.value.trim().toLowerCase() }),
-          });
-
-          if (response.ok) {
-            form.hidden = true;
-            note.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
-            note.className = 'note success';
-            return;
-          }
-          throw new Error(`Signup failed with status ${response.status}`);
-        } catch {
-          note.textContent = "Something went wrong — please try again in a moment.";
-          note.className = 'note error';
-          button.disabled = false;
-          button.textContent = 'Sign up';
-        }
-      });
-
-      email.addEventListener('input', () => {
-        if (note.classList.contains('error')) {
-          note.textContent = 'Free forever. Unsubscribe any time.';
-          note.className = 'note';
-        }
-      });
-    </script>
   </body>
 </html>
 
@@ -183,59 +134,31 @@ const description =
     text-wrap: balance;
   }
 
-  form[hidden] {
-    display: none;
-  }
-
-  form {
-    display: flex;
-    gap: 0.6rem;
+  /* Wrapper for beehiiv's embedded form. The iframe is injected by
+     loader.js at runtime, so it carries no Astro scope hash — reach it
+     with :global(). min-height reserves space to limit layout shift while
+     the form loads. */
+  .embed {
     margin: 2.5rem auto 0;
     max-width: 28rem;
+    min-height: 3.4rem;
   }
 
-  input {
-    flex: 1;
-    min-width: 0;
-    padding: 0.9rem 1.1rem;
-    font: inherit;
-    color: inherit;
-    background: #fffdf8;
-    border: 1px solid rgba(35, 65, 90, 0.25);
-    border-radius: 0.65rem;
-    transition: border-color 0.15s;
+  .embed :global(iframe) {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: 0;
+    margin: 0 auto;
   }
 
-  input::placeholder {
-    color: #9aa4ac;
-  }
-
-  input:focus-visible {
-    outline: none;
-    border-color: #45758c;
-    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
-  }
-
-  button {
+  .embed-fallback {
+    display: inline-block;
     padding: 0.9rem 1.6rem;
-    font: inherit;
     font-weight: 700;
     color: #23313c;
     background: #a2c5d3;
-    border: 0;
     border-radius: 0.65rem;
-    cursor: pointer;
-    transition: transform 0.12s, box-shadow 0.12s;
-  }
-
-  button:hover,
-  button:focus-visible {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
-  }
-
-  button:active {
-    transform: translateY(0);
+    text-decoration: none;
   }
 
   .note {
@@ -244,45 +167,11 @@ const description =
     color: #8a8272;
   }
 
-  .note.error {
-    color: #b3372c;
-  }
-
-  .note.success {
-    font-size: 1.05rem;
-    color: #1e7a4d;
-  }
-
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
   .waves {
     position: fixed;
     inset: auto 0 0;
     width: 100%;
     height: clamp(90px, 18vh, 220px);
     pointer-events: none;
-  }
-
-  @media (max-width: 30rem) {
-    form {
-      flex-direction: column;
-    }
-
-    button {
-      width: 100%;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    button {
-      transition: none;
-    }
   }
 </style>

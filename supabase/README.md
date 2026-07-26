@@ -4,23 +4,17 @@ Source of truth for the **the-tide** Supabase project
 (`jykpoupjvcmvoihujfkc`, ap-southeast-2). These files document and version the
 database + edge function that back newsletter signups.
 
-## Two paths into Beehiiv
+## Paths into Beehiiv
 
-Every signup ends up in Beehiiv via the `beehiiv-sync` edge function, but the
-home page and the other pages reach it differently.
-
-**Home page form — direct.** It POSTs the email straight to the function from
-the browser; the function subscribes it to Beehiiv. Nothing is stored in
-Supabase for these signups.
-
-```
-home form (browser)
-  → POST /functions/v1/beehiiv-sync   { "email": "..." }
-  → POST https://api.beehiiv.com/v2/publications/{pub}/subscriptions
-```
+> **The home page no longer touches Supabase.** Its signup form is now
+> beehiiv's own embedded subscribe form (see the root
+> [`README.md`](../README.md)), which subscribes visitors straight to Beehiiv
+> from the browser. The `beehiiv-sync` function and the `subscribers` table
+> below now serve **only the other pages** (e.g. Questions).
 
 **Other pages (e.g. Questions) — via the subscribers table.** They insert into
-`public.subscribers`; a trigger then calls the same function with the row.
+`public.subscribers`; a trigger then calls the `beehiiv-sync` function with the
+row.
 
 ```
 INSERT into public.subscribers
@@ -30,14 +24,15 @@ INSERT into public.subscribers
   → POST https://api.beehiiv.com/v2/publications/{pub}/subscriptions
 ```
 
-The function accepts both payload shapes (`{ email }` and `{ record: { email } }`).
+The function still accepts a bare `{ email }` payload too — a leftover from when
+the home page called it directly — but nothing uses that path now; the DB
+trigger always sends `{ record: { email } }`.
 
 - `migrations/20260717025238_create_subscribers.sql` — the table, unique index
   on `lower(email)`, and anon-insert-only RLS.
 - `migrations/20260717045106_sync_to_beehiiv.sql` — the trigger + function.
 - `functions/beehiiv-sync/index.ts` — validates the email, handles CORS, and
-  calls Beehiiv. Public (`verify_jwt = false`) so the browser can reach it
-  without a key; the Beehiiv API key stays server-side in the function secrets.
+  calls Beehiiv. The Beehiiv API key stays server-side in the function secrets.
 
 ### Required secrets
 
