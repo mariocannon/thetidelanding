@@ -70,6 +70,8 @@ Deno.serve(async (req: Request) => {
     return json({ error: 'Subscription failed' }, 502);
   }
 
-  console.log(`Subscribed ${email} to Beehiiv`);
+  // Log the full Beehiiv response so we can see the subscription status
+  // (e.g. "pending" means double opt-in is on and a confirmation email was sent).
+  console.log(`Beehiiv ${response.status} for ${email}: ${body}`);
   return json({ ok: true }, 200);
 });
