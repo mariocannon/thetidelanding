@@ -70,9 +70,10 @@ const description =
       const email = document.getElementById('email');
       const note = document.getElementById('form-note');
 
-      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
-      // Publishable key: safe to expose; row-level security only allows inserts.
-      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+      // Edge function that subscribes the email directly to Beehiiv. The
+      // Beehiiv API key stays server-side inside the function.
+      const SUBSCRIBE_URL =
+        'https://jykpoupjvcmvoihujfkc.supabase.co/functions/v1/beehiiv-sync';
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -88,18 +89,13 @@ const description =
         button.textContent = 'Signing up…';
 
         try {
-          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+          const response = await fetch(SUBSCRIBE_URL, {
             method: 'POST',
-            headers: {
-              apikey: SUPABASE_KEY,
-              'Content-Type': 'application/json',
-              Prefer: 'return=minimal',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email.value.trim().toLowerCase() }),
           });
 
-          // 409 = duplicate email: already subscribed, treat as success.
-          if (response.ok || response.status === 409) {
+          if (response.ok) {
             form.hidden = true;
             note.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
             note.className = 'note success';

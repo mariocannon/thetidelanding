@@ -1,30 +1,33 @@
 # Supabase — The Tide
 
 Source of truth for the **the-tide** Supabase project
-(`jykpoupjvcmvoihujfkc`, ap-southeast-2). These files document and version the
-database + edge function that back newsletter signups.
+(`jykpoupjvcmvoihujfkc`, ap-southeast-2). All that lives here now is one edge
+function that subscribes signups directly to Beehiiv.
 
-## Subscriber → Beehiiv sync
+## Signup → Beehiiv
 
-Every insert into `public.subscribers` is automatically pushed to the Beehiiv
-list. The chain:
+The landing page form calls the `beehiiv-sync` edge function directly from the
+browser; the function subscribes the email to Beehiiv. Beehiiv is the source of
+truth — no subscriber data is stored in Supabase.
 
 ```
-INSERT into public.subscribers
-  → trigger  subscribers_sync_beehiiv
-  → function sync_subscriber_to_beehiiv()   (pg_net http_post, fire-and-forget)
-  → edge function  beehiiv-sync
+signup form (browser)
+  → POST /functions/v1/beehiiv-sync   { "email": "..." }
   → POST https://api.beehiiv.com/v2/publications/{pub}/subscriptions
 ```
 
-- `migrations/20260717025238_create_subscribers.sql` — the table, unique index
-  on `lower(email)`, and anon-insert-only RLS.
-- `migrations/20260717045106_sync_to_beehiiv.sql` — the trigger + function.
-- `functions/beehiiv-sync/index.ts` — the edge function that calls Beehiiv.
+- `functions/beehiiv-sync/index.ts` — validates the email, handles CORS, and
+  calls Beehiiv. Public (`verify_jwt = false`), so the browser can reach it
+  without a key; the Beehiiv API key stays server-side in the function secrets.
+- `migrations/20260717025238_create_subscribers.sql` /
+  `migrations/20260717045106_sync_to_beehiiv.sql` — the original table + trigger
+  sync chain (historical).
+- `migrations/20260726000000_drop_subscribers.sql` — tears that chain back down
+  now that the form subscribes directly.
 
 ### Required secrets
 
-The edge function needs two secrets. Without them it returns HTTP 500 and no
+The function needs two secrets. Without them it returns HTTP 500 and no
 subscriber reaches Beehiiv. Set them in **Dashboard → Edge Functions → Secrets**
 (or `supabase secrets set`):
 
@@ -33,12 +36,10 @@ subscriber reaches Beehiiv. Set them in **Dashboard → Edge Functions → Secre
 | `BEEHIIV_API_KEY` | Beehiiv → Settings → Integrations → API keys |
 | `BEEHIIV_PUBLICATION_ID` | Same page; starts with `pub_` |
 
-The trigger only fires on **new** inserts — existing rows are not backfilled.
-
 ## Deploying changes
 
 ```sh
 supabase link --project-ref jykpoupjvcmvoihujfkc
-supabase db push                      # apply migrations
+supabase db push                      # apply migrations (drops the old table)
 supabase functions deploy beehiiv-sync
 ```

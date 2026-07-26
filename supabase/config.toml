@@ -3,6 +3,7 @@
 project_id = "jykpoupjvcmvoihujfkc"
 
 [functions.beehiiv-sync]
-# Invoked by the subscribers_sync_beehiiv trigger via pg_net. The trigger
-# sends the project's anon JWT as the bearer token, so JWT verification stays on.
-verify_jwt = true
+# Called directly by the public signup form in the browser, so JWT
+# verification is off. The function validates the email and CORS itself,
+# and the Beehiiv API key lives only in the function's secrets.
+verify_jwt = false
