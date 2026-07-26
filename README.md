@@ -21,15 +21,17 @@ npm run build   # output in dist/
 
 ## Subscribers
 
-Signups are stored in the `subscribers` table of the **the-tide** Supabase
-project (`jykpoupjvcmvoihujfkc`, ap-southeast-2) via a direct PostgREST
-`fetch` — no client library. The embedded key is the project's publishable
-key; row-level security allows anonymous inserts only, so subscriber emails
-can never be read from the browser. Duplicate signups (unique on
-`lower(email)`) are treated as already subscribed.
+The home page signup form subscribes users **directly to Beehiiv**: it
+`fetch`es a small Supabase edge function (`beehiiv-sync`) in the **the-tide**
+project (`jykpoupjvcmvoihujfkc`, ap-southeast-2), which subscribes the email to
+the Beehiiv publication. The Beehiiv API key lives only in the function's
+secrets, never in the browser, and nothing is stored in Supabase for these
+signups.
 
-To view subscribers, use the Supabase dashboard or query with a secret key:
+The other pages' forms are unchanged — they still insert into the Supabase
+`subscribers` table (and other tables), and a database trigger forwards new
+subscribers to Beehiiv through the same function.
 
-```sql
-select email, created_at from public.subscribers order by created_at desc;
-```
+See [`supabase/README.md`](supabase/README.md) for both paths, the required
+secrets, and deploy steps. To view or export subscribers, use the Beehiiv
+dashboard.
