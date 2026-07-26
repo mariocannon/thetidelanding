@@ -4,17 +4,11 @@ Source of truth for the **the-tide** Supabase project
 (`jykpoupjvcmvoihujfkc`, ap-southeast-2). These files document and version the
 database + edge function that back newsletter signups.
 
-## Paths into Beehiiv
+## One path into Beehiiv
 
-> **The home page no longer touches Supabase.** Its signup form is now
-> beehiiv's own embedded subscribe form (see the root
-> [`README.md`](../README.md)), which subscribes visitors straight to Beehiiv
-> from the browser. The `beehiiv-sync` function and the `subscribers` table
-> below now serve **only the other pages** (e.g. Questions).
-
-**Other pages (e.g. Questions) — via the subscribers table.** They insert into
-`public.subscribers`; a trigger then calls the `beehiiv-sync` function with the
-row.
+Every signup form — the home page and the other pages (e.g. Questions) —
+inserts into `public.subscribers`; a trigger then calls the `beehiiv-sync`
+function with the row. The browser never talks to Beehiiv directly.
 
 ```
 INSERT into public.subscribers
