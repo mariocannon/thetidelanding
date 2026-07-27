@@ -105,7 +105,7 @@ const description =
         button.textContent = 'Sending…';
 
         try {
-          const response = await fetch(`${SUPABASE_URL}/rest/v1/question_answers`, {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/poll_responses`, {
             method: 'POST',
             headers: {
               apikey: SUPABASE_KEY,
@@ -114,8 +114,7 @@ const description =
             },
             body: JSON.stringify({
               question: QUESTION,
-              answer: null,
-              comment,
+              response: comment,
             }),
           });
           if (!response.ok) throw new Error(`Answer failed with status ${response.status}`);
