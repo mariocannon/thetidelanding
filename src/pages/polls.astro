@@ -161,7 +161,7 @@ const description =
           // 409 = duplicate email: already subscribed, treat as success.
           if (response.ok || response.status === 409) {
             subscribeForm.hidden = true;
-            subscribeNote.textContent = "You're in. Watch your inbox for the next issue of The Tide.";
+            subscribeNote.textContent = "You're in! Check your inbox for your welcome email, then keep an eye out for your weekly issue of The Tide.";
             subscribeNote.className = 'note success';
             return;
           }
