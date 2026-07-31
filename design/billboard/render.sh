@@ -37,5 +37,5 @@ print('wrote', os.environ['OUT'], board.size)
 PY
 }
 
-render billboard 1480 640
+render billboard 1408 640
 render billboard-portrait 1080 1920

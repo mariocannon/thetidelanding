@@ -6,7 +6,7 @@ distance (short headline, one call to action).
 
 | File | Size | Source | Layout |
 | --- | --- | --- | --- |
-| `thetide-billboard-1480x640.png` | 1480 × 640 | `billboard.html` | landscape, logo beside the copy |
+| `thetide-billboard-1408x640.png` | 1408 × 640 | `billboard.html` | landscape, logo beside the copy |
 | `thetide-billboard-1080x1920.png` | 1080 × 1920 | `billboard-portrait.html` | portrait, centred stack like the site |
 
 Rebuild both after editing either page:
