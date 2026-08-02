@@ -19,6 +19,25 @@ npm run dev
 npm run build   # output in dist/
 ```
 
+## Test
+
+```sh
+npm test                       # builds, serves dist/, drives it in Chromium
+npm test -- --project=desktop  # one viewport
+npm test -- --ui               # watch it click through
+```
+
+[Playwright](https://playwright.dev) covers `/survey`, the longest form on the
+site, at desktop and phone widths: validation, the conditional children's-ages
+question, the progress count, and the exact JSON each answer set posts to
+Supabase. Requests to Supabase are intercepted, so running the tests never
+writes a row.
+
+One test reads the CHECK constraints straight out of `supabase/migrations` and
+asserts the page offers those options and no others — an option added to the
+page without a matching migration fails the build rather than 400ing on a
+reader mid-survey.
+
 ## Subscribers
 
 Every signup form — the home page included — inserts the email into the

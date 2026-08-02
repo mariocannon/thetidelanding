@@ -219,7 +219,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       </p>
 
       <form id="survey-form" method="post" action="#" novalidate>
-        <fieldset class="card" data-question>
+        <fieldset class="card" data-field="area">
           <legend><span class="number">1</span> Which part of the Coast do you live on? <span class="required">Required</span></legend>
           <label class="visually-hidden" for="area">Your area</label>
           <select id="area" name="area" required>
@@ -229,7 +229,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           </select>
         </fieldset>
 
-        <fieldset class="card" data-question>
+        <fieldset class="card" data-field="topics">
           <legend><span class="number">2</span> What do you want more of in The Tide? <span class="required">Required</span></legend>
           <p class="hint">Pick as many as you like.</p>
           <div class="pills">
@@ -244,7 +244,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           </div>
         </fieldset>
 
-        <fieldset class="card" data-question>
+        <fieldset class="card" data-field="occupation">
           <legend><span class="number">3</span> What do you do for work?</legend>
           <label class="visually-hidden" for="occupation">Occupation</label>
           <input
@@ -259,7 +259,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
 
         {
           CHOICE_QUESTIONS.map((question, index) => (
-            <fieldset class="card" data-question>
+            <fieldset class="card" data-field={question.name}>
               <legend>
                 <span class="number">{FIRST_CHOICE_NUMBER + index}</span> {question.legend}
               </legend>
@@ -275,7 +275,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           ))
         }
 
-        <fieldset class="card" id="children-ages" data-question hidden>
+        <fieldset class="card" id="children-ages" data-field="children_ages" hidden>
           <legend><span class="number">{FIRST_CHOICE_NUMBER + CHOICE_QUESTIONS.length}</span> How old are they?</legend>
           <p class="hint">Pick as many as you like.</p>
           <div class="pills">
@@ -290,7 +290,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           </div>
         </fieldset>
 
-        <fieldset class="card" data-question>
+        <fieldset class="card" data-field="pets">
           <legend><span class="number">{FIRST_CHOICE_NUMBER + CHOICE_QUESTIONS.length + 1}</span> Do you have any pets?</legend>
           <p class="hint">Pick as many as you like.</p>
           <div class="pills">
@@ -305,7 +305,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           </div>
         </fieldset>
 
-        <fieldset class="card" data-question>
+        <fieldset class="card" data-field="email">
           <legend><span class="number">{TOTAL_QUESTIONS}</span> What's your email address? <span class="required">Required</span></legend>
           <p class="hint">So we can match your answers to your subscription — and draw the line at one response per reader.</p>
           <label class="visually-hidden" for="email">Email address</label>
@@ -373,7 +373,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       function updateProgress() {
         // Hidden questions are out of the count entirely, so someone without
         // children can still reach the end of the bar.
-        const asked = [...form.querySelectorAll('fieldset[data-question]')].filter(
+        const asked = [...form.querySelectorAll('fieldset[data-field]')].filter(
           (fieldset) => !fieldset.hidden
         );
         const answered = asked.filter((fieldset) => {
