@@ -1,0 +1,805 @@
+---
+const title = 'The Tide — reader survey';
+const description =
+  'Tell us a bit about you so The Tide can cover the Coast you actually live on.';
+
+// Every option below has to match a CHECK constraint on public.survey_responses.
+// If you add one here, add it in a migration too or the insert is rejected.
+
+// Q1. North to south, the way you'd drive it.
+const AREAS = [
+  'Puhoi',
+  'Waiwera',
+  'Hatfields Beach',
+  'Ōrewa',
+  'Wainui',
+  'Millwater',
+  'Silverdale',
+  'Red Beach',
+  'Whangaparāoa',
+  'Stanmore Bay',
+  'Tindalls Beach',
+  'Matakatia',
+  'Arkles Bay',
+  'Little Manly',
+  'Manly',
+  'Army Bay',
+  'Gulf Harbour',
+  'Stillwater',
+  'Dairy Flat',
+  'Ōkura',
+];
+
+const TOPICS = [
+  'Event coverage',
+  'Restaurant news',
+  'Government updates',
+  'School news',
+  'Real estate',
+];
+
+// Q4–Q12: one radio group each, rendered in a loop.
+const CHOICE_QUESTIONS = [
+  {
+    name: 'education',
+    legend: 'What is the highest level of education you have finished?',
+    options: [
+      'Did not finish high school',
+      'Finished high school (NCEA Level 2 or 3)',
+      'Certificate or trade qualification (Levels 1-4)',
+      'Diploma or advanced diploma',
+      'Bachelor degree',
+      'Master degree',
+      'Professional degree (MD, JD, etc.)',
+      'Doctorate (PhD, EdD, etc.)',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'age_range',
+    legend: 'How old are you?',
+    options: [
+      'Under 18',
+      '18-24',
+      '25-34',
+      '35-44',
+      '45-54',
+      '55-64',
+      '65-74',
+      '75+',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'gender',
+    legend: 'What is your gender?',
+    options: ['Female', 'Male', 'Prefer not to say'],
+  },
+  {
+    name: 'relationship_status',
+    legend: 'What is your relationship status?',
+    options: [
+      'Single',
+      'In a relationship',
+      'Engaged',
+      'Married',
+      'Separated',
+      'Divorced',
+      'Widowed',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'home_ownership',
+    legend: 'Do you own or rent your home?',
+    options: [
+      'I own my home',
+      'I own my home and am moving soon',
+      'I own more than one home',
+      'I rent my home',
+      'I rent my home and am moving soon',
+      'Other',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'home_value',
+    legend: 'Roughly what is your home worth?',
+    options: [
+      'Under $600,000',
+      '$600,000-$799,999',
+      '$800,000-$999,999',
+      '$1M-$1.24M',
+      '$1.25M-$1.49M',
+      '$1.5M-$1.99M',
+      '$2M-$2.99M',
+      'Over $3 million',
+      'Not sure or prefer not to say',
+    ],
+  },
+  {
+    name: 'household_income',
+    legend: 'What is your total household income each year?',
+    options: [
+      'Under $50,000',
+      '$50,000-$74,999',
+      '$75,000-$99,999',
+      '$100,000-$149,999',
+      '$150,000-$199,999',
+      '$200,000-$299,999',
+      '$300,000-$499,999',
+      '$500,000-$749,999',
+      '$750,000-$999,999',
+      'Over $1 million',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'investments',
+    legend: 'Not counting your home, how much do you have invested?',
+    options: [
+      'Under $100,000',
+      '$100,000-$249,999',
+      '$250,000-$499,999',
+      '$500,000-$999,999',
+      '$1M-$2.9M',
+      '$3M-$4.9M',
+      '$5M-$9.9M',
+      'Over $10 million',
+      'I am not sure',
+      'Prefer not to say',
+    ],
+  },
+  {
+    name: 'children_at_home',
+    legend: 'Do you have children living at home?',
+    options: ['Yes', 'No', 'Prefer not to say'],
+  },
+];
+
+const CHILDREN_AGES = [
+  '0-2',
+  '3-5',
+  '6-10',
+  '11-13',
+  '14-18',
+  '18+ living at home',
+  'Prefer not to say',
+];
+
+const PETS = [
+  'I do not have pets',
+  'Yes, a dog or dogs',
+  'Yes, a cat or cats',
+  'Yes, fish',
+  'Yes, a bird or birds',
+  'Yes, a reptile or reptiles',
+  'Yes, a small mammal (guinea pig, rabbit, etc.)',
+  'Other',
+];
+
+// Q1–Q3 come before the loop, Q13–Q15 after it.
+const FIRST_CHOICE_NUMBER = 4;
+const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="progress" id="progress" role="status" aria-live="polite">
+      <div class="progress-bar"><span id="progress-fill"></span></div>
+      {/* Q13 only appears for readers with children, so the count starts one short. */}
+      <p id="progress-text">0 of {TOTAL_QUESTIONS - 1} answered</p>
+    </div>
+
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Reader survey</p>
+      <h1>Tell us who reads The Tide</h1>
+      <p class="lede">
+        The better we know the Coast, the better we cover it — and the fewer
+        irrelevant ads you get. Two questions are required; skip anything else
+        you'd rather not answer. Takes about three minutes.
+      </p>
+
+      <form id="survey-form" method="post" action="#" novalidate>
+        <fieldset class="card" data-question>
+          <legend><span class="number">1</span> Which part of the Coast do you live on? <span class="required">Required</span></legend>
+          <label class="visually-hidden" for="area">Your area</label>
+          <select id="area" name="area" required>
+            <option value="" selected>Choose your area…</option>
+            {AREAS.map((area) => <option value={area}>{area}</option>)}
+            <option value="None of the above">None of the above</option>
+          </select>
+        </fieldset>
+
+        <fieldset class="card" data-question>
+          <legend><span class="number">2</span> What do you want more of in The Tide? <span class="required">Required</span></legend>
+          <p class="hint">Pick as many as you like.</p>
+          <div class="pills">
+            {
+              TOPICS.map((topic) => (
+                <label class="pill">
+                  <input type="checkbox" name="topics" value={topic} />
+                  <span>{topic}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="card" data-question>
+          <legend><span class="number">3</span> What do you do for work?</legend>
+          <label class="visually-hidden" for="occupation">Occupation</label>
+          <input
+            id="occupation"
+            name="occupation"
+            type="text"
+            maxlength="200"
+            autocomplete="organization-title"
+            placeholder="Builder, teacher, retired…"
+          />
+        </fieldset>
+
+        {
+          CHOICE_QUESTIONS.map((question, index) => (
+            <fieldset class="card" data-question>
+              <legend>
+                <span class="number">{FIRST_CHOICE_NUMBER + index}</span> {question.legend}
+              </legend>
+              <div class="pills">
+                {question.options.map((option) => (
+                  <label class="pill">
+                    <input type="radio" name={question.name} value={option} />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ))
+        }
+
+        <fieldset class="card" id="children-ages" data-question hidden>
+          <legend><span class="number">{FIRST_CHOICE_NUMBER + CHOICE_QUESTIONS.length}</span> How old are they?</legend>
+          <p class="hint">Pick as many as you like.</p>
+          <div class="pills">
+            {
+              CHILDREN_AGES.map((range) => (
+                <label class="pill">
+                  <input type="checkbox" name="children_ages" value={range} />
+                  <span>{range}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="card" data-question>
+          <legend><span class="number">{FIRST_CHOICE_NUMBER + CHOICE_QUESTIONS.length + 1}</span> Do you have any pets?</legend>
+          <p class="hint">Pick as many as you like.</p>
+          <div class="pills">
+            {
+              PETS.map((pet) => (
+                <label class="pill">
+                  <input type="checkbox" name="pets" value={pet} />
+                  <span>{pet}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="card" data-question>
+          <legend><span class="number">{TOTAL_QUESTIONS}</span> What's your email address? <span class="required">Required</span></legend>
+          <p class="hint">So we can match your answers to your subscription — and draw the line at one response per reader.</p>
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+        </fieldset>
+
+        <button type="submit">Send my answers</button>
+      </form>
+
+      <p class="note" id="form-note" role="status" aria-live="polite">
+        We never sell or share your details. Answers are only ever reported as
+        totals, never as you.
+      </p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const PRIVACY_NOTE =
+        'We never sell or share your details. Answers are only ever reported as totals, never as you.';
+
+      const form = document.getElementById('survey-form');
+      const note = document.getElementById('form-note');
+      const childrenAges = document.getElementById('children-ages');
+      const progress = document.getElementById('progress');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+
+      // Q13 is the one bit of logic a plain survey tool can't do: only ask about
+      // ages when there are children at home.
+      function syncChildrenAges() {
+        const answer = form.querySelector('input[name="children_at_home"]:checked');
+        const show = answer?.value === 'Yes';
+        childrenAges.hidden = !show;
+        if (!show) {
+          childrenAges
+            .querySelectorAll('input:checked')
+            .forEach((input) => (input.checked = false));
+        }
+      }
+
+      function updateProgress() {
+        // Hidden questions are out of the count entirely, so someone without
+        // children can still reach the end of the bar.
+        const asked = [...form.querySelectorAll('fieldset[data-question]')].filter(
+          (fieldset) => !fieldset.hidden
+        );
+        const answered = asked.filter((fieldset) => {
+          const typed = fieldset.querySelector('input[type="text"], input[type="email"], select');
+          if (typed) return typed.value.trim() !== '';
+          return fieldset.querySelector('input:checked') !== null;
+        }).length;
+        progressFill.style.width = `${(answered / asked.length) * 100}%`;
+        progressText.textContent = `${answered} of ${asked.length} answered`;
+      }
+
+      form.addEventListener('change', () => {
+        syncChildrenAges();
+        updateProgress();
+      });
+      form.addEventListener('input', updateProgress);
+
+      function fail(message, field) {
+        note.textContent = message;
+        note.className = 'note error';
+        field?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        field?.focus({ preventScroll: true });
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const data = new FormData(form);
+        const single = (name) => {
+          const value = data.get(name);
+          return value ? String(value).trim() : null;
+        };
+        const multi = (name) => {
+          const values = data.getAll(name).map(String);
+          return values.length ? values : null;
+        };
+
+        const area = single('area');
+        const topics = multi('topics');
+        const email = (single('email') || '').toLowerCase();
+        const emailField = form.querySelector('#email');
+
+        if (!area) return fail('Pick the part of the Coast you live on first.', form.querySelector('#area'));
+        if (!topics) return fail('Pick at least one thing you want more of.', form.querySelector('input[name="topics"]'));
+        if (!emailField.checkValidity() || !email) {
+          return fail('Please enter a valid email address.', emailField);
+        }
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        const childrenAtHome = single('children_at_home');
+        const payload = {
+          area,
+          topics,
+          occupation: single('occupation'),
+          education: single('education'),
+          age_range: single('age_range'),
+          gender: single('gender'),
+          relationship_status: single('relationship_status'),
+          home_ownership: single('home_ownership'),
+          home_value: single('home_value'),
+          household_income: single('household_income'),
+          investments: single('investments'),
+          children_at_home: childrenAtHome,
+          children_ages: childrenAtHome === 'Yes' ? multi('children_ages') : null,
+          pets: multi('pets'),
+          email,
+        };
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/survey_responses`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          // 409 = this email has already answered. One response per reader is
+          // the point, so say thanks rather than showing an error.
+          if (response.ok || response.status === 409) {
+            form.hidden = true;
+            progress.hidden = true;
+            note.textContent =
+              response.status === 409
+                ? "You've already filled this in — thanks again."
+                : 'Thanks — that genuinely shapes what we write about.';
+            note.className = 'note success';
+            note.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return;
+          }
+          throw new Error(`Survey failed with status ${response.status}`);
+        } catch {
+          note.textContent = 'Something went wrong — please try again in a moment.';
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Send my answers';
+        }
+      });
+
+      form.addEventListener('input', () => {
+        if (note.classList.contains('error')) {
+          note.textContent = PRIVACY_NOTE;
+          note.className = 'note';
+        }
+      });
+
+      syncChildrenAges();
+      updateProgress();
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .progress {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.6rem 1rem 0.55rem;
+    text-align: center;
+    background: rgba(250, 245, 234, 0.92);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(35, 65, 90, 0.1);
+  }
+
+  .progress[hidden] {
+    display: none;
+  }
+
+  .progress p {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  .progress-bar {
+    width: min(28rem, 100%);
+    height: 4px;
+    margin: 0 auto;
+    background: rgba(35, 65, 90, 0.12);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: #45758c;
+    border-radius: 999px;
+    transition: width 0.2s ease;
+  }
+
+  main {
+    width: min(44rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 32rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    text-align: left;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  .card {
+    padding: 1.25rem 1.25rem 1.4rem;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  /* Floating the legend keeps it inside the card instead of straddling the
+     fieldset border, which is where browsers put it by default. */
+  legend {
+    float: left;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 0.9rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-wrap: pretty;
+  }
+
+  legend + * {
+    clear: both;
+  }
+
+  .number {
+    display: inline-block;
+    min-width: 1.6rem;
+    margin-right: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    font-size: 0.8rem;
+    text-align: center;
+    color: #23313c;
+    background: #a2c5d3;
+    border-radius: 0.4rem;
+  }
+
+  .required {
+    margin-left: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #45758c;
+    vertical-align: 1px;
+  }
+
+  .hint {
+    margin: -0.5rem 0 0.9rem;
+    font-size: 0.85rem;
+    color: #8a8272;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    cursor: pointer;
+  }
+
+  .pill input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pill span {
+    display: block;
+    padding: 0.6rem 0.95rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition:
+      background 0.12s,
+      border-color 0.12s;
+  }
+
+  .pill input:checked + span {
+    background: #a2c5d3;
+    border-color: #45758c;
+  }
+
+  .pill input:focus-visible + span {
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  input[type='text'],
+  input[type='email'],
+  select {
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    justify-self: center;
+    margin-top: 0.5rem;
+    padding: 0.95rem 2.2rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin: 1.25rem auto 0;
+    max-width: 30rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    font-size: 1.1rem;
+    color: #1e7a4d;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: -1;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    .pill span,
+    .progress-bar span {
+      transition: none;
+    }
+  }
+</style>

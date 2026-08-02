@@ -28,6 +28,30 @@ trigger always sends `{ record: { email } }`.
 - `functions/beehiiv-sync/index.ts` — validates the email, handles CORS, and
   calls Beehiiv. The Beehiiv API key stays server-side in the function secrets.
 
+## Reader survey
+
+`/survey` writes one row per reader to `public.survey_responses` — the
+first-party demographic data behind the media kit. Same shape as every other
+form on the site: the browser POSTs to PostgREST with the publishable key, and
+an anon `insert`-only policy means nobody can read an answer back out. There is
+deliberately **no** read policy and no Beehiiv sync; the survey does not
+subscribe anyone.
+
+Only three answers are required — `area`, `topics` and `email`. Everything else
+is nullable, and every personal question offers "Prefer not to say", which is
+what keeps people from bailing halfway down the page.
+
+- `migrations/20260803091149_create_survey_responses.sql` — the table, one
+  column per question, unique index on `lower(email)` (one response per reader).
+- `migrations/20260803094125_align_survey_responses_to_nz_options.sql` — NCEA
+  and NZ home-value brackets.
+- `migrations/20260803104358_survey_responses_area.sql` — `postcode` became
+  `area`, checked against the list of Hibiscus Coast suburbs.
+
+Every option in `src/pages/survey.astro` has to match a CHECK constraint on the
+table. Adding a suburb, a topic or an income bracket to the page means adding it
+in a migration first, or PostgREST rejects the insert with a 400.
+
 ### Required secrets
 
 The function needs two secrets. Without them it returns HTTP 500 and no
