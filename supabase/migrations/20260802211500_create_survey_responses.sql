@@ -46,8 +46,8 @@ create table public.survey_responses (
   education text check (
     education in (
       'Did not finish high school',
-      'Finished high school (Year 12)',
-      'Certificate I-IV or trade qualification',
+      'Finished high school (NCEA Level 2 or 3)',
+      'Certificate or trade qualification (Levels 1-4)',
       'Diploma or advanced diploma',
       'Bachelor degree',
       'Master degree',
@@ -103,15 +103,17 @@ create table public.survey_responses (
     )
   ),
 
-  -- Q9.
+  -- Q9. Brackets shifted up from the article's: on the Hibiscus Coast almost
+  -- everyone would land in its top two, which tells a sponsor nothing.
   home_value text check (
     home_value in (
-      'Under $400,000',
-      '$400,000-$599,999',
+      'Under $600,000',
       '$600,000-$799,999',
       '$800,000-$999,999',
-      '$1M-$1.49M',
-      '$1.5M-$2.99M',
+      '$1M-$1.24M',
+      '$1.25M-$1.49M',
+      '$1.5M-$1.99M',
+      '$2M-$2.99M',
       'Over $3 million',
       'Not sure or prefer not to say'
     )

@@ -29,20 +29,22 @@ const prizeCount = 'two';
 
 // Every postcode The Tide covers, plus one layer outside it, listed as
 // "postcode - suburbs" so people can find their own at a glance.
-// CHECK THIS LIST against the real coverage area before launch.
+//
+// The three Hibiscus Coast codes are the ones that matter and are confirmed.
+// The wider Rodney entries below them are the "one layer out" ring and have NOT
+// been confirmed against NZ Post — several of those towns carry a separate
+// rural-delivery code as well as the urban one listed here. Check them, and
+// trim the ring to whatever The Tide actually covers, before promoting this.
 const postcodes = [
-  ['2250', 'Gosford, Point Clare, Narara, Wyoming'],
-  ['2251', 'Kincumber, Avoca Beach, Copacabana, Saratoga'],
-  ['2256', 'Woy Woy, Umina Beach, Ettalong Beach'],
-  ['2257', 'Killcare, Wagstaffe, Pretty Beach'],
-  ['2258', 'Ourimbah, Palmdale'],
-  ['2259', 'Wyong, Tuggerah, Warnervale, Hamlyn Terrace'],
-  ['2260', 'Terrigal, Wamberal, Forresters Beach'],
-  ['2261', 'The Entrance, Bateau Bay, Long Jetty, Berkeley Vale'],
-  ['2262', 'Toukley, Budgewoi, Norah Head, San Remo'],
-  ['2263', 'Gwandalan, Summerland Point, Mannering Park'],
-  ['2264', 'Morisset, Bonnells Bay'],
-  ['2775', 'Spencer, Wisemans Ferry'],
+  ['0930', 'Whangaparāoa, Manly, Gulf Harbour, Army Bay, Tindalls Beach'],
+  ['0931', 'Orewa, Hatfields Beach'],
+  ['0932', 'Silverdale, Red Beach, Stanmore Bay, Millwater, Milldale, Arkles Bay'],
+  ['0910', 'Warkworth'],
+  ['0920', 'Snells Beach, Algies Bay, Martins Bay'],
+  ['0900', 'Wellsford'],
+  ['0794', 'Dairy Flat, Coatesville'],
+  ['0800', 'Helensville, Kaukapakapa'],
+  ['0810', 'Kumeū, Riverhead'],
 ];
 
 const topics = [
@@ -54,8 +56,8 @@ const topics = [
 ];
 const education = [
   'Did not finish high school',
-  'Finished high school (Year 12)',
-  'Certificate I-IV or trade qualification',
+  'Finished high school (NCEA Level 2 or 3)',
+  'Certificate or trade qualification (Levels 1-4)',
   'Diploma or advanced diploma',
   'Bachelor degree',
   'Master degree',
@@ -94,13 +96,17 @@ const homeOwnership = [
   'Other',
   'Prefer not to say',
 ];
+// Shifted up from the brackets in the article: on the Hibiscus Coast almost
+// everyone would land in its top two, which tells a sponsor nothing. These
+// split the range readers actually sit in.
 const homeValues = [
-  'Under $400,000',
-  '$400,000-$599,999',
+  'Under $600,000',
   '$600,000-$799,999',
   '$800,000-$999,999',
-  '$1M-$1.49M',
-  '$1.5M-$2.99M',
+  '$1M-$1.24M',
+  '$1.25M-$1.49M',
+  '$1.5M-$1.99M',
+  '$2M-$2.99M',
   'Over $3 million',
   'Not sure or prefer not to say',
 ];
