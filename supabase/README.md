@@ -41,6 +41,45 @@ subscriber reaches Beehiiv. Set them in **Dashboard → Edge Functions → Secre
 
 The trigger only fires on **new** inserts — existing rows are not backfilled.
 
+## Reader survey
+
+`/survey` writes to `public.survey_responses` — the demographics data behind a
+media kit. It follows the Life of Scoop "Data is power" survey: 14 questions,
+"Prefer not to say" on every personal one, and only postcode + topics required.
+
+- `migrations/20260802211500_create_survey_responses.sql` — the table, the
+  allowed answers for every question, a unique index on `lower(email)`, and
+  anon-insert-only RLS.
+
+Two things make this table different from `poll_responses`:
+
+- **It is not anonymous.** Email is required, so a response can be matched to a
+  subscriber. Anonymous totals describe the audience; identified answers let you
+  sell a slice of it ("readers who own a home and are moving soon").
+- **One column per question,** so counting is plain SQL:
+
+  ```sql
+  -- The media-kit numbers
+  select gender, count(*) from survey_responses group by 1 order by 2 desc;
+  select household_income, count(*) from survey_responses group by 1 order by 1;
+
+  -- Multi-select questions need unnest
+  select topic, count(*) from survey_responses, unnest(topics) as topic
+  group by 1 order by 2 desc;
+
+  -- A segment worth selling
+  select email from survey_responses
+  where home_ownership = 'I own my home and am moving soon';
+  ```
+
+The allowed answers are check constraints, and they are duplicated in
+`src/pages/survey.astro`. Change one, change the other — the page inserts with
+the publishable key, so the database is the only thing that can refuse an answer
+the survey never offered.
+
+Answering twice with the same email returns HTTP 409, which the page treats as
+"you're already done" rather than an error.
+
 ## Deploying changes
 
 ```sh

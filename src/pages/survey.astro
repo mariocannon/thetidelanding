@@ -1,0 +1,1042 @@
+---
+// The Tide — reader demographics survey.
+//
+// The questions come from the Life of Scoop "Data is power" playbook (the
+// 14-question Naptown Scoop survey), adapted for the Coast: postcodes instead
+// of ZIP codes. Two things follow from that playbook and are easy to undo by
+// accident, so they are called out here:
+//
+//   * "Prefer not to say" belongs on every personal question. People bail when
+//     a survey gets pushy; an out keeps them answering the next one.
+//   * Only the first two questions and the email are required. Everything else
+//     is skippable on purpose.
+//
+// Answers go into the Supabase `survey_responses` table. Unlike the polls page
+// they are not anonymous — the email ties each response back to the subscriber,
+// which is what makes the data worth collecting.
+//
+// The option lists below are mirrored by check constraints in
+// supabase/migrations/20260802211500_create_survey_responses.sql — change one,
+// change the other, or the insert will be rejected.
+const title = 'The Tide — reader survey';
+const description =
+  'Four minutes, and it shapes what we cover. Tell us who you are so The Tide can stay free and stay local.';
+
+// PLACEHOLDER PRIZE — swap in the real gift card and business before promoting
+// this page, or delete the two `prize` lines below to run it without a draw.
+const prize = '$150 gift card';
+const prizeCount = 'two';
+
+// Every postcode The Tide covers, plus one layer outside it, listed as
+// "postcode - suburbs" so people can find their own at a glance.
+// CHECK THIS LIST against the real coverage area before launch.
+const postcodes = [
+  ['2250', 'Gosford, Point Clare, Narara, Wyoming'],
+  ['2251', 'Kincumber, Avoca Beach, Copacabana, Saratoga'],
+  ['2256', 'Woy Woy, Umina Beach, Ettalong Beach'],
+  ['2257', 'Killcare, Wagstaffe, Pretty Beach'],
+  ['2258', 'Ourimbah, Palmdale'],
+  ['2259', 'Wyong, Tuggerah, Warnervale, Hamlyn Terrace'],
+  ['2260', 'Terrigal, Wamberal, Forresters Beach'],
+  ['2261', 'The Entrance, Bateau Bay, Long Jetty, Berkeley Vale'],
+  ['2262', 'Toukley, Budgewoi, Norah Head, San Remo'],
+  ['2263', 'Gwandalan, Summerland Point, Mannering Park'],
+  ['2264', 'Morisset, Bonnells Bay'],
+  ['2775', 'Spencer, Wisemans Ferry'],
+];
+
+const topics = [
+  'Event coverage',
+  'Restaurant news',
+  'Government updates',
+  'School news',
+  'Real estate',
+];
+const education = [
+  'Did not finish high school',
+  'Finished high school (Year 12)',
+  'Certificate I-IV or trade qualification',
+  'Diploma or advanced diploma',
+  'Bachelor degree',
+  'Master degree',
+  'Professional degree (MD, JD, etc.)',
+  'Doctorate (PhD, EdD, etc.)',
+  'Prefer not to say',
+];
+const ages = [
+  'Under 18',
+  '18-24',
+  '25-34',
+  '35-44',
+  '45-54',
+  '55-64',
+  '65-74',
+  '75+',
+  'Prefer not to say',
+];
+const genders = ['Female', 'Male', 'Prefer not to say'];
+const relationships = [
+  'Single',
+  'In a relationship',
+  'Engaged',
+  'Married',
+  'Separated',
+  'Divorced',
+  'Widowed',
+  'Prefer not to say',
+];
+const homeOwnership = [
+  'I own my home',
+  'I own my home and am moving soon',
+  'I own more than one home',
+  'I rent my home',
+  'I rent my home and am moving soon',
+  'Other',
+  'Prefer not to say',
+];
+const homeValues = [
+  'Under $400,000',
+  '$400,000-$599,999',
+  '$600,000-$799,999',
+  '$800,000-$999,999',
+  '$1M-$1.49M',
+  '$1.5M-$2.99M',
+  'Over $3 million',
+  'Not sure or prefer not to say',
+];
+const incomes = [
+  'Under $50,000',
+  '$50,000-$74,999',
+  '$75,000-$99,999',
+  '$100,000-$149,999',
+  '$150,000-$199,999',
+  '$200,000-$299,999',
+  '$300,000-$499,999',
+  '$500,000-$749,999',
+  '$750,000-$999,999',
+  'Over $1 million',
+  'Prefer not to say',
+];
+const investments = [
+  'Under $100,000',
+  '$100,000-$249,999',
+  '$250,000-$499,999',
+  '$500,000-$999,999',
+  '$1M-$2.9M',
+  '$3M-$4.9M',
+  '$5M-$9.9M',
+  'Over $10 million',
+  'I am not sure',
+  'Prefer not to say',
+];
+const childrenAtHome = ['Yes', 'No', 'Prefer not to say'];
+const childrenAges = [
+  '0-2',
+  '3-5',
+  '6-10',
+  '11-13',
+  '14-18',
+  '18+ living at home',
+  'Prefer not to say',
+];
+const pets = [
+  'I do not have pets',
+  'Yes, a dog or dogs',
+  'Yes, a cat or cats',
+  'Yes, fish',
+  'Yes, a bird or birds',
+  'Yes, a reptile or reptiles',
+  'Yes, a small mammal (guinea pig, rabbit, etc.)',
+  'Other',
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Reader survey</p>
+      <h1>Who's reading The Tide?</h1>
+      <p class="intro">
+        Every so often we ask who's on the other end of these emails. Some of it
+        gets personal, so let's be clear up front:
+      </p>
+      <p class="intro promise">
+        Your information will never be shared with anyone outside The Tide. It's
+        anonymised and turned into charts that tell us what to write about and
+        which local businesses to work with.
+      </p>
+      <p class="intro">
+        It takes about four minutes, and everyone who finishes goes in the draw
+        for one of {prizeCount} {prize}s at a local favourite. Only the first two
+        questions need an answer — skip anything you'd rather not share.
+      </p>
+
+      <form id="survey-form" method="post" action="#" novalidate>
+        <fieldset class="card">
+          <legend>Where you are</legend>
+
+          <div class="q">
+            <p class="q-label" id="q-postcode">
+              1. What's your postcode? <span class="req">*</span>
+            </p>
+            <div class="options stack" role="group" aria-labelledby="q-postcode">
+              {
+                postcodes.map(([code, suburbs]) => (
+                  <label class="choice">
+                    <input type="radio" name="postcode" value={code} />
+                    <span><strong>{code}</strong> — {suburbs}</span>
+                  </label>
+                ))
+              }
+              <label class="choice">
+                <input type="radio" name="postcode" value="None of the above" />
+                <span>None of the above</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-topics">
+              2. What local topics are you most interested in? <span class="req">*</span>
+              <span class="hint">Select all that apply</span>
+            </p>
+            <div class="options stack" role="group" aria-labelledby="q-topics">
+              {
+                topics.map((value) => (
+                  <label class="choice">
+                    <input type="checkbox" name="topics" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>About you</legend>
+
+          <div class="q">
+            <label class="q-label" for="occupation">
+              3. What's your occupation?
+              <span class="hint">Write "retired" if retired</span>
+            </label>
+            <input
+              id="occupation"
+              name="occupation"
+              type="text"
+              maxlength="200"
+              placeholder="Type your answer here"
+            />
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-education">4. What's your highest level of education?</p>
+            <div class="options stack" role="group" aria-labelledby="q-education">
+              {
+                education.map((value) => (
+                  <label class="choice">
+                    <input type="radio" name="education" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-age">5. What's your age range?</p>
+            <div class="options pills" role="group" aria-labelledby="q-age">
+              {
+                ages.map((value) => (
+                  <label class="pill">
+                    <input type="radio" name="age_range" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-gender">6. What's your gender?</p>
+            <div class="options pills" role="group" aria-labelledby="q-gender">
+              {
+                genders.map((value) => (
+                  <label class="pill">
+                    <input type="radio" name="gender" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-relationship">7. What's your relationship status?</p>
+            <div class="options pills" role="group" aria-labelledby="q-relationship">
+              {
+                relationships.map((value) => (
+                  <label class="pill">
+                    <input type="radio" name="relationship_status" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Home and money</legend>
+
+          <div class="q">
+            <p class="q-label" id="q-own">8. Do you own a home?</p>
+            <div class="options stack" role="group" aria-labelledby="q-own">
+              {
+                homeOwnership.map((value) => (
+                  <label class="choice">
+                    <input type="radio" name="home_ownership" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-home-value">9. Do you know your home's current value?</p>
+            <div class="options stack" role="group" aria-labelledby="q-home-value">
+              {
+                homeValues.map((value) => (
+                  <label class="choice">
+                    <input type="radio" name="home_value" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-income">10. What is your household income?</p>
+            <div class="options stack" role="group" aria-labelledby="q-income">
+              {
+                incomes.map((value) => (
+                  <label class="choice">
+                    <input type="radio" name="household_income" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-investments">
+              11. What is the estimated value of your household's investments?
+              <span class="hint">Not counting the home you live in</span>
+            </p>
+            <div class="options stack" role="group" aria-labelledby="q-investments">
+              {
+                investments.map((value) => (
+                  <label class="choice">
+                    <input type="radio" name="investments" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>The household</legend>
+
+          <div class="q">
+            <p class="q-label" id="q-kids">12. Do you have any children living at home?</p>
+            <div class="options pills" role="group" aria-labelledby="q-kids">
+              {
+                childrenAtHome.map((value) => (
+                  <label class="pill">
+                    <input type="radio" name="children_at_home" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <!-- Only shown when Q12 is Yes, so nobody is asked the ages of
+               children they just said they do not have. -->
+          <div class="q" id="children-ages" hidden>
+            <p class="q-label" id="q-kid-ages">
+              13. How old are your children?
+              <span class="hint">Select all that apply</span>
+            </p>
+            <div class="options pills" role="group" aria-labelledby="q-kid-ages">
+              {
+                childrenAges.map((value) => (
+                  <label class="pill">
+                    <input type="checkbox" name="children_ages" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="q">
+            <p class="q-label" id="q-pets">
+              14. Do you have any pets living in your household?
+              <span class="hint">Select all that apply</span>
+            </p>
+            <div class="options stack" role="group" aria-labelledby="q-pets">
+              {
+                pets.map((value) => (
+                  <label class="choice">
+                    <input type="checkbox" name="pets" value={value} />
+                    <span>{value}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="card">
+          <legend>Last one</legend>
+
+          <div class="q">
+            <label class="q-label" for="email">
+              Your email <span class="req">*</span>
+              <span class="hint">
+                So we can match this to your subscription — and let you know if you
+                win. Use the same address The Tide lands in.
+              </span>
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              spellcheck="false"
+              placeholder="you@example.com"
+            />
+          </div>
+        </fieldset>
+
+        <button type="submit">Send my answers</button>
+      </form>
+
+      <p class="note" id="form-note" role="status" aria-live="polite">
+        Thanks for helping out — it genuinely shapes what we publish.
+      </p>
+
+      <section id="subscribe" hidden>
+        <p class="subscribe-pitch">
+          Not on the list yet? Get the week's local stories, news and events.
+        </p>
+        <form id="subscribe-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="subscribe-email">Email address</label>
+          <input
+            id="subscribe-email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="note" id="subscribe-note" role="status" aria-live="polite">
+          Free forever. Unsubscribe any time.
+        </p>
+      </section>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const form = document.getElementById('survey-form');
+      const note = document.getElementById('form-note');
+      const NOTE_DEFAULT = note.textContent;
+
+      // Q13 follows Q12: ask for ages only from people who have kids at home.
+      const childrenAges = document.getElementById('children-ages');
+      form.addEventListener('change', (event) => {
+        if (event.target.name !== 'children_at_home') return;
+        childrenAges.hidden = event.target.value !== 'Yes';
+      });
+
+      // Skipped questions are sent as null rather than empty strings, so the
+      // table can tell "skipped" apart from "answered with nothing".
+      const picked = (name) => {
+        const field = form.querySelector(`input[name="${name}"]:checked`);
+        return field ? field.value : null;
+      };
+      const pickedAll = (name) => {
+        const values = [...form.querySelectorAll(`input[name="${name}"]:checked`)].map(
+          (field) => field.value
+        );
+        return values.length ? values : null;
+      };
+      const typed = (id) => document.getElementById(id).value.trim() || null;
+
+      const fail = (message, selector) => {
+        note.textContent = message;
+        note.className = 'note error';
+        const target = form.querySelector(selector);
+        if (target) {
+          target.focus({ preventScroll: true });
+          target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!picked('postcode')) {
+          return fail('Pick your postcode to start.', 'input[name="postcode"]');
+        }
+        if (!pickedAll('topics')) {
+          return fail('Pick at least one topic you care about.', 'input[name="topics"]');
+        }
+
+        const emailField = document.getElementById('email');
+        if (!emailField.value.trim() || !emailField.checkValidity()) {
+          return fail('We need a valid email to match this to your subscription.', '#email');
+        }
+
+        const kidsAtHome = picked('children_at_home');
+
+        const answers = {
+          postcode: picked('postcode'),
+          topics: pickedAll('topics'),
+          occupation: typed('occupation'),
+          education: picked('education'),
+          age_range: picked('age_range'),
+          gender: picked('gender'),
+          relationship_status: picked('relationship_status'),
+          home_ownership: picked('home_ownership'),
+          home_value: picked('home_value'),
+          household_income: picked('household_income'),
+          investments: picked('investments'),
+          children_at_home: kidsAtHome,
+          // Ages stay behind if someone ticks Yes, answers, then switches to No.
+          children_ages: kidsAtHome === 'Yes' ? pickedAll('children_ages') : null,
+          pets: pickedAll('pets'),
+          email: emailField.value.trim().toLowerCase(),
+        };
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+        note.textContent = NOTE_DEFAULT;
+        note.className = 'note';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/survey_responses`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(answers),
+          });
+
+          // 409 = this email has already answered. Nothing is wrong, and we are
+          // not going to make them prove it, so treat it as done.
+          if (!response.ok && response.status !== 409) {
+            throw new Error(`Survey failed with status ${response.status}`);
+          }
+
+          form.hidden = true;
+          note.textContent =
+            response.status === 409
+              ? "Looks like you've already taken this one — you're in the draw. Thanks!"
+              : 'Thanks — that is genuinely useful. Answers received.';
+          note.className = 'note success';
+          document.getElementById('subscribe').hidden = false;
+          note.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } catch {
+          note.textContent = 'Something went wrong — please try again in a moment.';
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Send my answers';
+        }
+      });
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      const subscribeEmail = document.getElementById('subscribe-email');
+      const subscribeNote = document.getElementById('subscribe-note');
+
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!subscribeEmail.checkValidity()) {
+          subscribeNote.textContent = 'Please enter a valid email address.';
+          subscribeNote.className = 'note error';
+          subscribeEmail.focus();
+          return;
+        }
+
+        const subscribeButton = subscribeForm.querySelector('button');
+        subscribeButton.disabled = true;
+        subscribeButton.textContent = 'Subscribing…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ email: subscribeEmail.value.trim().toLowerCase() }),
+          });
+
+          // 409 = duplicate email: already subscribed, treat as success.
+          if (response.ok || response.status === 409) {
+            subscribeForm.hidden = true;
+            subscribeNote.textContent =
+              "You're in! Check your inbox for your welcome email, then keep an eye out for your weekly issue of The Tide.";
+            subscribeNote.className = 'note success';
+            return;
+          }
+          throw new Error(`Signup failed with status ${response.status}`);
+        } catch {
+          subscribeNote.textContent = 'Something went wrong — please try again in a moment.';
+          subscribeNote.className = 'note error';
+          subscribeButton.disabled = false;
+          subscribeButton.textContent = 'Subscribe';
+        }
+      });
+
+      subscribeEmail.addEventListener('input', () => {
+        if (subscribeNote.classList.contains('error')) {
+          subscribeNote.textContent = 'Free forever. Unsubscribe any time.';
+          subscribeNote.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    display: grid;
+    place-items: start center;
+    background: radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 3rem);
+    padding-block: 3rem 9rem;
+  }
+
+  .home img {
+    width: min(8rem, 30vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.6rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .intro {
+    margin: 1rem auto 0;
+    max-width: 32rem;
+    font-size: 1.02rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .intro.promise {
+    padding: 0.9rem 1.1rem;
+    font-weight: 600;
+    color: #23313c;
+    background: #eef4f7;
+    border-radius: 0.75rem;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  .card {
+    margin: 1.5rem 0 0;
+    padding: 1.75rem 1.5rem 1.5rem;
+    text-align: left;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.14);
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(69, 117, 140, 0.06);
+  }
+
+  legend {
+    padding: 0.2rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #45758c;
+    background: #eef4f7;
+    border-radius: 999px;
+  }
+
+  .q + .q {
+    margin-top: 1.9rem;
+  }
+
+  .q[hidden] {
+    display: none;
+  }
+
+  .q-label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
+  .req {
+    color: #b3372c;
+  }
+
+  .hint {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #8a8272;
+  }
+
+  .options {
+    margin-top: 0.8rem;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .stack {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  /* The real inputs stay focusable but invisible; the label is the control. */
+  .pill input,
+  .choice input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  .pill {
+    cursor: pointer;
+  }
+
+  .pill span {
+    display: block;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    background: #f7f3ea;
+    border: 1px solid rgba(35, 65, 90, 0.18);
+    border-radius: 999px;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .pill:hover span {
+    border-color: #45758c;
+  }
+
+  .pill input:checked + span {
+    font-weight: 600;
+    background: #a2c5d3;
+    border-color: #45758c;
+  }
+
+  .choice {
+    cursor: pointer;
+  }
+
+  .choice span {
+    position: relative;
+    display: block;
+    padding: 0.6rem 0.9rem 0.6rem 2.6rem;
+    font-size: 0.97rem;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    border-radius: 0.6rem;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .choice:hover span {
+    background: #f7f3ea;
+  }
+
+  .choice span::before {
+    content: '';
+    position: absolute;
+    left: 0.85rem;
+    top: 0.72rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.35);
+    border-radius: 50%;
+    transition: background 0.12s, border-color 0.12s;
+  }
+
+  .choice:has(input[type='checkbox']) span::before {
+    border-radius: 0.35rem;
+  }
+
+  .choice input:checked + span {
+    background: #eef4f7;
+    border-color: rgba(69, 117, 140, 0.45);
+  }
+
+  .choice input:checked + span::before {
+    background: #a2c5d3;
+    border-color: #45758c;
+  }
+
+  .choice span::after {
+    content: '';
+    position: absolute;
+    left: 1.27rem;
+    top: 0.86rem;
+    width: 0.32rem;
+    height: 0.62rem;
+    border: solid #23313c;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform 0.12s;
+  }
+
+  .choice input:checked + span::after {
+    transform: rotate(45deg) scale(1);
+  }
+
+  .pill input:focus-visible + span,
+  .choice input:focus-visible + span {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.75);
+  }
+
+  input[type='text'],
+  input[type='email'] {
+    width: 100%;
+    margin-top: 0.6rem;
+    padding: 0.75rem 0.95rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input[type='text']:focus-visible,
+  input[type='email']:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  form#survey-form > button[type='submit'] {
+    display: block;
+    width: 100%;
+    max-width: 22rem;
+    margin: 2rem auto 0;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    font-size: 1.05rem;
+    color: #1e7a4d;
+  }
+
+  #subscribe[hidden] {
+    display: none;
+  }
+
+  .subscribe-pitch {
+    margin: 2.5rem auto 0;
+    max-width: 28rem;
+    font-size: clamp(1.05rem, 0.5vw + 0.95rem, 1.25rem);
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: balance;
+  }
+
+  #subscribe form[hidden] {
+    display: none;
+  }
+
+  #subscribe form {
+    display: flex;
+    gap: 0.6rem;
+    margin: 1.25rem auto 0;
+    max-width: 28rem;
+  }
+
+  #subscribe input[type='email'] {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+  }
+
+  @media (max-width: 30rem) {
+    #subscribe form {
+      flex-direction: column;
+    }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    .pill span,
+    .choice span,
+    .choice span::before,
+    .choice span::after {
+      transition: none;
+    }
+  }
+</style>
