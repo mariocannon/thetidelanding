@@ -38,7 +38,7 @@ const TOPICS = [
   'Real estate',
 ];
 
-// Q4–Q12: one radio group each, rendered in a loop.
+// Q4–Q10: one radio group each, rendered in a loop.
 const CHOICE_QUESTIONS = [
   {
     name: 'education',
@@ -103,21 +103,6 @@ const CHOICE_QUESTIONS = [
     ],
   },
   {
-    name: 'home_value',
-    legend: 'Roughly what is your home worth?',
-    options: [
-      'Under $600,000',
-      '$600,000-$799,999',
-      '$800,000-$999,999',
-      '$1M-$1.24M',
-      '$1.25M-$1.49M',
-      '$1.5M-$1.99M',
-      '$2M-$2.99M',
-      'Over $3 million',
-      'Not sure or prefer not to say',
-    ],
-  },
-  {
     name: 'household_income',
     legend: 'What is your total household income each year?',
     options: [
@@ -131,22 +116,6 @@ const CHOICE_QUESTIONS = [
       '$500,000-$749,999',
       '$750,000-$999,999',
       'Over $1 million',
-      'Prefer not to say',
-    ],
-  },
-  {
-    name: 'investments',
-    legend: 'Not counting your home, how much do you have invested?',
-    options: [
-      'Under $100,000',
-      '$100,000-$249,999',
-      '$250,000-$499,999',
-      '$500,000-$999,999',
-      '$1M-$2.9M',
-      '$3M-$4.9M',
-      '$5M-$9.9M',
-      'Over $10 million',
-      'I am not sure',
       'Prefer not to say',
     ],
   },
@@ -178,7 +147,7 @@ const PETS = [
   'Other',
 ];
 
-// Q1–Q3 come before the loop, Q13–Q15 after it.
+// Q1–Q3 come before the loop, Q11–Q13 after it.
 const FIRST_CHOICE_NUMBER = 4;
 const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
 ---
@@ -202,7 +171,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
   <body>
     <div class="progress" id="progress" role="status" aria-live="polite">
       <div class="progress-bar"><span id="progress-fill"></span></div>
-      {/* Q13 only appears for readers with children, so the count starts one short. */}
+      {/* Q11 only appears for readers with children, so the count starts one short. */}
       <p id="progress-text">0 of {TOTAL_QUESTIONS - 1} answered</p>
     </div>
 
@@ -214,8 +183,8 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       <h1>Tell us who reads The Tide</h1>
       <p class="lede">
         The better we know the Coast, the better we cover it — and the fewer
-        irrelevant ads you get. Two questions are required; skip anything else
-        you'd rather not answer. Takes about three minutes.
+        irrelevant ads you get. Only the first two are required; skip anything
+        else you'd rather not answer. Takes about two minutes.
       </p>
 
       <form id="survey-form" method="post" action="#" novalidate>
@@ -306,8 +275,12 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
         </fieldset>
 
         <fieldset class="card" data-field="email">
-          <legend><span class="number">{TOTAL_QUESTIONS}</span> What's your email address? <span class="required">Required</span></legend>
-          <p class="hint">So we can match your answers to your subscription — and draw the line at one response per reader.</p>
+          <legend><span class="number">{TOTAL_QUESTIONS}</span> What's your email address?</legend>
+          <p class="hint">
+            Optional — but leaving it lets us match your answers to your
+            subscription, and keeps anyone answering twice from skewing the
+            results.
+          </p>
           <label class="visually-hidden" for="email">Email address</label>
           <input
             id="email"
@@ -317,7 +290,6 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
             autocomplete="email"
             spellcheck="false"
             placeholder="you@example.com"
-            required
           />
         </fieldset>
 
@@ -357,7 +329,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       const progressFill = document.getElementById('progress-fill');
       const progressText = document.getElementById('progress-text');
 
-      // Q13 is the one bit of logic a plain survey tool can't do: only ask about
+      // Q11 is the one bit of logic a plain survey tool can't do: only ask about
       // ages when there are children at home.
       function syncChildrenAges() {
         const answer = form.querySelector('input[name="children_at_home"]:checked');
@@ -413,12 +385,13 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
 
         const area = single('area');
         const topics = multi('topics');
-        const email = (single('email') || '').toLowerCase();
         const emailField = form.querySelector('#email');
+        const email = (single('email') || '').toLowerCase();
 
         if (!area) return fail('Pick the part of the Coast you live on first.', form.querySelector('#area'));
         if (!topics) return fail('Pick at least one thing you want more of.', form.querySelector('input[name="topics"]'));
-        if (!emailField.checkValidity() || !email) {
+        // Email is optional, but a typo in one that was typed is worth catching.
+        if (email && !emailField.checkValidity()) {
           return fail('Please enter a valid email address.', emailField);
         }
 
@@ -436,13 +409,11 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           gender: single('gender'),
           relationship_status: single('relationship_status'),
           home_ownership: single('home_ownership'),
-          home_value: single('home_value'),
           household_income: single('household_income'),
-          investments: single('investments'),
           children_at_home: childrenAtHome,
           children_ages: childrenAtHome === 'Yes' ? multi('children_ages') : null,
           pets: multi('pets'),
-          email,
+          email: email || null,
         };
 
         try {

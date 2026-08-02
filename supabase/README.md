@@ -37,9 +37,15 @@ an anon `insert`-only policy means nobody can read an answer back out. There is
 deliberately **no** read policy and no Beehiiv sync; the survey does not
 subscribe anyone.
 
-Only three answers are required — `area`, `topics` and `email`. Everything else
-is nullable, and every personal question offers "Prefer not to say", which is
-what keeps people from bailing halfway down the page.
+Only two answers are required — `area` and `topics`. Everything else is
+nullable, and every personal question offers "Prefer not to say", which is what
+keeps people from bailing halfway down the page.
+
+Email is optional too, which is worth knowing when you read the numbers: a row
+without one still counts toward a percentage, but it can't be matched to a
+subscriber, so it can't be segmented or sold against. The `home_value` and
+`investments` columns are still on the table but no longer asked; they hold no
+data.
 
 - `migrations/20260803091149_create_survey_responses.sql` — the table, one
   column per question, unique index on `lower(email)` (one response per reader).
@@ -47,6 +53,8 @@ what keeps people from bailing halfway down the page.
   and NZ home-value brackets.
 - `migrations/20260803104358_survey_responses_area.sql` — `postcode` became
   `area`, checked against the list of Hibiscus Coast suburbs.
+- `migrations/20260803114829_survey_responses_optional_email.sql` — email is no
+  longer required.
 
 Every option in `src/pages/reader-survey.astro` has to match a CHECK constraint on the
 table. Adding a suburb, a topic or an income bracket to the page means adding it

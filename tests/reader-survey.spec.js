@@ -3,11 +3,10 @@ import { allowedValues } from './schema.mjs';
 
 const ENDPOINT = '**/rest/v1/survey_responses*';
 
-// The three answers the table insists on.
+// The two answers the table still insists on.
 const REQUIRED = {
   area: 'Manly',
   topic: 'Event coverage',
-  email: 'reader@example.com',
 };
 
 const option = (page, field, value) =>
@@ -18,7 +17,6 @@ const note = (page) => page.locator('#form-note');
 async function answerRequired(page) {
   await page.selectOption('#area', REQUIRED.area);
   await option(page, 'topics', REQUIRED.topic).click();
-  await page.fill('#email', REQUIRED.email);
 }
 
 /** Answers the survey and returns the JSON body it tried to POST. */
@@ -50,9 +48,7 @@ test('offers exactly the options the database will accept', async ({ page }) => 
     'gender',
     'relationship_status',
     'home_ownership',
-    'home_value',
     'household_income',
-    'investments',
     'children_at_home',
     'children_ages',
     'pets',
@@ -72,16 +68,18 @@ test('every personal question offers a way out', async ({ page }) => {
     'relationship_status',
     'home_ownership',
     'household_income',
-    'investments',
     'children_at_home',
   ]) {
     await expect(option(page, field, 'Prefer not to say')).toHaveCount(1);
   }
-  // Worded differently because "not sure" is the honest answer here.
-  await expect(option(page, 'home_value', 'Not sure or prefer not to say')).toHaveCount(1);
 });
 
-test('asks for the area, a topic and an email before it posts anything', async ({ page }) => {
+test('no longer asks what your home is worth or what you have invested', async ({ page }) => {
+  await expect(page.locator('[data-field="home_value"]')).toHaveCount(0);
+  await expect(page.locator('[data-field="investments"]')).toHaveCount(0);
+});
+
+test('asks for the area and a topic before it posts anything', async ({ page }) => {
   let posted = 0;
   await page.route(ENDPOINT, async (route) => {
     posted += 1;
@@ -95,12 +93,21 @@ test('asks for the area, a topic and an email before it posts anything', async (
   await page.click('button[type="submit"]');
   await expect(note(page)).toHaveText('Pick at least one thing you want more of.');
 
+  // An email is optional, but a typed one still has to be an email.
   await option(page, 'topics', REQUIRED.topic).click();
   await page.fill('#email', 'not-an-email');
   await page.click('button[type="submit"]');
   await expect(note(page)).toHaveText('Please enter a valid email address.');
 
   expect(posted).toBe(0);
+});
+
+test('takes a response with no email at all', async ({ page }) => {
+  await answerRequired(page);
+  const body = await submit(page);
+
+  expect(body.email).toBeNull();
+  await expect(note(page)).toHaveText('Thanks — that genuinely shapes what we write about.');
 });
 
 test("only asks about children's ages when there are children", async ({ page }) => {
@@ -120,16 +127,16 @@ test("only asks about children's ages when there are children", async ({ page })
 
 test('counts the questions it is actually asking', async ({ page }) => {
   const progress = page.locator('#progress-text');
-  await expect(progress).toHaveText('0 of 14 answered');
+  await expect(progress).toHaveText('0 of 12 answered');
 
   await page.selectOption('#area', REQUIRED.area);
-  await expect(progress).toHaveText('1 of 14 answered');
+  await expect(progress).toHaveText('1 of 12 answered');
 
   // Q13 joins the count only once it appears.
   await option(page, 'children_at_home', 'Yes').click();
-  await expect(progress).toHaveText('2 of 15 answered');
+  await expect(progress).toHaveText('2 of 13 answered');
   await option(page, 'children_at_home', 'No').click();
-  await expect(progress).toHaveText('2 of 14 answered');
+  await expect(progress).toHaveText('2 of 12 answered');
 });
 
 test('posts skipped questions as null and lowercases the email', async ({ page }) => {
@@ -147,9 +154,7 @@ test('posts skipped questions as null and lowercases the email', async ({ page }
     gender: null,
     relationship_status: null,
     home_ownership: null,
-    home_value: null,
     household_income: null,
-    investments: null,
     children_at_home: null,
     children_ages: null,
     pets: null,
