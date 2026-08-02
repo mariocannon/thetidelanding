@@ -30,7 +30,7 @@ trigger always sends `{ record: { email } }`.
 
 ## Reader survey
 
-`/survey` writes one row per reader to `public.survey_responses` — the
+`/reader-survey` writes one row per reader to `public.survey_responses` — the
 first-party demographic data behind the media kit. Same shape as every other
 form on the site: the browser POSTs to PostgREST with the publishable key, and
 an anon `insert`-only policy means nobody can read an answer back out. There is
@@ -48,7 +48,7 @@ what keeps people from bailing halfway down the page.
 - `migrations/20260803104358_survey_responses_area.sql` — `postcode` became
   `area`, checked against the list of Hibiscus Coast suburbs.
 
-Every option in `src/pages/survey.astro` has to match a CHECK constraint on the
+Every option in `src/pages/reader-survey.astro` has to match a CHECK constraint on the
 table. Adding a suburb, a topic or an income bracket to the page means adding it
 in a migration first, or PostgREST rejects the insert with a 400.
 

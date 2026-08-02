@@ -33,10 +33,10 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 5'] } },
   ],
   webServer: {
-    // The built site rather than the dev server: /survey ships as one static
+    // The built site rather than the dev server: /reader-survey ships as one
     // file, so this tests what readers actually get.
     command: `npm run build && npm run preview -- --port ${PORT}`,
-    url: `http://localhost:${PORT}/survey`,
+    url: `http://localhost:${PORT}/reader-survey`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },

@@ -34,7 +34,7 @@ async function submit(page, { status = 201 } = {}) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/survey');
+  await page.goto('/reader-survey');
 });
 
 test('offers exactly the options the database will accept', async ({ page }) => {

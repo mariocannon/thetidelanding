@@ -27,7 +27,7 @@ npm test -- --project=desktop  # one viewport
 npm test -- --ui               # watch it click through
 ```
 
-[Playwright](https://playwright.dev) covers `/survey`, the longest form on the
+[Playwright](https://playwright.dev) covers `/reader-survey`, the longest form on the
 site, at desktop and phone widths: validation, the conditional children's-ages
 question, the progress count, and the exact JSON each answer set posts to
 Supabase. Requests to Supabase are intercepted, so running the tests never
