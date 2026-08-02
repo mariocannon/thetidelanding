@@ -29,5 +29,12 @@ insert-only row-level security. The browser never talks to Beehiiv directly.
 A database trigger on `subscribers` then forwards each new row to Beehiiv
 through the `beehiiv-sync` edge function.
 
+## Reader survey
+
+`/survey` collects reader demographics into the Supabase `survey_responses`
+table — the first-party data a media kit is built from. Before promoting it,
+check the postcode list and the placeholder prize copy at the top of
+[`src/pages/survey.astro`](src/pages/survey.astro).
+
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.
