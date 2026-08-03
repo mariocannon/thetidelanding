@@ -147,9 +147,9 @@ const PETS = [
   'Other',
 ];
 
-// Q1–Q3 come before the loop, Q11–Q13 after it.
+// Q1–Q3 come before the loop, Q11–Q12 after it.
 const FIRST_CHOICE_NUMBER = 4;
-const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
+const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
 ---
 
 <!doctype html>
@@ -182,9 +182,9 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       <p class="eyebrow">Reader survey</p>
       <h1>Tell us who reads The Tide</h1>
       <p class="lede">
-        The better we know the Coast, the better we cover it — and the fewer
-        irrelevant ads you get. Only the first two are required; skip anything
-        else you'd rather not answer. Takes about two minutes.
+        The better we know the Coast, the better we cover it. Only the first two
+        are required; skip anything else you'd rather not answer. Takes about
+        two minutes.
       </p>
 
       <form id="survey-form" method="post" action="#" novalidate>
@@ -274,31 +274,12 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           </div>
         </fieldset>
 
-        <fieldset class="card" data-field="email">
-          <legend><span class="number">{TOTAL_QUESTIONS}</span> What's your email address?</legend>
-          <p class="hint">
-            Optional — but leaving it lets us match your answers to your
-            subscription, and keeps anyone answering twice from skewing the
-            results.
-          </p>
-          <label class="visually-hidden" for="email">Email address</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            inputmode="email"
-            autocomplete="email"
-            spellcheck="false"
-            placeholder="you@example.com"
-          />
-        </fieldset>
-
         <button type="submit">Send my answers</button>
       </form>
 
       <p class="note" id="form-note" role="status" aria-live="polite">
-        We never sell or share your details. Answers are only ever reported as
-        totals, never as you.
+        Anonymous — we never ask who you are, and answers are only ever
+        reported as totals.
       </p>
     </main>
 
@@ -320,7 +301,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
       const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
 
       const PRIVACY_NOTE =
-        'We never sell or share your details. Answers are only ever reported as totals, never as you.';
+        'Anonymous — we never ask who you are, and answers are only ever reported as totals.';
 
       const form = document.getElementById('survey-form');
       const note = document.getElementById('form-note');
@@ -349,7 +330,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           (fieldset) => !fieldset.hidden
         );
         const answered = asked.filter((fieldset) => {
-          const typed = fieldset.querySelector('input[type="text"], input[type="email"], select');
+          const typed = fieldset.querySelector('input[type="text"], select');
           if (typed) return typed.value.trim() !== '';
           return fieldset.querySelector('input:checked') !== null;
         }).length;
@@ -385,15 +366,8 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
 
         const area = single('area');
         const topics = multi('topics');
-        const emailField = form.querySelector('#email');
-        const email = (single('email') || '').toLowerCase();
-
         if (!area) return fail('Pick the part of the Coast you live on first.', form.querySelector('#area'));
         if (!topics) return fail('Pick at least one thing you want more of.', form.querySelector('input[name="topics"]'));
-        // Email is optional, but a typo in one that was typed is worth catching.
-        if (email && !emailField.checkValidity()) {
-          return fail('Please enter a valid email address.', emailField);
-        }
 
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
@@ -413,7 +387,6 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
           children_at_home: childrenAtHome,
           children_ages: childrenAtHome === 'Yes' ? multi('children_ages') : null,
           pets: multi('pets'),
-          email: email || null,
         };
 
         try {
@@ -427,15 +400,10 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
             body: JSON.stringify(payload),
           });
 
-          // 409 = this email has already answered. One response per reader is
-          // the point, so say thanks rather than showing an error.
-          if (response.ok || response.status === 409) {
+          if (response.ok) {
             form.hidden = true;
             progress.hidden = true;
-            note.textContent =
-              response.status === 409
-                ? "You've already filled this in — thanks again."
-                : 'Thanks — that genuinely shapes what we write about.';
+            note.textContent = 'Thanks — that genuinely shapes what we write about.';
             note.className = 'note success';
             note.scrollIntoView({ block: 'center', behavior: 'smooth' });
             return;
@@ -675,7 +643,6 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 3;
   }
 
   input[type='text'],
-  input[type='email'],
   select {
     width: 100%;
     padding: 0.9rem 1.1rem;

@@ -41,11 +41,11 @@ Only two answers are required — `area` and `topics`. Everything else is
 nullable, and every personal question offers "Prefer not to say", which is what
 keeps people from bailing halfway down the page.
 
-Email is optional too, which is worth knowing when you read the numbers: a row
-without one still counts toward a percentage, but it can't be matched to a
-subscriber, so it can't be segmented or sold against. The `home_value` and
-`investments` columns are still on the table but no longer asked; they hold no
-data.
+The survey no longer asks for an email, so responses are anonymous: they answer
+"what is the Coast like" but cannot be matched to a subscriber, which rules out
+segmenting or selling against them. The `email`, `home_value` and `investments`
+columns are still on the table and still nullable, but nothing writes to them —
+the unique index on `lower(email)` has nothing left to enforce.
 
 - `migrations/20260803091149_create_survey_responses.sql` — the table, one
   column per question, unique index on `lower(email)` (one response per reader).

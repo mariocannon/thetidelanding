@@ -93,21 +93,15 @@ test('asks for the area and a topic before it posts anything', async ({ page }) 
   await page.click('button[type="submit"]');
   await expect(note(page)).toHaveText('Pick at least one thing you want more of.');
 
-  // An email is optional, but a typed one still has to be an email.
-  await option(page, 'topics', REQUIRED.topic).click();
-  await page.fill('#email', 'not-an-email');
-  await page.click('button[type="submit"]');
-  await expect(note(page)).toHaveText('Please enter a valid email address.');
-
   expect(posted).toBe(0);
 });
 
-test('takes a response with no email at all', async ({ page }) => {
-  await answerRequired(page);
-  const body = await submit(page);
+test('asks for nothing that identifies a reader', async ({ page }) => {
+  await expect(page.locator('[data-field="email"]')).toHaveCount(0);
+  await expect(page.locator('input[type="email"]')).toHaveCount(0);
 
-  expect(body.email).toBeNull();
-  await expect(note(page)).toHaveText('Thanks — that genuinely shapes what we write about.');
+  await answerRequired(page);
+  expect(await submit(page)).not.toHaveProperty('email');
 });
 
 test("only asks about children's ages when there are children", async ({ page }) => {
@@ -127,23 +121,22 @@ test("only asks about children's ages when there are children", async ({ page })
 
 test('counts the questions it is actually asking', async ({ page }) => {
   const progress = page.locator('#progress-text');
-  await expect(progress).toHaveText('0 of 12 answered');
+  await expect(progress).toHaveText('0 of 11 answered');
 
   await page.selectOption('#area', REQUIRED.area);
-  await expect(progress).toHaveText('1 of 12 answered');
+  await expect(progress).toHaveText('1 of 11 answered');
 
-  // Q13 joins the count only once it appears.
+  // Q11 joins the count only once it appears.
   await option(page, 'children_at_home', 'Yes').click();
-  await expect(progress).toHaveText('2 of 13 answered');
-  await option(page, 'children_at_home', 'No').click();
   await expect(progress).toHaveText('2 of 12 answered');
+  await option(page, 'children_at_home', 'No').click();
+  await expect(progress).toHaveText('2 of 11 answered');
 });
 
-test('posts skipped questions as null and lowercases the email', async ({ page }) => {
+test('posts skipped questions as null', async ({ page }) => {
   await page.selectOption('#area', REQUIRED.area);
   await option(page, 'topics', REQUIRED.topic).click();
   await option(page, 'topics', 'Real estate').click();
-  await page.fill('#email', 'Reader@Example.COM');
 
   expect(await submit(page)).toEqual({
     area: REQUIRED.area,
@@ -158,7 +151,6 @@ test('posts skipped questions as null and lowercases the email', async ({ page }
     children_at_home: null,
     children_ages: null,
     pets: null,
-    email: 'reader@example.com',
   });
 
   await expect(note(page)).toHaveText('Thanks — that genuinely shapes what we write about.');
@@ -198,15 +190,6 @@ test('drops the ages when the children answer is taken back', async ({ page }) =
     children_at_home: 'Prefer not to say',
     children_ages: null,
   });
-});
-
-test('thanks a reader who has already answered', async ({ page }) => {
-  await answerRequired(page);
-  // 409: the unique index on lower(email) — one response per reader.
-  await submit(page, { status: 409 });
-
-  await expect(note(page)).toHaveText("You've already filled this in — thanks again.");
-  await expect(note(page)).toHaveClass(/success/);
 });
 
 test('lets a reader try again when the insert fails', async ({ page }) => {
