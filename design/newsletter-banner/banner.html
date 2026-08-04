@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Custom Decal Co — newsletter banner</title>
+    <style>
+      @font-face {
+        font-family: 'Baloo 2';
+        font-weight: 800;
+        src: url('baloo2-800.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('inter-600.woff2') format('woff2');
+      }
+
+      /* Palette lifted from src/pages/index.astro, inverted onto the deep
+         ink the white COASTIE cut looks best against. */
+      :root {
+        --sand-light: #faf5ea;
+        --ink: #16242e;
+        --ink-deep: #0e1a22;
+        --sea: #45758c;
+        --sky: #a2c5d3;
+        --width: 1200px;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: #d8cdb8;
+      }
+
+      /* The render script crops the top-left --width x 200 of the page. */
+      .board {
+        position: relative;
+        width: var(--width);
+        height: 200px;
+        overflow: hidden;
+        background: var(--ink);
+        font-family: 'Inter', sans-serif;
+        color: var(--sand-light);
+      }
+
+      .glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(80% 220% at 50% 120%, #24404f 0%, var(--ink) 55%, var(--ink-deep) 100%);
+      }
+
+      .waves {
+        position: absolute;
+        inset: auto 0 0;
+        width: 100%;
+        height: 74px;
+        display: block;
+      }
+
+      /* Thin sky rules top and bottom so the strip reads as a placed ad. */
+      .rule {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--sky);
+      }
+
+      .rule.top { top: 0; }
+      .rule.bottom { bottom: 0; opacity: 0.55; }
+
+      main {
+        position: relative;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        padding: 0 48px;
+      }
+
+      .mark {
+        height: 96px;
+        width: auto;
+        flex: none;
+        filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.45));
+      }
+
+      .divider {
+        flex: none;
+        width: 3px;
+        height: 104px;
+        border-radius: 2px;
+        background: linear-gradient(180deg, rgba(162, 197, 211, 0) 0%, rgba(162, 197, 211, 0.75) 50%, rgba(162, 197, 211, 0) 100%);
+      }
+
+      .copy {
+        flex: none;
+        display: grid;
+        justify-items: start;
+        gap: 6px;
+      }
+
+      .eyebrow {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.26em;
+        text-transform: uppercase;
+        color: var(--sky);
+      }
+
+      h1 {
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        font-size: 50px;
+        line-height: 1;
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+        color: var(--sand-light);
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--sky);
+      }
+
+      .url {
+        flex: none;
+        padding: 15px 30px 18px;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 34px;
+        white-space: nowrap;
+        color: var(--ink);
+        background: var(--sky);
+        border-radius: 12px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
+      }
+
+      .brk { display: none; }
+
+      /* Narrow boards can't hold the lockup on one line: drop the divider,
+         tighten the gaps and break the headline over two lines. */
+      .compact main {
+        gap: 26px;
+        padding: 0 26px;
+      }
+
+      .compact .divider { display: none; }
+
+      .compact .mark { height: 108px; }
+
+      .compact .copy { gap: 4px; }
+
+      .compact .eyebrow { font-size: 13px; }
+
+      .compact h1 {
+        font-size: 38px;
+        line-height: 1.06;
+        white-space: normal;
+      }
+
+      .compact .brk { display: block; }
+
+      .compact .url {
+        padding: 13px 24px 15px;
+        font-size: 27px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="board">
+      <div class="glow"></div>
+
+      <svg class="waves" viewBox="0 0 1200 74" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="#a2c5d3"
+          opacity="0.16"
+          d="M0,30 C200,54 400,8 600,22 C800,36 1000,64 1200,40 L1200,74 L0,74 Z"
+        ></path>
+        <path
+          fill="#a2c5d3"
+          opacity="0.28"
+          d="M0,52 C240,30 440,68 640,58 C840,48 1020,30 1200,58 L1200,74 L0,74 Z"
+        ></path>
+      </svg>
+
+      <div class="rule top"></div>
+      <div class="rule bottom"></div>
+
+      <main>
+        <img class="mark" src="coastie-wordmark-white.png" alt="Coastie" />
+        <div class="divider"></div>
+        <div class="copy">
+          <p class="eyebrow">The Custom Decal Company</p>
+          <h1>Grab an <em>original</em><br class="brk" /> Coastie decal today</h1>
+        </div>
+        <div class="url">thecustomdecal.co</div>
+      </main>
+    </div>
+
+    <script>
+      // render.sh passes the board width as ?w=<px> so both sizes share one page.
+      const w = new URLSearchParams(location.search).get('w');
+      if (w) document.documentElement.style.setProperty('--width', w + 'px');
+      if (Number(w || 1200) <= 2000) document.body.classList.add('compact');
+    </script>
+  </body>
+</html>
