@@ -76,8 +76,11 @@ const description =
       const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
       const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
 
-      // New subscribers go straight on to the reader survey.
-      const SURVEY_URL = 'https://thetide.co.nz/reader-survey/';
+      // New subscribers go straight on to the reader survey. Same-origin and
+      // slash-free on purpose: `trailingSlash: 'never'` means /reader-survey/
+      // isn't a real path, and a relative link keeps preview builds on the
+      // preview domain.
+      const SURVEY_URL = '/reader-survey';
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
