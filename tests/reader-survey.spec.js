@@ -153,7 +153,7 @@ test('posts skipped questions as null', async ({ page }) => {
     pets: null,
   });
 
-  await expect(note(page)).toHaveText('Thanks — that genuinely shapes what we write about.');
+  await expect(note(page)).toHaveText('Thanks — please keep an eye out for our welcome email.');
   await expect(page.locator('#survey-form')).toBeHidden();
   await expect(page.locator('#progress')).toBeHidden();
 });
