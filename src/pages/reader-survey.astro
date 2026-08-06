@@ -38,7 +38,24 @@ const TOPICS = [
   'Real estate',
 ];
 
-// Q4–Q10: one radio group each, rendered in a loop.
+// Q4. The ten things Coast readers this age actually spend a Saturday on —
+// the ones a sponsor can be sold against. 'Other' opens a text box rather than
+// swallowing everything that isn't on the list.
+const HOBBIES = [
+  'Gardening',
+  'Exercising (gym, running, yoga)',
+  'Golf',
+  'Fishing or boating',
+  'Walking or hiking',
+  'Cooking or baking',
+  'Reading',
+  'Travel',
+  'DIY and home projects',
+  'Photography, art or craft',
+  'Other',
+];
+
+// Q5–Q11: one radio group each, rendered in a loop.
 const CHOICE_QUESTIONS = [
   {
     name: 'education',
@@ -147,9 +164,9 @@ const PETS = [
   'Other',
 ];
 
-// Q1–Q3 come before the loop, Q11–Q12 after it.
-const FIRST_CHOICE_NUMBER = 4;
-const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
+// Q1–Q4 come before the loop, the last two after it.
+const FIRST_CHOICE_NUMBER = 5;
+const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
 ---
 
 <!doctype html>
@@ -171,7 +188,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
   <body>
     <div class="progress" id="progress" role="status" aria-live="polite">
       <div class="progress-bar"><span id="progress-fill"></span></div>
-      {/* Q11 only appears for readers with children, so the count starts one short. */}
+      {/* The ages question only appears for readers with children, so the count starts one short. */}
       <p id="progress-text">0 of {TOTAL_QUESTIONS - 1} answered</p>
     </div>
 
@@ -223,6 +240,24 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
             maxlength="200"
             autocomplete="organization-title"
             placeholder="Builder, teacher, retired…"
+          />
+        </fieldset>
+
+        <fieldset class="card" data-field="hobby">
+          <legend><span class="number">4</span> What are your hobbies?</legend>
+          <label class="visually-hidden" for="hobby">Your main hobby</label>
+          <select id="hobby" name="hobby">
+            <option value="" selected>Choose a hobby…</option>
+            {HOBBIES.map((hobby) => <option value={hobby}>{hobby}</option>)}
+          </select>
+          <label class="visually-hidden" for="hobby-other">Your hobby</label>
+          <input
+            id="hobby-other"
+            name="hobby_other"
+            type="text"
+            maxlength="100"
+            placeholder="Tell us what it is…"
+            hidden
           />
         </fieldset>
 
@@ -305,13 +340,22 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
 
       const form = document.getElementById('survey-form');
       const note = document.getElementById('form-note');
+      const hobbyOther = document.getElementById('hobby-other');
       const childrenAges = document.getElementById('children-ages');
       const progress = document.getElementById('progress');
       const progressFill = document.getElementById('progress-fill');
       const progressText = document.getElementById('progress-text');
 
-      // Q11 is the one bit of logic a plain survey tool can't do: only ask about
-      // ages when there are children at home.
+      // The 'Other' box only exists once 'Other' is the answer, and picking a
+      // listed hobby afterwards clears whatever was typed in it.
+      function syncHobbyOther() {
+        const show = form.elements.hobby.value === 'Other';
+        hobbyOther.hidden = !show;
+        if (!show) hobbyOther.value = '';
+      }
+
+      // The one bit of logic a plain survey tool can't do: only ask about ages
+      // when there are children at home.
       function syncChildrenAges() {
         const answer = form.querySelector('input[name="children_at_home"]:checked');
         const show = answer?.value === 'Yes';
@@ -339,6 +383,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
       }
 
       form.addEventListener('change', () => {
+        syncHobbyOther();
         syncChildrenAges();
         updateProgress();
       });
@@ -374,10 +419,14 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
         button.textContent = 'Sending…';
 
         const childrenAtHome = single('children_at_home');
+        const hobby = single('hobby');
         const payload = {
           area,
           topics,
           occupation: single('occupation'),
+          hobby,
+          // The table only accepts a typed hobby alongside 'Other'.
+          hobby_other: hobby === 'Other' ? single('hobby_other') : null,
           education: single('education'),
           age_range: single('age_range'),
           gender: single('gender'),
@@ -424,6 +473,7 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
         }
       });
 
+      syncHobbyOther();
       syncChildrenAges();
       updateProgress();
     </script>
@@ -652,6 +702,15 @@ const TOTAL_QUESTIONS = 3 + CHOICE_QUESTIONS.length + 2;
     border: 1px solid rgba(35, 65, 90, 0.25);
     border-radius: 0.65rem;
     transition: border-color 0.15s;
+  }
+
+  input[hidden] {
+    display: none;
+  }
+
+  /* The 'Other' box sits under the dropdown that opens it. */
+  select + label + input {
+    margin-top: 0.6rem;
   }
 
   input::placeholder {

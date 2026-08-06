@@ -36,10 +36,12 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('offers exactly the options the database will accept', async ({ page }) => {
-  const areas = await page.locator('[data-field="area"] option').evaluateAll((options) =>
-    options.map((o) => o.value).filter(Boolean)
-  );
-  expect(areas.sort()).toEqual(allowedValues('area').sort());
+  for (const field of ['area', 'hobby']) {
+    const rendered = await page
+      .locator(`[data-field="${field}"] option`)
+      .evaluateAll((options) => options.map((o) => o.value).filter(Boolean));
+    expect(rendered.sort(), `options for ${field}`).toEqual(allowedValues(field).sort());
+  }
 
   for (const field of [
     'topics',
@@ -121,16 +123,16 @@ test("only asks about children's ages when there are children", async ({ page })
 
 test('counts the questions it is actually asking', async ({ page }) => {
   const progress = page.locator('#progress-text');
-  await expect(progress).toHaveText('0 of 11 answered');
+  await expect(progress).toHaveText('0 of 12 answered');
 
   await page.selectOption('#area', REQUIRED.area);
-  await expect(progress).toHaveText('1 of 11 answered');
+  await expect(progress).toHaveText('1 of 12 answered');
 
-  // Q11 joins the count only once it appears.
+  // The ages question joins the count only once it appears.
   await option(page, 'children_at_home', 'Yes').click();
-  await expect(progress).toHaveText('2 of 12 answered');
+  await expect(progress).toHaveText('2 of 13 answered');
   await option(page, 'children_at_home', 'No').click();
-  await expect(progress).toHaveText('2 of 11 answered');
+  await expect(progress).toHaveText('2 of 12 answered');
 });
 
 test('posts skipped questions as null', async ({ page }) => {
@@ -142,6 +144,8 @@ test('posts skipped questions as null', async ({ page }) => {
     area: REQUIRED.area,
     topics: [REQUIRED.topic, 'Real estate'],
     occupation: null,
+    hobby: null,
+    hobby_other: null,
     education: null,
     age_range: null,
     gender: null,
@@ -158,9 +162,38 @@ test('posts skipped questions as null', async ({ page }) => {
   await expect(page.locator('#progress')).toBeHidden();
 });
 
+test('only asks what the hobby is when it is not on the list', async ({ page }) => {
+  const other = page.locator('#hobby-other');
+  await expect(other).toBeHidden();
+
+  await page.selectOption('#hobby', 'Golf');
+  await expect(other).toBeHidden();
+
+  await page.selectOption('#hobby', 'Other');
+  await expect(other).toBeVisible();
+  await other.fill('Restoring old motorbikes');
+
+  await answerRequired(page);
+  expect(await submit(page)).toMatchObject({
+    hobby: 'Other',
+    hobby_other: 'Restoring old motorbikes',
+  });
+});
+
+test('drops the typed hobby when a listed one is picked instead', async ({ page }) => {
+  await answerRequired(page);
+  await page.selectOption('#hobby', 'Other');
+  await page.fill('#hobby-other', 'Restoring old motorbikes');
+  await page.selectOption('#hobby', 'Golf');
+
+  await expect(page.locator('#hobby-other')).toBeHidden();
+  expect(await submit(page)).toMatchObject({ hobby: 'Golf', hobby_other: null });
+});
+
 test('sends the answers it was given', async ({ page }) => {
   await answerRequired(page);
   await page.fill('#occupation', 'Builder');
+  await page.selectOption('#hobby', 'Exercising (gym, running, yoga)');
   await option(page, 'age_range', '35-44').click();
   await option(page, 'home_ownership', 'I own my home and am moving soon').click();
   await option(page, 'household_income', '$150,000-$199,999').click();
@@ -171,6 +204,8 @@ test('sends the answers it was given', async ({ page }) => {
 
   expect(await submit(page)).toMatchObject({
     occupation: 'Builder',
+    hobby: 'Exercising (gym, running, yoga)',
+    hobby_other: null,
     age_range: '35-44',
     home_ownership: 'I own my home and am moving soon',
     household_income: '$150,000-$199,999',
