@@ -3,23 +3,29 @@ import { fileURLToPath } from 'node:url';
 
 const MIGRATIONS = fileURLToPath(new URL('../supabase/migrations', import.meta.url));
 
+/** The noticeboard tables live in a second Supabase project of their own. */
+export const ADS_MIGRATIONS = fileURLToPath(
+  new URL('../supabase/newsletter-ads/migrations', import.meta.url)
+);
+
 // The quoted, comma-separated list both `col in (...)` and `col <@ array[...]`
 // wrap. Matching only quoted items means values containing brackets — like
 // 'Professional degree (MD, JD, etc.)' — don't cut the list short.
 const LIST = String.raw`((?:\s*'(?:[^']|'')*'\s*,?)+)`;
 
 /**
- * The values a CHECK constraint on public.survey_responses accepts for a
- * column, read out of the migrations themselves. Migrations are applied in
- * filename order, so a later one redefining a constraint wins — same as the
- * database. Read from SQL rather than hardcoded here so the page can't drift
- * away from the table without a test failing.
+ * The values the database accepts for a column — from a CHECK constraint on
+ * public.survey_responses, or from the WITH CHECK on an insert policy — read
+ * out of the migrations themselves. Migrations are applied in filename order,
+ * so a later one redefining a constraint wins, same as the database. Read from
+ * SQL rather than hardcoded here so a page can't drift away from the table
+ * without a test failing.
  */
-export function allowedValues(column) {
+export function allowedValues(column, dir = MIGRATIONS) {
   let values;
 
-  for (const file of readdirSync(MIGRATIONS).sort()) {
-    const sql = readFileSync(`${MIGRATIONS}/${file}`, 'utf8').replace(/--[^\n]*/g, '');
+  for (const file of readdirSync(dir).sort()) {
+    const sql = readFileSync(`${dir}/${file}`, 'utf8').replace(/--[^\n]*/g, '');
     const scalar = [...sql.matchAll(new RegExp(`${column}\\s+in\\s*\\(${LIST}`, 'g'))].at(-1);
     const array = [...sql.matchAll(new RegExp(`${column}\\s*<@\\s*array\\[${LIST}`, 'g'))].at(-1);
     const match = array ?? scalar;
@@ -28,6 +34,6 @@ export function allowedValues(column) {
     }
   }
 
-  if (!values) throw new Error(`No CHECK list for ${column} in supabase/migrations`);
+  if (!values) throw new Error(`No CHECK list for ${column} in ${dir}`);
   return values;
 }

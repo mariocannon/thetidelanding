@@ -48,5 +48,13 @@ insert-only row-level security. The browser never talks to Beehiiv directly.
 A database trigger on `subscribers` then forwards each new row to Beehiiv
 through the `beehiiv-sync` edge function.
 
+## What's on
+
+`/submit-event` is the ad manager's `/submit/event` form rebuilt here — same
+fields, same rules, same wording — so an event can be listed from The Tide's
+own site. It inserts into the `Event` table in the **Newsletter ad management**
+project (`tlderdsxnonhemkdxqns`) as an unassigned `DRAFT` tagged
+`source = 'PUBLIC'`, which is where the ad manager's What's On list picks it up.
+
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.

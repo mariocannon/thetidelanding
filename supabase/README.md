@@ -4,6 +4,13 @@ Source of truth for the **the-tide** Supabase project
 (`jykpoupjvcmvoihujfkc`, ap-southeast-2). These files document and version the
 database + edge function that back newsletter signups.
 
+Two projects are in play, and only the first one is this project's own:
+
+| Directory | Project | Backs |
+| --- | --- | --- |
+| `migrations/` | **the-tide** (`jykpoupjvcmvoihujfkc`) | signups, polls, the reader survey |
+| `newsletter-ads/migrations/` | **Newsletter ad management** (`tlderdsxnonhemkdxqns`) | `/submit-event` → the what's-on noticeboard |
+
 ## One path into Beehiiv
 
 Every signup form — the home page and the other pages (e.g. Questions) —
@@ -80,3 +87,47 @@ supabase link --project-ref jykpoupjvcmvoihujfkc
 supabase db push                      # apply migrations
 supabase functions deploy beehiiv-sync
 ```
+
+`newsletter-ads/migrations` belongs to a different project and is deliberately
+outside `migrations/`, so `db push` never sends it to the wrong database. Apply
+it against the ad manager's project instead:
+
+```sh
+supabase link --project-ref tlderdsxnonhemkdxqns
+supabase db push --db-url "$AD_MANAGER_DB_URL"   # or paste it in the SQL editor
+```
+
+## What's on — event submissions
+
+`/submit-event` is the ad manager's `/submit/event` rebuilt on the landing
+site: same fields, same rules, same wording. It writes to `public."Event"` in
+the **Newsletter ad management** project (`tlderdsxnonhemkdxqns`) — the table
+the ad manager's what's-on section reads — rather than to anything in
+the-tide project.
+
+Every submission lands the way one from the ad manager's own form does: an
+unassigned `DRAFT` tagged `source = 'PUBLIC'`, waiting for the operator to
+approve it into an issue. It posts straight to PostgREST with the publishable
+key, so there is no server in between; the insert-only policy is the server.
+
+```
+POST /rest/v1/Event   { …, "status": "DRAFT", "source": "PUBLIC", "issueId": null }
+  → policy "Public event submissions"  (anon, insert only)
+  → DRAFT in the ad manager's What's On list
+```
+
+- `newsletter-ads/migrations/20260806090000_event_public_submissions.sql` — the
+  policy, plus database defaults for `id` and `updatedAt` (Prisma fills both in
+  application code; PostgREST cannot).
+
+The policy is `publicEventSchema` from the ad manager restated in SQL: title
+and venue lengths, the 70-word cap, a category from `EVENT_CATEGORIES`, a date
+that has not already been, and an email or a phone number to reply to. A reader
+cannot publish themselves, tag a submission `STAFF`, attach it to an issue, or
+read, edit or delete anything — there is no select, update or delete policy.
+The operator's tooling connects as `postgres` and bypasses RLS, so none of this
+touches it.
+
+Adding a category to `src/pages/submit-event.astro` means adding it to that
+migration first: a test reads the list straight out of the SQL and fails when
+the two drift apart.

@@ -1,0 +1,779 @@
+---
+const title = 'List an event — The Tide';
+const description =
+  "Tell us about a Hibiscus Coast event and we'll consider it for The Tide's what's-on section.";
+
+// The ad manager's /submit/event, rebuilt in The Tide's own clothes. Field for
+// field, rule for rule and message for message it is the same form — the only
+// difference is where it posts: this one writes to public."Event" through
+// PostgREST instead of /api/events/submit. Both file an unassigned DRAFT
+// tagged source=PUBLIC, and the "Public event submissions" policy in
+// supabase/newsletter-ads/migrations enforces the rules below at the door.
+
+// EVENT_CATEGORIES and their labels, from lib/enums.ts in the ad manager.
+const CATEGORIES = [
+  { value: 'MUSIC', label: 'Music' },
+  { value: 'MARKET', label: 'Market' },
+  { value: 'SPORT', label: 'Sport' },
+  { value: 'ARTS', label: 'Arts' },
+  { value: 'FOOD', label: 'Food & Drink' },
+  { value: 'FUNDRAISER', label: 'Fundraiser' },
+  { value: 'FAMILY', label: 'Family' },
+  { value: 'COMMUNITY', label: 'Community' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+// EVENT_WORD_MAX.
+const WORD_MAX = 70;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">What's on</p>
+      <h1>List an event in The Tide</h1>
+      <p class="lede">
+        What's on runs in our weekly email to the Hibiscus Coast. Tell us when
+        and where it is, up to {WORD_MAX} words about it, and how people can reach
+        you. We'll confirm which issue it appears in.
+      </p>
+
+      <form id="event-form" class="card" novalidate>
+        <div class="field" data-field="title">
+          <label for="title">Event name <span class="required">*</span></label>
+          <input id="title" name="title" type="text" maxlength="120" placeholder="Ōrewa Night Market" required />
+          <p class="hint" data-hint>What readers see first.</p>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="startDate">
+            <label for="startDate">Date <span class="required">*</span></label>
+            <input id="startDate" name="startDate" type="date" required />
+          </div>
+
+          <div class="field" data-field="startTime">
+            <label for="startTime">Start time</label>
+            <input id="startTime" name="startTime" type="time" />
+            <p class="hint" data-hint>Leave blank if it runs all day.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="endDate">
+            <label for="endDate">End date</label>
+            <input id="endDate" name="endDate" type="date" />
+            <p class="hint" data-hint>Only if it runs past one day.</p>
+          </div>
+
+          <div class="field" data-field="endTime">
+            <label for="endTime">End time</label>
+            <input id="endTime" name="endTime" type="time" />
+          </div>
+        </div>
+
+        <div class="field" data-field="location">
+          <label for="location">Where <span class="required">*</span></label>
+          <input
+            id="location"
+            name="location"
+            type="text"
+            maxlength="160"
+            placeholder="Ōrewa Community Centre, Ōrewa"
+            required
+          />
+          <p class="hint" data-hint>Venue and suburb, so people can find it.</p>
+        </div>
+
+        <div class="field" data-field="body">
+          <label for="body">About the event <span class="required">*</span></label>
+          <textarea id="body" name="body" rows="7" aria-describedby="body-count" required></textarea>
+          <p id="body-count" class="counter empty" aria-live="polite">
+            No copy yet — up to {WORD_MAX} words
+          </p>
+          <p class="hint" data-hint>
+            Up to {WORD_MAX} words — what's on, who it's for, and anything people
+            need to know before they turn up.
+          </p>
+        </div>
+
+        <div class="field" data-field="category">
+          <label for="category">Category <span class="required">*</span></label>
+          <select id="category" name="category">
+            {
+              CATEGORIES.map((category) => (
+                <option value={category.value} selected={category.value === 'COMMUNITY'}>
+                  {category.label}
+                </option>
+              ))
+            }
+          </select>
+        </div>
+
+        <div class="field" data-field="ticketUrl">
+          <label for="ticketUrl">Tickets or more info</label>
+          <input
+            id="ticketUrl"
+            name="ticketUrl"
+            type="url"
+            inputmode="url"
+            spellcheck="false"
+            placeholder="https://example.co.nz/tickets"
+          />
+          <p class="hint" data-hint>Optional — a full link starting http:// or https://</p>
+        </div>
+
+        <div class="field" data-field="contactName">
+          <label for="contactName">Your name <span class="required">*</span></label>
+          <input id="contactName" name="contactName" type="text" maxlength="120" autocomplete="name" required />
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="contactEmail">
+            <label for="contactEmail">Email</label>
+            <input
+              id="contactEmail"
+              name="contactEmail"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              spellcheck="false"
+            />
+            <p class="hint" data-hint>Email or phone — whichever you'd like readers to use.</p>
+          </div>
+
+          <div class="field" data-field="contactPhone">
+            <label for="contactPhone">Phone</label>
+            <input id="contactPhone" name="contactPhone" type="tel" autocomplete="tel" />
+          </div>
+        </div>
+
+        {/*
+          Honeypot: hidden from people, filled in by bots. Not display:none —
+          some bots skip those — and kept out of the tab order and the
+          accessibility tree so nobody real ever meets it.
+        */}
+        <div class="honeypot" aria-hidden="true">
+          <label for="website">Website</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <p class="message" id="form-message" role="alert" hidden></p>
+
+        <button type="submit">Send my event</button>
+      </form>
+
+      <section id="sent" class="card sent" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        <h2>Thanks — your event is in.</h2>
+        <p>
+          We read every listing before it runs. If it needs a trim or we have a
+          question we'll get in touch using the details you gave us, and we'll
+          confirm which issue it appears in.
+        </p>
+        <button type="button" id="send-another">Send another event</button>
+      </section>
+
+      <p class="footnote">
+        Your contact details are printed with the listing so readers can respond —
+        please only send details you're happy to have published.
+      </p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      // The noticeboard lives in the Newsletter ad management project, not the
+      // one the signup forms write to.
+      const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
+      const WORD_MAX = 70;
+      const MIN_SECONDS = 3;
+
+      const form = document.getElementById('event-form');
+      const sent = document.getElementById('sent');
+      const message = document.getElementById('form-message');
+      const counter = document.getElementById('body-count');
+      // Named access (form.title) hits HTMLElement's own `title`, so hold the
+      // controls this script reaches for directly.
+      const bodyField = document.getElementById('body');
+      const titleField = document.getElementById('title');
+      const honeypot = document.getElementById('website');
+
+      // Stamped when the form renders; a submission returned faster than a
+      // person could type one is refused.
+      let startedAt = Date.now();
+
+      /**
+       * Whitespace-separated tokens that contain at least one letter or digit.
+       * A lone dash or bullet isn't a word; "same-day" and "021 555 0142" count
+       * the way a person reading the ad would count them.
+       */
+      function countWords(text) {
+        const trimmed = (text ?? '').trim();
+        if (trimmed === '') return 0;
+        return trimmed.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
+      }
+
+      function wordCountState(count) {
+        if (count === 0) return 'empty';
+        if (count > WORD_MAX) return 'long';
+        return 'ok';
+      }
+
+      /** `63 words`, `74 words — 4 over the 70-word maximum`. */
+      function wordCountMessage(count) {
+        const words = `${count} ${count === 1 ? 'word' : 'words'}`;
+        switch (wordCountState(count)) {
+          case 'empty':
+            return `No copy yet — up to ${WORD_MAX} words`;
+          case 'long':
+            return `${words} — ${count - WORD_MAX} over the ${WORD_MAX}-word maximum`;
+          default:
+            return words;
+        }
+      }
+
+      function updateCounter() {
+        const count = countWords(bodyField.value);
+        counter.textContent = wordCountMessage(count);
+        counter.className = `counter ${wordCountState(count)}`;
+      }
+
+      /** Blank time means midnight, which reads as no time given. */
+      function parseDateTimeInput(date, time) {
+        const [y, m, d] = date.split('-').map(Number);
+        const [hh, mm] = (time && time.trim() !== '' ? time : '00:00').split(':').map(Number);
+        return new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0, 0);
+      }
+
+      const hasTime = (value) => !(value.getHours() === 0 && value.getMinutes() === 0);
+
+      /**
+       * An event is over once its end has passed — or its start, when no end
+       * was given. A date-only event counts as upcoming all day.
+       */
+      function isUpcoming(starts, ends) {
+        const finishes = ends ?? starts;
+        if (!hasTime(finishes)) {
+          const endOfDay = new Date(finishes);
+          endOfDay.setHours(23, 59, 59, 999);
+          return endOfDay >= new Date();
+        }
+        return finishes >= new Date();
+      }
+
+      /** The naive wall-clock stamp public."Event" stores: 2027-03-14T10:30:00. */
+      function stamp(value) {
+        const pad = (n) => String(n).padStart(2, '0');
+        return (
+          `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}` +
+          `T${pad(value.getHours())}:${pad(value.getMinutes())}:00`
+        );
+      }
+
+      const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+      /** Turns '' into undefined so optional text fields clear cleanly. */
+      function text(name) {
+        const value = new FormData(form).get(name);
+        const trimmed = value === null ? '' : String(value).trim();
+        return trimmed === '' ? undefined : trimmed;
+      }
+
+      function showErrors(errors) {
+        for (const field of form.querySelectorAll('.field[data-field]')) {
+          const name = field.dataset.field;
+          const hint = field.querySelector('[data-hint]');
+          const previous = field.querySelector('.error');
+          if (previous) previous.remove();
+          field.querySelector('input, select, textarea')?.removeAttribute('aria-invalid');
+
+          if (errors[name]) {
+            // An error replaces the hint, the way the ad manager's Field does.
+            if (hint) hint.hidden = true;
+            const paragraph = document.createElement('p');
+            paragraph.className = 'error';
+            paragraph.textContent = errors[name];
+            field.append(paragraph);
+            field.querySelector('input, select, textarea')?.setAttribute('aria-invalid', 'true');
+          } else if (hint) {
+            hint.hidden = false;
+          }
+        }
+
+        const first = form.querySelector('.field .error');
+        first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      function say(text) {
+        message.textContent = text;
+        message.hidden = text === null;
+      }
+
+      /** publicEventSchema, checked in the browser before anything is posted. */
+      function validate() {
+        const errors = {};
+
+        const title = text('title');
+        if (!title) errors.title = 'Give your event a name';
+        else if (title.length > 120) errors.title = 'Keep the name to 120 characters or fewer';
+
+        const body = text('body');
+        if (!body) errors.body = 'Tell us about your event';
+        else if (body.length > 2000) errors.body = 'That is longer than a listing can be';
+        else {
+          const words = countWords(body);
+          if (wordCountState(words) !== 'ok') {
+            errors.body = `Listings run to ${WORD_MAX} words at most. ${wordCountMessage(words)}.`;
+          }
+        }
+
+        const location = text('location');
+        if (!location) errors.location = 'Where is it on?';
+        else if (location.length > 160) errors.location = 'That is too long for a venue';
+
+        const contactName = text('contactName');
+        if (!contactName) errors.contactName = 'Tell us who to credit this to';
+        else if (contactName.length > 120) errors.contactName = 'That name is too long';
+
+        const contactEmail = text('contactEmail');
+        const contactPhone = text('contactPhone');
+        if (contactEmail && !isEmail(contactEmail)) {
+          errors.contactEmail = 'Enter a valid email address';
+        }
+        if (contactPhone && contactPhone.length > 40) {
+          errors.contactPhone = 'That phone number is too long';
+        }
+        if (!contactEmail && !contactPhone) {
+          errors.contactEmail = 'Add an email or a phone number so readers can reply';
+        }
+
+        const ticketUrl = text('ticketUrl');
+        if (ticketUrl && !/^https?:\/\/.+/i.test(ticketUrl)) {
+          errors.ticketUrl = 'Enter a full URL starting with http:// or https://';
+        }
+
+        const startDate = text('startDate');
+        const startTime = text('startTime');
+        const endDate = text('endDate');
+        const endTime = text('endTime');
+
+        if (!startDate) {
+          errors.startDate = 'When is it on?';
+          return { errors };
+        }
+
+        const starts = parseDateTimeInput(startDate, startTime);
+        const ends = endDate ? parseDateTimeInput(endDate, endTime) : null;
+
+        // A time without a date has nothing to attach itself to.
+        if (endTime && !endDate) errors.endDate = 'Add an end date to go with that time';
+
+        if (ends) {
+          // An end at midnight is a date with no time, so it covers that whole day.
+          const endOfEnd = endTime
+            ? ends
+            : new Date(ends.getFullYear(), ends.getMonth(), ends.getDate(), 23, 59, 59);
+          if (endOfEnd < starts) errors.endDate = 'The event cannot finish before it starts';
+        }
+
+        // No point collecting something that has already happened.
+        if (!isUpcoming(starts, ends)) {
+          errors.startDate = 'That date has already been — check the year, or send us the next one';
+        }
+
+        return {
+          errors,
+          values: {
+            title,
+            body,
+            location,
+            category: text('category'),
+            startsAt: stamp(starts),
+            endsAt: ends ? stamp(ends) : null,
+            contactName,
+            contactEmail: contactEmail ?? null,
+            contactPhone: contactPhone ?? null,
+            ticketUrl: ticketUrl ?? null,
+            // Not negotiable from outside: submissions are unassigned drafts.
+            status: 'DRAFT',
+            source: 'PUBLIC',
+            issueId: null,
+          },
+        };
+      }
+
+      function finish() {
+        form.hidden = true;
+        sent.hidden = false;
+        say(null);
+        sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      bodyField.addEventListener('input', updateCounter);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Honeypot: hidden from people, irresistible to bots. Answer the way a
+        // success does, so a script learns nothing from being refused.
+        if (honeypot.value.trim() !== '') return finish();
+
+        if ((Date.now() - startedAt) / 1000 < MIN_SECONDS) {
+          return say('That was quick — give it another go.');
+        }
+
+        const { errors, values } = validate();
+        showErrors(errors);
+        if (Object.keys(errors).length > 0) return say('Check the highlighted fields.');
+        say(null);
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/Event`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(values),
+          });
+
+          if (response.ok) return finish();
+          say('Something went wrong saving that. Please try again.');
+        } catch {
+          say('Could not reach us just now. Please check your connection and retry.');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Send my event';
+        }
+      });
+
+      document.getElementById('send-another').addEventListener('click', () => {
+        form.reset();
+        showErrors({});
+        updateCounter();
+        sent.hidden = true;
+        form.hidden = false;
+        startedAt = Date.now();
+        titleField.focus();
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .card {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.5rem 1.35rem;
+    text-align: left;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.4rem;
+    /* Date and time inputs carry a wide intrinsic minimum; without this a grid
+       column refuses to shrink and the page scrolls sideways on a phone. */
+    min-width: 0;
+  }
+
+  .row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .required {
+    color: #b3372c;
+  }
+
+  .hint,
+  .error,
+  .counter {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .hint {
+    color: #8a8272;
+  }
+
+  .hint[hidden] {
+    display: none;
+  }
+
+  .error {
+    font-weight: 600;
+    color: #b3372c;
+  }
+
+  .counter {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .counter.empty {
+    color: #8a8272;
+  }
+
+  .counter.ok {
+    color: #1e7a4d;
+  }
+
+  .counter.long {
+    color: #9a6210;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  [aria-invalid='true'] {
+    border-color: #b3372c;
+  }
+
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .message {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #b3372c;
+  }
+
+  .message[hidden] {
+    display: none;
+  }
+
+  button {
+    justify-self: start;
+    padding: 0.8rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .sent {
+    justify-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .sent svg {
+    width: 2rem;
+    height: 2rem;
+    color: #1e7a4d;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sent h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .sent p {
+    max-width: 30rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #5a6672;
+  }
+
+  .sent button {
+    justify-self: center;
+    background: transparent;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+  }
+
+  .footnote {
+    margin-top: 1.5rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #8a8272;
+  }
+
+  @media (min-width: 34rem) {
+    .row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style>
