@@ -1,29 +1,27 @@
 ---
-const title = 'List an event — The Tide';
+const title = 'Place a classified — The Tide';
 const description =
-  "Tell us about a Hibiscus Coast event and we'll consider it for The Tide's what's-on section.";
+  'Send us a classified for The Tide: a headline, up to 70 words, and how readers can reach you.';
 
-// The ad manager's /submit/event, rebuilt in The Tide's own clothes. Field for
-// field, rule for rule and message for message it is the same form — the only
-// difference is where it posts: this one writes to public."Event" through
-// PostgREST instead of /api/events/submit. Both file an unassigned DRAFT
-// tagged source=PUBLIC, and the "Public event submissions" policy in
+// The ad manager's /submit, rebuilt in The Tide's own clothes. Field for field,
+// rule for rule and message for message it is the same form — the only
+// difference is where it posts: this one writes to public."Classified" through
+// PostgREST instead of /api/classifieds/submit. Both file an unassigned DRAFT
+// tagged source=PUBLIC, and the "Public classified submissions" policy in
 // supabase/newsletter-ads/migrations enforces the rules below at the door.
 
-// EVENT_CATEGORIES and their labels, from lib/enums.ts in the ad manager.
+// CLASSIFIED_CATEGORIES and their labels, from lib/enums.ts in the ad manager.
 const CATEGORIES = [
-  { value: 'MUSIC', label: 'Music' },
-  { value: 'MARKET', label: 'Market' },
-  { value: 'SPORT', label: 'Sport' },
-  { value: 'ARTS', label: 'Arts' },
-  { value: 'FOOD', label: 'Food & Drink' },
-  { value: 'FUNDRAISER', label: 'Fundraiser' },
-  { value: 'FAMILY', label: 'Family' },
+  { value: 'FOR_SALE', label: 'For sale' },
+  { value: 'WANTED', label: 'Wanted' },
+  { value: 'SERVICES', label: 'Services' },
+  { value: 'JOBS', label: 'Jobs' },
+  { value: 'PROPERTY', label: 'Property' },
   { value: 'COMMUNITY', label: 'Community' },
   { value: 'OTHER', label: 'Other' },
 ];
 
-// EVENT_WORD_MAX.
+// CLASSIFIED_WORD_MAX.
 const WORD_MAX = 70;
 ---
 
@@ -48,69 +46,37 @@ const WORD_MAX = 70;
       <a class="home" href="/">
         <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
       </a>
-      <p class="eyebrow">What's on</p>
-      <h1>List an event in The Tide</h1>
+      <p class="eyebrow">Classifieds</p>
+      <h1>Place a classified in The Tide</h1>
       <p class="lede">
-        What's on runs in our weekly email to the Hibiscus Coast. Tell us when
-        and where it is, up to {WORD_MAX} words about it, and how people can reach
-        you. We'll confirm which issue it appears in.
+        Classifieds run in our weekly email to the Hibiscus Coast. Send yours
+        below — a headline, up to {WORD_MAX} words, and a phone number or email so
+        readers can reach you. We'll be in touch to confirm which issue it runs in.
       </p>
 
-      <form id="event-form" class="card" novalidate>
-        <div class="field" data-field="title">
-          <label for="title">Event name <span class="required">*</span></label>
-          <input id="title" name="title" type="text" maxlength="120" placeholder="Ōrewa Night Market" required />
-          <p class="hint" data-hint>What readers see first.</p>
-        </div>
-
-        <div class="row">
-          <div class="field" data-field="startDate">
-            <label for="startDate">Date <span class="required">*</span></label>
-            <input id="startDate" name="startDate" type="date" required />
-          </div>
-
-          <div class="field" data-field="startTime">
-            <label for="startTime">Start time</label>
-            <input id="startTime" name="startTime" type="time" />
-            <p class="hint" data-hint>Leave blank if it runs all day.</p>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="field" data-field="endDate">
-            <label for="endDate">End date</label>
-            <input id="endDate" name="endDate" type="date" />
-            <p class="hint" data-hint>Only if it runs past one day.</p>
-          </div>
-
-          <div class="field" data-field="endTime">
-            <label for="endTime">End time</label>
-            <input id="endTime" name="endTime" type="time" />
-          </div>
-        </div>
-
-        <div class="field" data-field="location">
-          <label for="location">Where <span class="required">*</span></label>
+      <form id="classified-form" class="card" novalidate>
+        <div class="field" data-field="headline">
+          <label for="headline">Headline <span class="required">*</span></label>
           <input
-            id="location"
-            name="location"
+            id="headline"
+            name="headline"
             type="text"
-            maxlength="160"
-            placeholder="Ōrewa Community Centre, Ōrewa"
+            maxlength="80"
+            placeholder="Tidy 4.2m alloy runabout, Ōrewa"
             required
           />
-          <p class="hint" data-hint>Venue and suburb, so people can find it.</p>
+          <p class="hint" data-hint>A short line readers see first.</p>
         </div>
 
         <div class="field" data-field="body">
-          <label for="body">About the event <span class="required">*</span></label>
-          <textarea id="body" name="body" rows="7" aria-describedby="body-count" required></textarea>
+          <label for="body">Your listing <span class="required">*</span></label>
+          <textarea id="body" name="body" rows="8" aria-describedby="body-count" required></textarea>
           <p id="body-count" class="counter empty" aria-live="polite">
             No copy yet — up to {WORD_MAX} words
           </p>
           <p class="hint" data-hint>
-            Up to {WORD_MAX} words — what's on, who it's for, and anything people
-            need to know before they turn up.
+            Up to {WORD_MAX} words — what it is, why it's worth a look, and anything
+            a reader needs to know.
           </p>
         </div>
 
@@ -119,25 +85,12 @@ const WORD_MAX = 70;
           <select id="category" name="category">
             {
               CATEGORIES.map((category) => (
-                <option value={category.value} selected={category.value === 'COMMUNITY'}>
+                <option value={category.value} selected={category.value === 'FOR_SALE'}>
                   {category.label}
                 </option>
               ))
             }
           </select>
-        </div>
-
-        <div class="field" data-field="ticketUrl">
-          <label for="ticketUrl">Tickets or more info</label>
-          <input
-            id="ticketUrl"
-            name="ticketUrl"
-            type="url"
-            inputmode="url"
-            spellcheck="false"
-            placeholder="https://example.co.nz/tickets"
-          />
-          <p class="hint" data-hint>Optional — a full link starting http:// or https://</p>
         </div>
 
         <div class="field" data-field="contactName">
@@ -177,7 +130,7 @@ const WORD_MAX = 70;
 
         <p class="message" id="form-message" role="alert" hidden></p>
 
-        <button type="submit">Send my event</button>
+        <button type="submit">Send my listing</button>
       </form>
 
       <section id="sent" class="card sent" hidden>
@@ -185,23 +138,21 @@ const WORD_MAX = 70;
           <circle cx="12" cy="12" r="10"></circle>
           <path d="m9 12 2 2 4-4"></path>
         </svg>
-        <h2>Thanks — your event is in.</h2>
+        <h2>Thanks — your listing is in.</h2>
         <p>
-          We read every listing before it runs. If it needs a trim or we have a
-          question we'll get in touch using the details you gave us, and we'll
+          We read every classified before it runs. If it needs a trim or we have
+          a question we'll get in touch using the details you gave us, and we'll
           confirm which issue it appears in.
         </p>
-        <button type="button" id="send-another">Send another event</button>
+        <button type="button" id="send-another">Send another listing</button>
       </section>
 
       <p class="footnote">
-        Your contact details are printed with the listing so readers can respond —
+        Your contact details are printed with your listing so readers can respond —
         please only send details you're happy to have published.
       </p>
 
-      <p class="cross-link">
-        <a href="/submit-classified">Selling something instead? Place a classified.</a>
-      </p>
+      <p class="cross-link"><a href="/submit-event">Running an event? List it here instead.</a></p>
 
       <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
     </main>
@@ -219,8 +170,8 @@ const WORD_MAX = 70;
     </svg>
 
     <script is:inline>
-      // The noticeboard lives in the Newsletter ad management project, not the
-      // one the signup forms write to.
+      // Classifieds live in the Newsletter ad management project, not the one
+      // the signup forms write to.
       const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
       // Publishable key: safe to expose; row-level security only allows inserts.
       const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
@@ -228,14 +179,12 @@ const WORD_MAX = 70;
       const WORD_MAX = 70;
       const MIN_SECONDS = 3;
 
-      const form = document.getElementById('event-form');
+      const form = document.getElementById('classified-form');
       const sent = document.getElementById('sent');
       const message = document.getElementById('form-message');
       const counter = document.getElementById('body-count');
-      // Named access (form.title) hits HTMLElement's own `title`, so hold the
-      // controls this script reaches for directly.
       const bodyField = document.getElementById('body');
-      const titleField = document.getElementById('title');
+      const headlineField = document.getElementById('headline');
       const honeypot = document.getElementById('website');
 
       // Stamped when the form renders; a submission returned faster than a
@@ -278,38 +227,6 @@ const WORD_MAX = 70;
         counter.className = `counter ${wordCountState(count)}`;
       }
 
-      /** Blank time means midnight, which reads as no time given. */
-      function parseDateTimeInput(date, time) {
-        const [y, m, d] = date.split('-').map(Number);
-        const [hh, mm] = (time && time.trim() !== '' ? time : '00:00').split(':').map(Number);
-        return new Date(y, (m ?? 1) - 1, d ?? 1, hh ?? 0, mm ?? 0, 0, 0);
-      }
-
-      const hasTime = (value) => !(value.getHours() === 0 && value.getMinutes() === 0);
-
-      /**
-       * An event is over once its end has passed — or its start, when no end
-       * was given. A date-only event counts as upcoming all day.
-       */
-      function isUpcoming(starts, ends) {
-        const finishes = ends ?? starts;
-        if (!hasTime(finishes)) {
-          const endOfDay = new Date(finishes);
-          endOfDay.setHours(23, 59, 59, 999);
-          return endOfDay >= new Date();
-        }
-        return finishes >= new Date();
-      }
-
-      /** The naive wall-clock stamp public."Event" stores: 2027-03-14T10:30:00. */
-      function stamp(value) {
-        const pad = (n) => String(n).padStart(2, '0');
-        return (
-          `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}` +
-          `T${pad(value.getHours())}:${pad(value.getMinutes())}:00`
-        );
-      }
-
       const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
       /** Turns '' into undefined so optional text fields clear cleanly. */
@@ -349,27 +266,23 @@ const WORD_MAX = 70;
         message.hidden = text === null;
       }
 
-      /** publicEventSchema, checked in the browser before anything is posted. */
+      /** publicClassifiedSchema, checked in the browser before anything is posted. */
       function validate() {
         const errors = {};
 
-        const title = text('title');
-        if (!title) errors.title = 'Give your event a name';
-        else if (title.length > 120) errors.title = 'Keep the name to 120 characters or fewer';
+        const headline = text('headline');
+        if (!headline) errors.headline = 'Give your listing a headline';
+        else if (headline.length > 80) errors.headline = 'Keep the headline to 80 characters or fewer';
 
         const body = text('body');
-        if (!body) errors.body = 'Tell us about your event';
-        else if (body.length > 2000) errors.body = 'That is longer than a listing can be';
+        if (!body) errors.body = 'Write your listing';
+        else if (body.length > 2000) errors.body = 'That is longer than a classified can be';
         else {
           const words = countWords(body);
           if (wordCountState(words) !== 'ok') {
             errors.body = `Listings run to ${WORD_MAX} words at most. ${wordCountMessage(words)}.`;
           }
         }
-
-        const location = text('location');
-        if (!location) errors.location = 'Where is it on?';
-        else if (location.length > 160) errors.location = 'That is too long for a venue';
 
         const contactName = text('contactName');
         if (!contactName) errors.contactName = 'Tell us who to credit this to';
@@ -387,53 +300,15 @@ const WORD_MAX = 70;
           errors.contactEmail = 'Add an email or a phone number so readers can reply';
         }
 
-        const ticketUrl = text('ticketUrl');
-        if (ticketUrl && !/^https?:\/\/.+/i.test(ticketUrl)) {
-          errors.ticketUrl = 'Enter a full URL starting with http:// or https://';
-        }
-
-        const startDate = text('startDate');
-        const startTime = text('startTime');
-        const endDate = text('endDate');
-        const endTime = text('endTime');
-
-        if (!startDate) {
-          errors.startDate = 'When is it on?';
-          return { errors };
-        }
-
-        const starts = parseDateTimeInput(startDate, startTime);
-        const ends = endDate ? parseDateTimeInput(endDate, endTime) : null;
-
-        // A time without a date has nothing to attach itself to.
-        if (endTime && !endDate) errors.endDate = 'Add an end date to go with that time';
-
-        if (ends) {
-          // An end at midnight is a date with no time, so it covers that whole day.
-          const endOfEnd = endTime
-            ? ends
-            : new Date(ends.getFullYear(), ends.getMonth(), ends.getDate(), 23, 59, 59);
-          if (endOfEnd < starts) errors.endDate = 'The event cannot finish before it starts';
-        }
-
-        // No point collecting something that has already happened.
-        if (!isUpcoming(starts, ends)) {
-          errors.startDate = 'That date has already been — check the year, or send us the next one';
-        }
-
         return {
           errors,
           values: {
-            title,
+            headline,
             body,
-            location,
             category: text('category'),
-            startsAt: stamp(starts),
-            endsAt: ends ? stamp(ends) : null,
             contactName,
             contactEmail: contactEmail ?? null,
             contactPhone: contactPhone ?? null,
-            ticketUrl: ticketUrl ?? null,
             // Not negotiable from outside: submissions are unassigned drafts.
             status: 'DRAFT',
             source: 'PUBLIC',
@@ -472,7 +347,7 @@ const WORD_MAX = 70;
         button.textContent = 'Sending…';
 
         try {
-          const response = await fetch(`${SUPABASE_URL}/rest/v1/Event`, {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/Classified`, {
             method: 'POST',
             headers: {
               apikey: SUPABASE_KEY,
@@ -488,7 +363,7 @@ const WORD_MAX = 70;
           say('Could not reach us just now. Please check your connection and retry.');
         } finally {
           button.disabled = false;
-          button.textContent = 'Send my event';
+          button.textContent = 'Send my listing';
         }
       });
 
@@ -499,7 +374,7 @@ const WORD_MAX = 70;
         sent.hidden = true;
         form.hidden = false;
         startedAt = Date.now();
-        titleField.focus();
+        headlineField.focus();
       });
     </script>
   </body>
@@ -588,8 +463,8 @@ const WORD_MAX = 70;
   .field {
     display: grid;
     gap: 0.4rem;
-    /* Date and time inputs carry a wide intrinsic minimum; without this a grid
-       column refuses to shrink and the page scrolls sideways on a phone. */
+    /* Without this a grid column refuses to shrink past an input's intrinsic
+       minimum and the page scrolls sideways on a phone. */
     min-width: 0;
   }
 

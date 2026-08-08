@@ -67,5 +67,13 @@ own site. It inserts into the `Event` table in the **Newsletter ad management**
 project (`tlderdsxnonhemkdxqns`) as an unassigned `DRAFT` tagged
 `source = 'PUBLIC'`, which is where the ad manager's What's On list picks it up.
 
+## Classifieds
+
+`/submit-classified` is the same rebuild of the ad manager's `/submit` form. It
+inserts into the `Classified` table in the same **Newsletter ad management**
+project as an unassigned `DRAFT` tagged `source = 'PUBLIC'`, which is where the
+ad manager's classifieds queue picks it up — a headline, up to 70 words, a
+category, and an email or phone number readers can reply to.
+
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.

@@ -49,7 +49,7 @@ test('offers exactly the categories the policy will accept', async ({ page }) =>
     .locator('#category option')
     .evaluateAll((options) => options.map((option) => option.value));
 
-  expect(rendered.sort()).toEqual(allowedValues('category', ADS_MIGRATIONS).sort());
+  expect(rendered.sort()).toEqual(allowedValues('category', ADS_MIGRATIONS, 'Event').sort());
   await expect(page.locator('#category')).toHaveValue('COMMUNITY');
 });
 

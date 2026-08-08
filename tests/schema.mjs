@@ -20,12 +20,26 @@ const LIST = String.raw`((?:\s*'(?:[^']|'')*'\s*,?)+)`;
  * so a later one redefining a constraint wins, same as the database. Read from
  * SQL rather than hardcoded here so a page can't drift away from the table
  * without a test failing.
+ *
+ * Pass `table` when more than one table in `dir` checks a column of the same
+ * name — public."Event" and public."Classified" both check `category`, and
+ * without it the later migration would answer for both.
  */
-export function allowedValues(column, dir = MIGRATIONS) {
+export function allowedValues(column, dir = MIGRATIONS, table) {
   let values;
 
   for (const file of readdirSync(dir).sort()) {
-    const sql = readFileSync(`${dir}/${file}`, 'utf8').replace(/--[^\n]*/g, '');
+    let sql = readFileSync(`${dir}/${file}`, 'utf8').replace(/--[^\n]*/g, '');
+
+    // Statements naming the table asked for. Policies and alters hold no
+    // semicolons of their own, so splitting on one gives whole statements.
+    if (table) {
+      sql = sql
+        .split(';')
+        .filter((statement) => statement.includes(`public."${table}"`))
+        .join(';');
+    }
+
     const scalar = [...sql.matchAll(new RegExp(`${column}\\s+in\\s*\\(${LIST}`, 'g'))].at(-1);
     const array = [...sql.matchAll(new RegExp(`${column}\\s*<@\\s*array\\[${LIST}`, 'g'))].at(-1);
     const match = array ?? scalar;

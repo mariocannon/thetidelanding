@@ -9,7 +9,7 @@ Two projects are in play, and only the first one is this project's own:
 | Directory | Project | Backs |
 | --- | --- | --- |
 | `migrations/` | **the-tide** (`jykpoupjvcmvoihujfkc`) | signups, polls, the reader survey |
-| `newsletter-ads/migrations/` | **Newsletter ad management** (`tlderdsxnonhemkdxqns`) | `/submit-event` → the what's-on noticeboard |
+| `newsletter-ads/migrations/` | **Newsletter ad management** (`tlderdsxnonhemkdxqns`) | `/submit-event` → the what's-on noticeboard, `/submit-classified` → the classifieds queue |
 
 ## One path into Beehiiv
 
@@ -134,3 +134,34 @@ touches it.
 Adding a category to `src/pages/submit-event.astro` means adding it to that
 migration first: a test reads the list straight out of the SQL and fails when
 the two drift apart.
+
+## Classifieds — reader submissions
+
+`/submit-classified` is the ad manager's `/submit` rebuilt the same way: same
+fields, same rules, same wording. It writes to `public."Classified"` in the
+**Newsletter ad management** project (`tlderdsxnonhemkdxqns`) — the table the
+ad manager's classifieds queue reads.
+
+The ad manager's own form posts to `/api/classifieds/submit`, which validates
+with `publicClassifiedSchema` and writes through Prisma. There is no such
+server here, so the insert policy is that schema restated in SQL and PostgREST
+is the endpoint.
+
+```
+POST /rest/v1/Classified   { …, "status": "DRAFT", "source": "PUBLIC", "issueId": null }
+  → policy "Public classified submissions"  (anon, insert only)
+  → DRAFT in the ad manager's classifieds list
+```
+
+- `newsletter-ads/migrations/20260808090000_classified_public_submissions.sql` —
+  the policy, plus database defaults for `id` and `updatedAt` (Prisma fills both
+  in application code; PostgREST cannot).
+
+Headline and copy lengths, the 70-word cap (`CLASSIFIED_WORD_MAX`), a category
+from `CLASSIFIED_CATEGORIES`, and an email or a phone number to reply to. As
+with events there is no select, update or delete policy: a reader can post a
+listing and can never read, edit or remove one — not even their own.
+
+Both tables check a column called `category`, so the test helper takes the
+table name (`allowedValues('category', ADS_MIGRATIONS, 'Classified')`) and one
+list can't answer for the other.
