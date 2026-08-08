@@ -1,0 +1,465 @@
+---
+const title = 'Privacy — The Tide';
+const description =
+  'What The Tide collects when you sign up, answer a question or fill in a form, who handles it, and how to get it back or have it deleted.';
+
+// Written from what the site actually does, not from a template. Every claim
+// below is checkable against a form on this site and a table in
+// supabase/migrations — if a form starts collecting something new, this page
+// is part of that change.
+const CONTACT = 'hello@thetide.co.nz';
+const UPDATED = '8 August 2026';
+
+// Each form on the site, the table it writes to, and what lands in it. The
+// `tables` list is the reason this is data and not prose: tests/privacy.spec.js
+// reads every /rest/v1/<table> the pages post to and fails if one isn't
+// accounted for here, so a new form can't start collecting details without
+// this page saying so.
+const COLLECTION = [
+  {
+    form: 'Signing up',
+    tables: ['subscribers'],
+    where: 'the home page, and the sign-up box under a poll or question',
+    fields: 'Your email address, and the date you signed up.',
+    detail:
+      "That's the whole record. We don't ask for your name, and there's no account to create.",
+  },
+  {
+    form: 'The reader survey',
+    tables: ['survey_responses'],
+    where: '/reader-survey',
+    fields:
+      'Which part of the Coast you live in, the topics you want covered, and your answers about work, education, age range, gender, household, home, income, investments, pets and hobbies. Your email address, only if you choose to give it.',
+    detail:
+      "Every question is optional except your area and topics, and the email question at the end is optional too. Answers are reported as totals — \"62% of readers own their home\" — never as one reader's form. If you leave the email blank, the answers aren't linked to your subscription at all. Where the survey asks about children, it asks how many are at home and their age brackets; it never asks for their names or anything else about them.",
+  },
+  {
+    form: 'Polls and questions',
+    tables: ['poll_responses', 'question_answers'],
+    where: '/polls and /questions',
+    fields: 'The question, your answer, and any comment you type.',
+    detail:
+      'These are anonymous. Nothing that identifies you is sent with the answer, so we cannot tell which reader left which comment. Please leave personal details out of the comment box — it goes into the same field as everything else.',
+  },
+  {
+    form: 'Giveaway entries',
+    tables: ['giveaway_entries'],
+    where: '/local-giveaway',
+    fields: 'Your name, email address and the suburb you pick.',
+    detail:
+      'Used to run the giveaway and get in touch if you win. Entering also signs you up to the newsletter, which the form says before you enter.',
+  },
+  {
+    form: 'Orders',
+    tables: ['customer_details'],
+    where: '/order',
+    fields: 'Your name, delivery address and email address.',
+    detail: 'Used to send you what you ordered and to talk to you about it.',
+  },
+  {
+    form: 'Listing an event',
+    tables: ['Event'],
+    where: '/submit-event',
+    fields:
+      "The event details, plus the contact name, email and phone you give for it.",
+    detail:
+      'This one is different: the contact details you give are printed with the listing so readers can respond. Only send details you are happy to see published in the newsletter.',
+  },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Privacy</p>
+      <h1>What we do with your details</h1>
+      <p class="lede">
+        The Tide is a weekly email newsletter for the Hibiscus Coast. This page
+        says exactly what we collect, who else handles it, and how to get it
+        back or have it deleted.
+      </p>
+      <p class="updated">Last updated {UPDATED}</p>
+
+      <section class="card summary" aria-labelledby="short">
+        <h2 id="short">The short version</h2>
+        <ul>
+          <li>We collect what you type into a form on this site. Nothing else.</li>
+          <li>No cookies, no analytics, no tracking pixels, no ad networks.</li>
+          <li>We don't sell or rent your details to anyone.</li>
+          <li>
+            Every email has an unsubscribe link, and you can ask us to delete
+            everything at any time by emailing <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+          </li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="collect">
+        <h2 id="collect">What we collect, and when</h2>
+        <p class="section-lede">
+          We only ever collect what a form on this site asks for, at the moment
+          you send it. There is no collection in the background.
+        </p>
+        {
+          COLLECTION.map((item) => (
+            <div class="item" data-tables={item.tables.join(' ')}>
+              <h3>{item.form}</h3>
+              <p class="where">{item.where}</p>
+              <p class="fields">{item.fields}</p>
+              <p class="detail">{item.detail}</p>
+            </div>
+          ))
+        }
+      </section>
+
+      <section class="card" aria-labelledby="use">
+        <h2 id="use">What we use it for</h2>
+        <ul>
+          <li>Sending you the newsletter, if you signed up for it.</li>
+          <li>
+            Deciding what goes in it — which suburbs and which topics readers
+            actually want covered.
+          </li>
+          <li>
+            Replying to you about a giveaway, an order or an event you sent in.
+          </li>
+          <li>
+            Describing our readership to advertisers as totals and percentages.
+            Advertisers see the shape of the audience, never a list of readers
+            and never anyone's individual answers.
+          </li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="others">
+        <h2 id="others">Who else handles it</h2>
+        <p class="section-lede">
+          Two services, both handling your details only to do a job for us.
+        </p>
+        <div class="item">
+          <h3>Supabase</h3>
+          <p class="detail">
+            Stores everything the forms collect, in a database hosted in Sydney,
+            Australia. When your browser sends a form it connects to Supabase
+            directly, so their server logs will record the request — that can
+            include your IP address, the same as any website you visit.
+          </p>
+        </div>
+        <div class="item">
+          <h3>Beehiiv</h3>
+          <p class="detail">
+            Sends the newsletter. When you sign up, your email address is passed
+            to Beehiiv so the newsletter can reach your inbox. Beehiiv is a US
+            company, so subscriber emails are stored overseas. Like most email
+            platforms it records whether an issue was opened and which links
+            were clicked.
+          </p>
+        </div>
+        <div class="item">
+          <h3>Stripe</h3>
+          <p class="detail">
+            Takes the payment if you buy something. Checkout happens on Stripe's
+            own pages under their privacy policy — card numbers are never typed
+            into this site and never reach us.
+          </p>
+        </div>
+        <p class="detail">
+          Event listings go to a second Supabase database — the one behind our
+          advertising and what's-on system — because that's where the newsletter's
+          what's-on section is put together.
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="tracking">
+        <h2 id="tracking">Cookies and tracking</h2>
+        <p class="detail">
+          This site sets no cookies and runs no analytics. Loading a page here
+          makes no request to any other company — the pages are plain HTML with
+          the styles and artwork built in, and no fonts, scripts or images are
+          fetched from anywhere else. The only time this site talks to another
+          server is the moment you press a submit button.
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="keep">
+        <h2 id="keep">How long we keep it</h2>
+        <ul>
+          <li>
+            <strong>Subscriber emails</strong> — until you unsubscribe or ask us
+            to delete them.
+          </li>
+          <li>
+            <strong>Survey answers</strong> — kept as long as they're useful for
+            planning coverage. Ask and we'll delete yours; if you left an email
+            we can find your row, and if you didn't, there's nothing linking it
+            to you to find.
+          </li>
+          <li>
+            <strong>Poll and question answers</strong> — kept indefinitely.
+            They're anonymous, so they can't be traced back to you to remove.
+          </li>
+          <li>
+            <strong>Giveaway entries and orders</strong> — kept while we're
+            running the giveaway or filling the order, and afterwards only as
+            long as we need them for our records.
+          </li>
+          <li>
+            <strong>Event listings</strong> — kept as part of the newsletter's
+            archive of what ran.
+          </li>
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="rights">
+        <h2 id="rights">Your rights</h2>
+        <p class="section-lede">
+          Under New Zealand's Privacy Act 2020 you can ask for a copy of the
+          personal information we hold about you, ask us to correct it, and ask
+          us to delete it.
+        </p>
+        <ul>
+          <li>
+            <strong>Unsubscribe</strong> — the link at the bottom of every issue,
+            any time. It's free and it takes effect straight away.
+          </li>
+          <li>
+            <strong>A copy, a correction or a deletion</strong> — email
+            <a href={`mailto:${CONTACT}`}>{CONTACT}</a> from the address you
+            signed up with, or tell us which address to look for. We'll come back
+            to you within 20 working days, as the Act requires.
+          </li>
+        </ul>
+        <p class="detail">
+          If you think we've got it wrong and we haven't put it right, you can
+          complain to the Office of the Privacy Commissioner at <span class="nowrap"
+            >privacy.org.nz</span
+          >.
+        </p>
+      </section>
+
+      <section class="card" aria-labelledby="changes">
+        <h2 id="changes">Changes to this page</h2>
+        <p class="detail">
+          If what we collect changes, this page changes with it, and the date at
+          the top moves. Questions about any of it: <a href={`mailto:${CONTACT}`}
+            >{CONTACT}</a
+          >.
+        </p>
+      </section>
+
+      <p class="footnote"><a href="/">Back to The Tide</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .updated {
+    margin-top: 0.9rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    color: #8a8272;
+  }
+
+  .card {
+    margin-top: 1.25rem;
+    padding: 1.5rem 1.35rem;
+    text-align: left;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .section-lede,
+  .detail,
+  .fields,
+  li {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+
+  .section-lede {
+    margin-top: 0.6rem;
+    color: #5a6672;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+    padding-left: 1.1rem;
+  }
+
+  li::marker {
+    color: #a2c5d3;
+  }
+
+  /* One form's worth of collection: what it is, where it lives, what it takes. */
+  .item {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(35, 65, 90, 0.1);
+  }
+
+  .where {
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    color: #8a8272;
+  }
+
+  .fields {
+    margin-top: 0.5rem;
+  }
+
+  .detail {
+    margin-top: 0.5rem;
+    color: #5a6672;
+  }
+
+  .summary li {
+    color: #23313c;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+
+  .nowrap {
+    white-space: nowrap;
+  }
+
+  a {
+    color: #35657d;
+    text-decoration-color: rgba(53, 101, 125, 0.4);
+    text-underline-offset: 0.15em;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration-color: currentColor;
+  }
+
+  .home,
+  .home:hover {
+    text-decoration: none;
+  }
+
+  .footnote {
+    margin-top: 1.75rem;
+    font-size: 0.85rem;
+    color: #8a8272;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: -1;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+</style>

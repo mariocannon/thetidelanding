@@ -38,6 +38,17 @@ asserts the page offers those options and no others — an option added to the
 page without a matching migration fails the build rather than 400ing on a
 reader mid-survey.
 
+## Privacy
+
+`/privacy` says what each form collects, who else handles it (Supabase, Beehiiv,
+Stripe) and how a reader gets their details back or deleted. Every other page
+links to it.
+
+The page lists each form alongside the table it writes to, and a test reads
+every `/rest/v1/<table>` the pages post to and fails if one isn't described
+there — so a new form can't start collecting details the page doesn't mention.
+Contact address for requests: `hello@thetide.co.nz`.
+
 ## Subscribers
 
 Every signup form — the home page included — inserts the email into the
