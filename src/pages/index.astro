@@ -53,6 +53,7 @@ const description =
       </p>
 
       <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+      <p class="event-link"><a href="/submit-event">List your event</a></p>
     </main>
 
     <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
@@ -313,13 +314,23 @@ const description =
     font-size: 0.8rem;
   }
 
-  .privacy-link a {
+  /* Sits under the privacy link and matches it — same size, colour and
+     underline as its sibling above. */
+  .event-link {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a,
+  .event-link a {
     color: #8a8272;
     text-underline-offset: 0.15em;
   }
 
   .privacy-link a:hover,
-  .privacy-link a:focus-visible {
+  .privacy-link a:focus-visible,
+  .event-link a:hover,
+  .event-link a:focus-visible {
     color: #45758c;
   }
 </style>
