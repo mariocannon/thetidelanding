@@ -23,13 +23,22 @@
         src: url('../billboard/inter-600.woff2') format('woff2');
       }
 
-      /* Palette lifted straight from src/pages/index.astro. */
       :root {
+        /* Palette lifted straight from src/pages/index.astro. */
         --sand: #f0e7d6;
         --sand-light: #faf5ea;
         --ink: #23313c;
         --sea: #45758c;
         --sky: #a2c5d3;
+
+        /* Added here: the logo draws a sun over the water but the site never
+           spends it. Warmth carries the accents — rays, bullets, highlighter
+           strokes, one whole ground — while every piece of text still sits on
+           ink, sand or sea, so nothing rides on a low-contrast pairing. */
+        --sun: #f2a65a;
+        --sun-deep: #d9873a;
+        --deep-sea: #2c5c72;
+
         /* Body copy runs darker than the site's --slate (#5a6672). These are
            read at arm's length on an iPad by someone in their sixties, in a
            Facebook feed, so every line clears 7:1 against the sand. */
@@ -63,15 +72,16 @@
         color: var(--ink);
       }
 
-      /* Light boards: the site's own background wash. */
+      /* ---- Grounds -------------------------------------------------------
+         Four of them, so ten posts in a row don't read as one long block:
+         sand, ink, a sunrise wash, and the deep sea. */
+
       .glow {
         position: absolute;
         inset: 0;
         background: radial-gradient(120% 90% at 50% 0%, var(--sand-light) 0%, var(--sand) 60%);
       }
 
-      /* Dark boards invert it — ink ground, sand type — so a feed of ten
-         alternates instead of reading as one long beige block. */
       .board.dark {
         background: var(--ink);
         color: var(--sand-light);
@@ -81,11 +91,63 @@
         background: radial-gradient(115% 85% at 50% 0%, #2f4251 0%, var(--ink) 62%);
       }
 
+      .board.dawn .glow {
+        background:
+          radial-gradient(88% 62% at 50% 30%, rgba(242, 166, 90, 0.42) 0%, rgba(242, 166, 90, 0) 62%),
+          radial-gradient(120% 92% at 50% 0%, var(--sand-light) 0%, var(--sand) 62%);
+      }
+
+      .board.sunlit {
+        background: var(--sun);
+      }
+
+      .board.sunlit .glow {
+        background: radial-gradient(96% 72% at 50% 26%, #f7bd7e 0%, var(--sun) 64%);
+      }
+
+      .board.seabed {
+        background: var(--deep-sea);
+        color: var(--sand-light);
+      }
+
+      .board.seabed .glow {
+        background: radial-gradient(110% 82% at 50% 12%, #3a7690 0%, var(--deep-sea) 60%);
+      }
+
+      /* A whisper of texture so the flat grounds don't look like a slide. */
+      .grain {
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(35, 49, 60, 0.13) 1.4px, transparent 1.5px);
+        background-size: 26px 26px;
+        opacity: 0.5;
+        mask-image: radial-gradient(120% 80% at 50% 105%, #000 0%, transparent 70%);
+      }
+
+      .board.dark .grain,
+      .board.seabed .grain {
+        background-image: radial-gradient(circle, rgba(162, 197, 211, 0.2) 1.4px, transparent 1.5px);
+      }
+
+      /* Rays fanning up from behind the logo, echoing the sun in the mark.
+         They radiate from the logo rather than converging somewhere in the
+         copy, and the mask puts them out well before the headline starts. */
+      .rays {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 1080px;
+        height: 760px;
+        transform: translateX(-50%);
+        opacity: 0.42;
+        mask-image: radial-gradient(closest-side at 50% 27%, #000 22%, transparent 76%);
+      }
+
       .waves {
         position: absolute;
         inset: auto 0 0;
         width: 100%;
-        height: 210px;
+        height: 232px;
         display: block;
       }
 
@@ -96,11 +158,18 @@
         border-radius: 24px;
       }
 
-      .board.dark .frame {
+      .board.dark .frame,
+      .board.seabed .frame {
         border-color: rgba(162, 197, 211, 0.34);
       }
 
-      /* The content column. Bottom padding clears the waves. */
+      .board.sunlit .frame {
+        border-color: rgba(35, 49, 60, 0.28);
+      }
+
+      /* ---- Layouts -------------------------------------------------------
+         Centred stack, left-aligned editorial, and a raised card. */
+
       .inner {
         position: relative;
         height: 100%;
@@ -112,6 +181,18 @@
         padding: 92px 84px 200px;
       }
 
+      .inner.left {
+        align-items: flex-start;
+        text-align: left;
+        padding: 96px 88px 210px;
+      }
+
+      .inner.roomy {
+        padding-bottom: 168px;
+      }
+
+      /* ---- Marks ---------------------------------------------------------- */
+
       .logo {
         width: 176px;
         height: auto;
@@ -119,14 +200,14 @@
       }
 
       .logo.small {
-        width: 128px;
+        width: 124px;
       }
 
       .eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 16px;
-        margin-top: 32px;
+        margin-top: 30px;
         font-size: 26px;
         font-weight: 800;
         letter-spacing: 0.2em;
@@ -134,8 +215,13 @@
         color: var(--sea);
       }
 
-      .board.dark .eyebrow {
+      .board.dark .eyebrow,
+      .board.seabed .eyebrow {
         color: var(--sky);
+      }
+
+      .board.sunlit .eyebrow {
+        color: #3a2a18;
       }
 
       .eyebrow::before,
@@ -147,8 +233,13 @@
         background: currentColor;
       }
 
+      /* Left-aligned boards get one rule, on the left, not two. */
+      .inner.left .eyebrow::after {
+        display: none;
+      }
+
       h1 {
-        margin-top: 28px;
+        margin-top: 26px;
         font-family: 'Baloo 2', sans-serif;
         font-weight: 800;
         font-size: 104px;
@@ -171,14 +262,36 @@
         color: var(--sea);
       }
 
-      .board.dark h1 em {
+      .board.dark h1 em,
+      .board.seabed h1 em {
         color: var(--sky);
+      }
+
+      .board.sunlit h1 em {
+        color: var(--ink);
+        text-decoration: underline;
+        text-decoration-color: var(--sand-light);
+        text-decoration-thickness: 11px;
+        text-underline-offset: 12px;
+        text-decoration-skip-ink: none;
+      }
+
+      /* A drawn-on underline, for one word a board at most. Done with
+         text-decoration rather than a background stripe so it tracks the
+         glyphs instead of the line box, which on a 0.98 line-height lands
+         the stripe somewhere under the words. */
+      h1 em.marked {
+        text-decoration: underline;
+        text-decoration-color: var(--sun);
+        text-decoration-thickness: 11px;
+        text-underline-offset: 12px;
+        text-decoration-skip-ink: none;
       }
 
       /* Deliberately larger than a designer's instinct: this is the line that
          has to survive a phone held at arm's length. */
       .sub {
-        margin-top: 26px;
+        margin-top: 24px;
         max-width: 850px;
         font-size: 38px;
         font-weight: 600;
@@ -187,17 +300,28 @@
         text-wrap: balance;
       }
 
-      .board.dark .sub {
+      .board.dark .sub,
+      .board.seabed .sub {
         color: var(--body-dark);
       }
 
-      /* thetide.co.nz lockup, straight off the billboard. */
+      .board.sunlit .sub {
+        color: #3a2a18;
+      }
+
+      .inner.left .sub {
+        max-width: 780px;
+        text-wrap: pretty;
+      }
+
+      /* ---- The thetide.co.nz lockup, straight off the billboard ----------- */
+
       .cta {
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 20px;
-        margin-top: 42px;
+        margin-top: 40px;
       }
 
       .url {
@@ -215,26 +339,35 @@
         padding: 16px 28px 19px;
       }
 
-      .board.dark .url {
+      .board.dark .url,
+      .board.seabed .url {
         color: var(--ink);
         background: var(--sand-light);
         box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
       }
 
+      /* Tilted like something stuck on by hand — the one place the grid
+         breaks, which is what makes it read as warm rather than corporate. */
       .free {
         padding: 15px 28px 18px;
         font-family: 'Archivo Black', sans-serif;
         font-size: 44px;
         text-transform: uppercase;
         color: var(--ink);
-        background: var(--sky);
+        background: var(--sun);
+        border: 3px solid var(--ink);
         border-radius: 14px;
-        box-shadow: 0 12px 30px rgba(35, 49, 60, 0.26);
+        transform: rotate(-4.5deg);
+        box-shadow: 0 10px 24px rgba(35, 49, 60, 0.28);
+      }
+
+      .board.sunlit .free {
+        background: var(--sand-light);
       }
 
       .badge {
         display: inline-block;
-        margin-top: 32px;
+        margin-top: 30px;
         padding: 12px 26px 13px;
         font-size: 25px;
         font-weight: 800;
@@ -246,19 +379,106 @@
         border-radius: 999px;
       }
 
-      .board.dark .badge {
+      .board.dark .badge,
+      .board.seabed .badge {
         color: var(--sky);
         background: rgba(162, 197, 211, 0.14);
         border-color: rgba(162, 197, 211, 0.4);
       }
 
-      /* Suburb chips. */
+      /* ---- The card, for boards that should look like a clipping ---------- */
+
+      .card {
+        position: relative;
+        width: 100%;
+        padding: 74px 62px 60px;
+        background: var(--sand-light);
+        border: 3px solid rgba(69, 117, 140, 0.28);
+        border-radius: 34px;
+        box-shadow: 0 26px 60px rgba(35, 49, 60, 0.16);
+      }
+
+      .ribbon {
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 13px 34px 15px;
+        white-space: nowrap;
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--sand-light);
+        background: var(--ink);
+        border-radius: 999px;
+        box-shadow: 0 10px 24px rgba(35, 49, 60, 0.26);
+      }
+
+      .card h1 {
+        margin-top: 0;
+      }
+
+      /* ---- Lists, chips and icons ----------------------------------------- */
+
+      .list {
+        display: grid;
+        gap: 20px;
+        margin-top: 34px;
+      }
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 41px;
+        font-weight: 700;
+      }
+
+      .item::before {
+        content: '';
+        flex: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--sun);
+        box-shadow: 0 0 0 6px rgba(242, 166, 90, 0.22);
+      }
+
+      .ticks {
+        display: grid;
+        gap: 22px;
+        margin-top: 34px;
+        text-align: left;
+      }
+
+      .tick {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 40px;
+        font-weight: 700;
+      }
+
+      .tick span {
+        display: grid;
+        place-items: center;
+        width: 58px;
+        height: 58px;
+        flex: none;
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--sand-light);
+        background: var(--sea);
+        border-radius: 999px;
+      }
+
       .chips {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 15px;
-        margin-top: 38px;
+        margin-top: 36px;
         max-width: 900px;
       }
 
@@ -272,13 +492,12 @@
         border-radius: 999px;
       }
 
-      /* Solid chips, for listing what's actually in the newsletter. */
       .cats {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
         gap: 16px;
-        margin-top: 36px;
+        margin-top: 34px;
         max-width: 912px;
       }
 
@@ -286,44 +505,45 @@
         padding: 14px 28px 17px;
         font-size: 34px;
         font-weight: 800;
-        letter-spacing: 0.01em;
         color: var(--ink);
         background: var(--sky);
         border-radius: 12px;
       }
 
-      /* Ticked promises. */
-      .ticks {
-        display: grid;
-        gap: 22px;
-        margin-top: 42px;
+      /* Line icons drawn in the logo's own weight rather than emoji, which
+         drag their own palette in and fight the sand-and-sea scheme. */
+      .icon {
+        width: 132px;
+        height: 132px;
+        color: var(--sea);
       }
 
-      .tick {
-        display: flex;
-        align-items: center;
-        gap: 22px;
-        font-size: 42px;
-        font-weight: 700;
-        text-align: left;
+      .board.dark .icon,
+      .board.seabed .icon {
+        color: var(--sky);
       }
 
-      .tick span {
-        display: grid;
-        place-items: center;
-        width: 60px;
-        height: 60px;
-        flex: none;
-        font-size: 34px;
-        font-weight: 800;
-        color: var(--sand-light);
-        background: var(--sea);
-        border-radius: 999px;
-      }
-
-      .board.dark .tick span {
+      .board.sunlit .icon {
         color: var(--ink);
-        background: var(--sky);
+      }
+
+      /* A postmark, for the board about where you live. */
+      .stamp {
+        position: absolute;
+        top: 96px;
+        right: 84px;
+        padding: 14px 22px 16px;
+        text-align: center;
+        font-size: 21px;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--sky);
+        border: 3px double rgba(162, 197, 211, 0.6);
+        border-radius: 12px;
+        transform: rotate(7deg);
+        opacity: 0.8;
       }
 
       .footline {
@@ -331,6 +551,7 @@
         left: 0;
         right: 0;
         bottom: 112px;
+        text-align: center;
         font-size: 28px;
         font-weight: 800;
         letter-spacing: 0.14em;
@@ -338,19 +559,35 @@
         color: var(--sea);
       }
 
-      .board.dark .footline {
+      .board.dark .footline,
+      .board.seabed .footline {
         color: #8fb2c4;
       }
     </style>
   </head>
   <body>
-    <!-- 01 — the hero. Belonging first: she subscribes to a neighbour, not a
-         masthead. -->
-    <section class="board" id="post-01">
+    <!-- 01 — the hero, on a sunrise. Belonging first: she subscribes to a
+         neighbour, not a masthead. -->
+    <section class="board dawn" id="post-01">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.45" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <svg class="rays" viewBox="0 0 1080 760" aria-hidden="true">
+        <g stroke="#f2a65a" stroke-width="8" stroke-linecap="round" opacity="0.5">
+          <path d="M540 210 L1100 210"></path>
+          <path d="M540 210 L1025 -70"></path>
+          <path d="M540 210 L820 -275"></path>
+          <path d="M540 210 L540 -350"></path>
+          <path d="M540 210 L260 -275"></path>
+          <path d="M540 210 L55 -70"></path>
+          <path d="M540 210 L-20 210"></path>
+          <path d="M540 210 L1025 490"></path>
+          <path d="M540 210 L55 490"></path>
+        </g>
+      </svg>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f2a65a" opacity="0.3" d="M0,72 C190,132 372,18 552,48 C732,78 908,166 1080,104 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
       <div class="inner">
@@ -365,53 +602,57 @@
       </div>
     </section>
 
-    <!-- 02 — hook one. Events were near-universal in the survey, so what's on
-         gets a whole post rather than a bullet. -->
+    <!-- 02 — hook one, laid out as a programme rather than a poster. Events
+         were near-universal in the survey, so they get a whole board. -->
     <section class="board dark" id="post-02">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.22" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" opacity="0.5" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#a2c5d3" opacity="0.24" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
-      <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
+      <div class="inner left roomy">
         <p class="eyebrow">What's on</p>
-        <h1 class="tight">No more hunting<br />for <em>what's on.</em></h1>
-        <div class="cats">
-          <span class="cat">Markets</span>
-          <span class="cat">Live music</span>
-          <span class="cat">Quiz nights</span>
-          <span class="cat">Fun runs</span>
-          <span class="cat">Garden tours</span>
-          <span class="cat">Council meetings</span>
+        <h1 class="tight">No more hunting<br />for <em class="marked">what's on.</em></h1>
+        <div class="list">
+          <p class="item">Markets &amp; fairs</p>
+          <p class="item">Live music</p>
+          <p class="item">Quiz nights</p>
+          <p class="item">Fun runs &amp; garden tours</p>
+          <p class="item">Council consultations</p>
         </div>
-        <p class="sub">The week ahead on the Coast, in one email.</p>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
         </div>
       </div>
     </section>
 
-    <!-- 03 — hook two. Restaurant news was the second-strongest ask, and it's
-         the one she and Graham act on. -->
+    <!-- 03 — hook two, as a clipping. Restaurant news was the second-strongest
+         ask, and it's the one she and Graham act on. -->
     <section class="board" id="post-03">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.45" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f2a65a" opacity="0.26" d="M0,72 C190,132 372,18 552,48 C732,78 908,166 1080,104 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
-      <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
-        <p class="eyebrow">We tried it</p>
-        <h1 class="tight">Where to eat<br />this <em>week.</em></h1>
-        <div class="cats">
-          <span class="cat">New openings</span>
-          <span class="cat">Proper roasts</span>
-          <span class="cat">Dog-friendly</span>
+      <div class="inner roomy">
+        <div class="card">
+          <p class="ribbon">We tried it</p>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 11h13v3.5A5.5 5.5 0 0 1 11.5 20h-2A5.5 5.5 0 0 1 4 14.5Z"></path>
+            <path d="M17 12h1.6a2.4 2.4 0 0 1 0 4.8H17"></path>
+            <path d="M7 7.5c0-1.2 1-1.6 1-2.8M11 7.5c0-1.2 1-1.6 1-2.8M15 7.5c0-1.2 1-1.6 1-2.8"></path>
+          </svg>
+          <h1 class="tight">Where to eat<br />this <em>week.</em></h1>
+          <p class="sub">
+            New openings, proper roasts, the dog-friendly spots — an honest
+            write-up from someone who actually ate there.
+          </p>
         </div>
-        <p class="sub">An honest write-up from someone who actually ate there.</p>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
         </div>
@@ -419,14 +660,16 @@
     </section>
 
     <!-- 04 — belonging. She's been here long enough to have a claim on the
-         place; the chip wall says "your patch is in here". -->
-    <section class="board dark" id="post-04">
+         place; the chip wall and the postmark say "your patch is in here". -->
+    <section class="board seabed" id="post-04">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.22" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" opacity="0.5" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#a2c5d3" opacity="0.22" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.42" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
+      <p class="stamp">Hibiscus<br />Coast · NZ</p>
       <div class="inner">
         <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
         <p class="eyebrow">Your patch</p>
@@ -448,23 +691,27 @@
       </div>
     </section>
 
-    <!-- 05 — the share mechanic that suits her. She won't chase swag, but she
-         will nominate a neighbour and then tell them she did. -->
-    <section class="board" id="post-05">
+    <!-- 05 — the share mechanic that suits her, on the warmest ground in the
+         set. She won't chase swag, but she will nominate a neighbour. -->
+    <section class="board sunlit" id="post-05">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.45" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#faf5ea" opacity="0.34" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.85" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
       <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="9" r="5.4"></circle>
+          <path d="m12 6.4 .82 1.66 1.83.27-1.32 1.29.31 1.82L12 10.58l-1.64.86.31-1.82-1.32-1.29 1.83-.27Z" fill="currentColor" stroke="none"></path>
+          <path d="M8.3 13.6 6.5 21l5.5-2.8 5.5 2.8-1.8-7.4"></path>
+        </svg>
         <p class="eyebrow">Your turn</p>
         <h1 class="tight">Know a local<br /><em>legend?</em></h1>
         <p class="sub">
-          Someone who quietly makes the Coast better — the volunteer, the
-          coach, the neighbour who mows the berm. Tell us and we'll shout
-          them out.
+          The volunteer, the coach, the neighbour who mows the berm. Tell us
+          and we'll shout them out.
         </p>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
@@ -475,42 +722,47 @@
     <!-- 06 — the same mechanic pointed at food, so the two hooks compound. -->
     <section class="board dark" id="post-06">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.22" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" opacity="0.5" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#a2c5d3" opacity="0.24" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
       <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 10h13v4.5A5.5 5.5 0 0 1 11.5 20h-2A5.5 5.5 0 0 1 4 14.5Z"></path>
+          <path d="M17 11h1.6a2.4 2.4 0 0 1 0 4.8H17"></path>
+          <path d="M8 6.6c0-1.1 1-1.5 1-2.6M12 6.6c0-1.1 1-1.5 1-2.6"></path>
+        </svg>
         <p class="eyebrow">Settle it for us</p>
-        <h1 class="tight">Which Coast café<br />does it <em>best?</em></h1>
-        <p class="sub">
-          Nominate your usual. We'll run the results — and we'll go and try
-          the winner.
-        </p>
+        <h1 class="tight">Which Coast café<br />does it <em class="marked">best?</em></h1>
+        <p class="sub">Nominate your usual. We'll run the results — and go try the winner.</p>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
         </div>
       </div>
     </section>
 
-    <!-- 07 — reliability. Irregular sending is what loses her, so the promise
-         is the post. -->
+    <!-- 07 — reliability, as a clipping she could pin up. Irregular sending is
+         what loses her, so the promise is the post. -->
     <section class="board" id="post-07">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.45" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f2a65a" opacity="0.26" d="M0,72 C190,132 372,18 552,48 C732,78 908,166 1080,104 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
-      <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
-        <p class="eyebrow">The deal</p>
-        <h1 class="tight">Same day.<br />Same friendly <em>voice.</em></h1>
-        <div class="ticks">
-          <p class="tick"><span>✓</span> One email a week — never more</p>
-          <p class="tick"><span>✓</span> Free, and always will be</p>
-          <p class="tick"><span>✓</span> Unsubscribe any time</p>
+      <div class="inner roomy">
+        <div class="card">
+          <p class="ribbon">The deal</p>
+          <h1 class="small">Same day.<br />Same friendly <em>voice.</em></h1>
+          <div class="ticks">
+            <p class="tick"><span>✓</span> One email a week — never more</p>
+            <p class="tick"><span>✓</span> Free, and always will be</p>
+            <p class="tick"><span>✓</span> Unsubscribe any time</p>
+          </div>
         </div>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
@@ -520,21 +772,22 @@
 
     <!-- 08 — friction. No app, no password, no fifteen fields: the objection
          answered before she reaches it. -->
-    <section class="board dark" id="post-08">
+    <section class="board seabed" id="post-08">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.22" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" opacity="0.5" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#a2c5d3" opacity="0.22" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.42" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
       <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2.6" y="5.4" width="18.8" height="13.2" rx="2.6"></rect>
+          <path d="m3.4 7.2 7.3 5.3a2.2 2.2 0 0 0 2.6 0l7.3-5.3"></path>
+        </svg>
         <p class="eyebrow">Easy as</p>
-        <h1 class="tight">No app.<br />No <em>password.</em></h1>
-        <p class="sub">
-          Pop your email in and you're done — about ten seconds, on the phone
-          or the iPad.
-        </p>
+        <h1 class="tight">No app.<br />No <em class="marked">password.</em></h1>
+        <p class="sub">Pop your email in and you're done — on the phone or the iPad.</p>
         <div class="cta">
           <div class="url">thetide.co.nz</div>
           <div class="free">Free</div>
@@ -546,32 +799,51 @@
          She belongs to something, and that something needs an audience. -->
     <section class="board" id="post-09">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.45" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f2a65a" opacity="0.26" d="M0,72 C190,132 372,18 552,48 C732,78 908,166 1080,104 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
-      <div class="inner">
-        <img class="logo small" src="../../public/logo.webp" alt="The Tide" />
+      <div class="inner left roomy">
         <p class="eyebrow">Club · Church · Committee</p>
-        <h1 class="small">Got something on?<br />We'll help fill <em>the room.</em></h1>
-        <p class="sub">
-          Garden club, quiz night, school fair, fundraiser — send it over and
-          we'll consider it for what's on.
-        </p>
+        <h1 class="small">Got something on?<br />We'll help fill <em class="marked">the room.</em></h1>
+        <div class="list">
+          <p class="item">Garden club</p>
+          <p class="item">Quiz night</p>
+          <p class="item">School fair</p>
+          <p class="item">Fundraiser</p>
+        </div>
+        <p class="sub">Send it over and we'll consider it for what's on.</p>
         <div class="cta">
           <div class="url path">thetide.co.nz/submit-event</div>
         </div>
       </div>
     </section>
 
-    <!-- 10 — the closer, and the growth engine: she forwards things. Asking
-         plainly beats any referral scheme with her. -->
-    <section class="board dark" id="post-10">
+    <!-- 10 — the closer, back on the sunrise, and the growth engine: she
+         forwards things. Asking plainly beats any referral scheme with her. -->
+    <section class="board dawn" id="post-10">
       <div class="glow"></div>
-      <svg class="waves" viewBox="0 0 1080 210" preserveAspectRatio="none" aria-hidden="true">
-        <path fill="#a2c5d3" opacity="0.22" d="M0,88 C182,148 366,26 546,58 C726,90 902,180 1080,120 L1080,210 L0,210 Z"></path>
-        <path fill="#a2c5d3" opacity="0.5" d="M0,148 C212,88 392,194 570,166 C750,138 930,88 1080,166 L1080,210 L0,210 Z"></path>
+      <svg class="rays" viewBox="0 0 1080 760" aria-hidden="true">
+        <g stroke="#f2a65a" stroke-width="8" stroke-linecap="round" opacity="0.42">
+          <path d="M540 210 L1100 210"></path>
+          <path d="M540 210 L1025 -70"></path>
+          <path d="M540 210 L820 -275"></path>
+          <path d="M540 210 L540 -350"></path>
+          <path d="M540 210 L260 -275"></path>
+          <path d="M540 210 L55 -70"></path>
+          <path d="M540 210 L-20 210"></path>
+          <path d="M540 210 L1025 490"></path>
+          <path d="M540 210 L55 490"></path>
+        </g>
+      </svg>
+      <div class="grain"></div>
+      <svg class="waves" viewBox="0 0 1080 232" preserveAspectRatio="none" aria-hidden="true">
+        <path fill="#f2a65a" opacity="0.3" d="M0,72 C190,132 372,18 552,48 C732,78 908,166 1080,104 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" opacity="0.5" d="M0,110 C182,170 366,48 546,80 C726,112 902,202 1080,142 L1080,232 L0,232 Z"></path>
+        <path fill="#a2c5d3" d="M0,170 C212,110 392,216 570,188 C750,160 930,110 1080,188 L1080,232 L0,232 Z"></path>
       </svg>
       <div class="frame"></div>
       <div class="inner">

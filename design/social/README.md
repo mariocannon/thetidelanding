@@ -38,6 +38,26 @@ the craft.
 - **Reliability is a promise she can see** (07), because vanishing for three
   weeks is what loses her.
 
+## How the set is built
+
+Ten centred stacks in a row got samey in a feed, so the boards run three
+layouts and four grounds instead:
+
+- **Layouts** — centred stack (01, 04, 05, 06, 08, 10), left-aligned editorial
+  with a bulleted list (02, 09), and a raised card with a ribbon, for the two
+  boards that should read like a clipping (03, 07).
+- **Grounds** — sand, ink, a sunrise wash, and the deep sea. No two
+  consecutive posts share one.
+- **Warmth** — the logo draws a sun over water but the site never spends it.
+  It now carries the rays behind the mark, the list bullets, the underline on
+  one word a board, the tilted FREE sticker, and the whole of board 05.
+  Every piece of *text*, though, still sits on ink, sand or sea: the sun is
+  never asked to hold type, so nothing rides on a weak pairing. On the sun
+  ground the emphasis is a sand underline rather than a second hue, because
+  every warm accent tested there went muddy.
+- Grain, layered waves and a postmark on 04 keep the flat grounds from
+  reading like slides.
+
 | # | File | Post | Job |
 | --- | --- | --- | --- |
 | 01 | `01-your-week-on-the-coast.png` | For Coasties, by Coasties | Hero, belonging first |
