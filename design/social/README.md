@@ -68,7 +68,7 @@ layouts and four grounds instead:
 | 06 | `06-which-coast-cafe.png` | Best café on the Coast | Share mechanic + food |
 | 07 | `07-same-day-same-voice.png` | Same day, same voice | Reliability |
 | 08 | `08-no-app-no-password.png` | No app, no password | Removes friction |
-| 09 | `09-got-something-on.png` | Club, church, committee | Event supply |
+| 09 | `09-got-something-on.png` | Club, committee | Event supply |
 | 10 | `10-know-someone-whod-love-this.png` | Forward it on | Word of mouth |
 
 Carol is not the whole Coast — the young-family belt around Millwater barely
@@ -84,9 +84,12 @@ readers to nominate a local legend and a café, and both point at
 nomination up first or hold those two back.
 
 Everything else is checked against a page in `src/pages`: the reader count and
-"free forever" from the home page, the suburbs from `/reader-survey`, the
-submission promise from `/submit-event`. Events are described as submitted for
-consideration, not guaranteed a slot, because that's what the form says.
+"free forever" from the home page, the suburbs from `/reader-survey`.
+
+Board 09 promises submitted events get posted out to readers. `/submit-event`
+itself only says a submission will be *considered* for the what's-on section,
+so either the form's wording should follow the post or the post should soften
+back — as it stands the two disagree.
 
 Suburb names carry macrons (Ōrewa, Whangaparāoa). The site's own forms spell
 them without — worth aligning one way or the other.
