@@ -5,7 +5,7 @@
 // there and re-run this to get a matching set.
 //
 // Usage: node design/social/render-posts.mjs
-import { existsSync, readdirSync, mkdirSync } from 'node:fs';
+import { existsSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
@@ -32,17 +32,20 @@ const SCALE = 2; // supersample, then downsample for clean type and edges
 // Slug per board, in page order — the file names readers of the folder see.
 const NAMES = [
   'your-week-on-the-coast',
-  'hundreds-of-coasties',
-  'whats-in-it',
+  'no-more-hunting-for-whats-on',
+  'where-to-eat-this-week',
   'from-waiwera-to-gulf-harbour',
-  'list-your-event',
-  'place-a-classified',
-  'coastie-decal-giveaway',
-  'what-would-you-like-to-see',
-  'one-email-a-week',
-  'dont-miss-the-tide',
+  'know-a-local-legend',
+  'which-coast-cafe',
+  'same-day-same-voice',
+  'no-app-no-password',
+  'got-something-on',
+  'know-someone-whod-love-this',
 ];
 
+// Rebuilt from scratch each run: renaming or dropping a board should take its
+// PNG with it, rather than leaving a stale post in the folder to be posted.
+rmSync(OUT_DIR, { recursive: true, force: true });
 mkdirSync(OUT_DIR, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: sandboxChromium() });
