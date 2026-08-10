@@ -147,7 +147,7 @@ const WORD_MAX = 70;
 
         <div class="row">
           <div class="field" data-field="contactEmail">
-            <label for="contactEmail">Email</label>
+            <label for="contactEmail">Email <span class="required">*</span></label>
             <input
               id="contactEmail"
               name="contactEmail"
@@ -155,8 +155,9 @@ const WORD_MAX = 70;
               inputmode="email"
               autocomplete="email"
               spellcheck="false"
+              required
             />
-            <p class="hint" data-hint>Email or phone — whichever you'd like readers to use.</p>
+            <p class="hint" data-hint>So we can reach you, and readers can reply.</p>
           </div>
 
           <div class="field" data-field="contactPhone">
@@ -377,14 +378,10 @@ const WORD_MAX = 70;
 
         const contactEmail = text('contactEmail');
         const contactPhone = text('contactPhone');
-        if (contactEmail && !isEmail(contactEmail)) {
-          errors.contactEmail = 'Enter a valid email address';
-        }
+        if (!contactEmail) errors.contactEmail = 'Add an email so we can reach you';
+        else if (!isEmail(contactEmail)) errors.contactEmail = 'Enter a valid email address';
         if (contactPhone && contactPhone.length > 40) {
           errors.contactPhone = 'That phone number is too long';
-        }
-        if (!contactEmail && !contactPhone) {
-          errors.contactEmail = 'Add an email or a phone number so readers can reply';
         }
 
         const ticketUrl = text('ticketUrl');

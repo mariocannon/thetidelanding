@@ -62,8 +62,9 @@ through the `beehiiv-sync` edge function.
 ## What's on
 
 `/submit-event` is the ad manager's `/submit/event` form rebuilt here — same
-fields, same rules, same wording — so an event can be listed from The Tide's
-own site. It inserts into the `Event` table in the **Newsletter ad management**
+fields, same wording — so an event can be listed from The Tide's own site. One
+rule is stricter: an email address is required (phone stays optional), where the
+ad manager takes either. It inserts into the `Event` table in the **Newsletter ad management**
 project (`tlderdsxnonhemkdxqns`) as an unassigned `DRAFT` tagged
 `source = 'PUBLIC'`, which is where the ad manager's What's On list picks it up.
 

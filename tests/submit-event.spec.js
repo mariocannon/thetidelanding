@@ -32,11 +32,18 @@ async function fillRequired(page) {
 async function submit(page, { status = 201, wait = true } = {}) {
   if (wait) await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
   let body = null;
+  // The click resolves before the post lands, so wait for the route itself —
+  // on a loaded machine the request is otherwise still in flight when we read.
+  let handled;
+  const posted = new Promise((resolve) => (handled = resolve));
   await page.route(ENDPOINT, async (route) => {
     body = JSON.parse(route.request().postData());
     await route.fulfill({ status, body: '' });
+    handled();
   });
   await page.click('button[type="submit"]');
+  // A submission the form refuses never posts; that is a `null` body, not a hang.
+  await Promise.race([posted, page.waitForTimeout(5000)]);
   return body;
 }
 
@@ -112,26 +119,35 @@ test('checks the highlighted fields before it posts anything', async ({ page }) 
   await expect(error(page, 'body')).toHaveText('Tell us about your event');
   await expect(error(page, 'location')).toHaveText('Where is it on?');
   await expect(error(page, 'contactName')).toHaveText('Tell us who to credit this to');
+  await expect(error(page, 'contactEmail')).toHaveText('Add an email so we can reach you');
   await expect(error(page, 'startDate')).toHaveText('When is it on?');
   expect(posted).toBe(0);
 });
 
-test('wants an email or a phone number, not necessarily both', async ({ page }) => {
+test('wants an email, with a phone number optional alongside it', async ({ page }) => {
   await fillRequired(page);
   await page.fill('#contactName', 'Sam Rivers');
   await page.fill('#contactEmail', '');
+  await page.fill('#contactPhone', '021 555 0134');
 
   await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
   await page.click('button[type="submit"]');
-  await expect(error(page, 'contactEmail')).toHaveText(
-    'Add an email or a phone number so readers can reply'
-  );
+  await expect(error(page, 'contactEmail')).toHaveText('Add an email so we can reach you');
 
-  await page.fill('#contactPhone', '021 555 0134');
+  await page.fill('#contactEmail', 'not-an-email');
+  await page.click('button[type="submit"]');
+  await expect(error(page, 'contactEmail')).toHaveText('Enter a valid email address');
+
+  await page.fill('#contactEmail', 'sam@example.co.nz');
   expect(await submit(page, { wait: false })).toMatchObject({
-    contactEmail: null,
+    contactEmail: 'sam@example.co.nz',
     contactPhone: '021 555 0134',
   });
+});
+
+test('marks the email field as required', async ({ page }) => {
+  await expect(field(page, 'contactEmail').locator('label')).toHaveText('Email *');
+  await expect(page.locator('#contactEmail')).toHaveAttribute('required', '');
 });
 
 test('counts the words and refuses copy over the cap', async ({ page }) => {
