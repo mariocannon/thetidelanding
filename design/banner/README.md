@@ -20,13 +20,15 @@ size. Override the browser with `CHROME=/path/to/chrome`. It needs Pillow
 ## Editing the copy
 
 The three lines marked `EDIT ME` in `coffee-catchup.html` — eyebrow, headline
-and details — are the whole ad. **The date, time and place currently in there
-are placeholders**; replace them before the banner goes out.
+and details — are the whole ad. The details line reads "Dates to be confirmed";
+swap in the real date, time and place once they're set.
 
-Keep all three about their current length. The strip is only 160px tall, so
-the headline and details line are set at a fixed size with `white-space:
-nowrap` — longer copy runs into the logo rather than wrapping or shrinking.
-Re-render and look at the PNG after any copy change.
+The strip is only 160px tall, so the headline and details line are set at a
+fixed size with `white-space: nowrap` — longer copy runs into the logo rather
+than wrapping or shrinking. The copy column is 260px, which at the details
+line's 13px is about 35 characters. A full date-time-place line is longer than
+that: drop `.sub` back to 11px, which buys roughly another six. Re-render and
+look at the PNG after any copy change.
 
 The cup and the logo flank the copy instead of stacking beside it, which is
 what the taller billboard layouts do — at this height there's no room for a
