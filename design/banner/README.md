@@ -5,7 +5,7 @@ logo and type as `src/pages/index.astro`, laid out for a wide, short slot.
 
 | File | Size | Source |
 | --- | --- | --- |
-| `thetide-coffee-catchup-450x160.png` | 450 × 160 | `coffee-catchup.html` |
+| `thetide-coffee-catchup-1080x150.png` | 1080 × 150 | `coffee-catchup.html` |
 
 Rebuild after editing a page:
 
@@ -23,16 +23,18 @@ The three lines marked `EDIT ME` in `coffee-catchup.html` — eyebrow, headline
 and details — are the whole ad. The details line reads "Dates to be confirmed";
 swap in the real date, time and place once they're set.
 
-The strip is only 160px tall, so the headline and details line are set at a
-fixed size with `white-space: nowrap` — longer copy runs into the logo rather
-than wrapping or shrinking. The copy column is 260px, which at the details
-line's 13px is about 35 characters. A full date-time-place line is longer than
-that: drop `.sub` back to 11px, which buys roughly another six. Re-render and
-look at the PNG after any copy change.
+The headline and details line are set at a fixed size with `white-space:
+nowrap`, so longer copy runs into the CTA rather than wrapping or shrinking.
+The copy takes the width the cup, CTA and logo leave it — about 415px, which
+at the details line's 17px is roughly 48 characters. A full date-time-place
+line fits comfortably. Re-render and look at the PNG after any copy change.
 
-The cup and the logo flank the copy instead of stacking beside it, which is
-what the taller billboard layouts do — at this height there's no room for a
-second element in a column.
+At 7:1 the layout is a single row — cup, copy, CTA, logo — rather than the
+stack the taller billboards use: the copy grows to fill, which pushes the CTA
+across to the logo instead of leaving the right half of the strip empty.
+
+The banner is 150px tall and the logo is portrait, so the logo's width isn't a
+free choice — much above 88px and it stops fitting between the paddings.
 
 Fonts come from `../billboard/` so there's one checked-in copy of each — Baloo
 2 (headline), Archivo Black (URL tag) and Inter (everything else), all SIL Open
