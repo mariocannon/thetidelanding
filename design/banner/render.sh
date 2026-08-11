@@ -38,4 +38,4 @@ print('wrote', os.environ['OUT'], banner.size)
 PY
 }
 
-render coffee-catchup 600 300
+render coffee-catchup 450 160

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>The Tide — coffee catch-up banner 600×300</title>
+    <title>The Tide — coffee catch-up banner 450×160</title>
     <style>
       /* Fonts live with the billboard pages so there's one checked-in copy of
          each: Baloo 2 (headline), Archivo Black (URL tag), Inter (the rest). */
@@ -41,11 +41,11 @@
         background: #d8cdb8;
       }
 
-      /* The render script crops the top-left 600×300 of the page. */
+      /* The render script crops the top-left 450×160 of the page. */
       .banner {
         position: relative;
-        width: 600px;
-        height: 300px;
+        width: 450px;
+        height: 160px;
         overflow: hidden;
         background: var(--sand);
         font-family: 'Inter', sans-serif;
@@ -63,25 +63,27 @@
         position: absolute;
         inset: auto 0 0;
         width: 100%;
-        height: 82px;
+        height: 44px;
         display: block;
       }
 
       .frame {
         position: absolute;
-        inset: 13px;
+        inset: 8px;
         border: 2px solid rgba(69, 117, 140, 0.3);
-        border-radius: 14px;
+        border-radius: 11px;
       }
 
+      /* Cup and logo flank the copy: at 160px tall there's no room to stack
+         them beside it the way the taller banners do. */
       main {
         position: relative;
         height: 100%;
         display: grid;
-        grid-template-columns: 1fr 132px;
+        grid-template-columns: 56px 1fr 70px;
         align-items: center;
-        gap: 20px;
-        padding: 30px 38px 34px;
+        gap: 12px;
+        padding: 16px 20px 18px;
       }
 
       .copy {
@@ -92,29 +94,30 @@
       .eyebrow {
         display: inline-flex;
         align-items: center;
-        gap: 9px;
-        font-size: 12px;
+        gap: 7px;
+        font-size: 9px;
         font-weight: 800;
-        letter-spacing: 0.22em;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
         color: var(--sea);
       }
 
       .eyebrow::before {
         content: '';
-        width: 26px;
-        height: 3px;
-        border-radius: 2px;
+        width: 18px;
+        height: 2px;
+        border-radius: 1px;
         background: var(--sea);
       }
 
       h1 {
-        margin-top: 10px;
+        margin-top: 6px;
         font-family: 'Baloo 2', sans-serif;
         font-weight: 800;
-        font-size: 54px;
-        line-height: 0.94;
+        font-size: 30px;
+        line-height: 1;
         letter-spacing: -0.02em;
+        white-space: nowrap;
         color: var(--ink);
       }
 
@@ -124,58 +127,54 @@
       }
 
       .sub {
-        margin-top: 12px;
-        font-size: 16px;
+        margin-top: 6px;
+        font-size: 11px;
         font-weight: 600;
-        line-height: 1.35;
+        line-height: 1.3;
+        white-space: nowrap;
         color: var(--slate);
       }
 
       .cta {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-top: 18px;
+        gap: 7px;
+        margin-top: 10px;
       }
 
       .url {
-        padding: 8px 15px 9px;
+        padding: 5px 10px 6px;
         font-family: 'Archivo Black', sans-serif;
-        font-size: 18px;
+        font-size: 12px;
         color: var(--sand-light);
         background: var(--ink);
-        border-radius: 8px;
-        box-shadow: 0 7px 16px rgba(35, 49, 60, 0.24);
+        border-radius: 6px;
+        box-shadow: 0 5px 11px rgba(35, 49, 60, 0.24);
       }
 
       .badge {
-        padding: 8px 14px 9px;
+        padding: 4px 9px 5px;
         white-space: nowrap;
-        font-size: 12px;
+        font-size: 8px;
         font-weight: 800;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--sea);
         background: rgba(162, 197, 211, 0.28);
-        border: 2px solid rgba(69, 117, 140, 0.35);
+        border: 1.5px solid rgba(69, 117, 140, 0.35);
         border-radius: 999px;
       }
 
-      .mark {
-        display: grid;
-        justify-items: center;
-        gap: 12px;
+      .cup {
+        width: 56px;
+        height: auto;
+        filter: drop-shadow(0 5px 11px rgba(35, 49, 60, 0.14));
       }
 
-      .mark .cup {
-        width: 106px;
+      .logo {
+        width: 70px;
         height: auto;
-        filter: drop-shadow(0 7px 16px rgba(35, 49, 60, 0.14));
-      }
-
-      .mark img {
-        width: 92px;
-        height: auto;
+        justify-self: center;
       }
     </style>
   </head>
@@ -183,26 +182,50 @@
     <div class="banner">
       <div class="glow"></div>
 
-      <svg class="waves" viewBox="0 0 600 82" preserveAspectRatio="none" aria-hidden="true">
+      <svg class="waves" viewBox="0 0 450 44" preserveAspectRatio="none" aria-hidden="true">
         <path
           fill="#a2c5d3"
           opacity="0.45"
-          d="M0,34 C101,58 203,10 303,22 C404,34 501,70 600,46 L600,82 L0,82 Z"
+          d="M0,18 C76,31 152,5 227,12 C303,18 376,38 450,25 L450,44 L0,44 Z"
         ></path>
         <path
           fill="#a2c5d3"
-          d="M0,58 C118,34 217,75 317,64 C417,53 517,34 600,64 L600,82 L0,82 Z"
+          d="M0,31 C88,18 163,40 238,34 C313,28 388,18 450,34 L450,44 L0,44 Z"
         ></path>
       </svg>
 
       <div class="frame"></div>
 
       <main>
+        <svg class="cup" viewBox="0 0 120 104" fill="none" aria-hidden="true">
+          <g stroke="#a2c5d3" stroke-width="5" stroke-linecap="round">
+            <path d="M45 34c-7-7 7-11 0-18" />
+            <path d="M62 32c-8-8 8-13 0-21" />
+            <path d="M79 34c-7-7 7-11 0-18" />
+          </g>
+          <path
+            d="M92 52c13 0 17 5 17 11s-7 11-19 11"
+            stroke="#45758c"
+            stroke-width="6"
+            stroke-linecap="round"
+          />
+          <path
+            d="M27 44H93L83 86H37Z"
+            fill="#faf5ea"
+            stroke="#45758c"
+            stroke-width="6"
+            stroke-linejoin="round"
+          />
+          <rect x="32" y="48" width="56" height="13" rx="3" fill="#23313c" opacity="0.9" />
+          <rect x="12" y="88" width="96" height="11" rx="5.5" fill="#45758c" />
+        </svg>
+
         <div class="copy">
-          <!-- EDIT ME: the three lines below are the whole ad. Keep the
-               headline to two words a line so it stays 54px. -->
+          <!-- EDIT ME: the three lines below are the whole ad. They're set at
+               a fixed size and told not to wrap, so keep them about this
+               long — a longer line runs into the logo instead of shrinking. -->
           <p class="eyebrow">Come say hi</p>
-          <h1>Coffee<br /><em>catch-up.</em></h1>
+          <h1>Coffee <em>catch-up.</em></h1>
           <p class="sub">Saturday 23 August · 10am · Ōrewa Beach</p>
           <div class="cta">
             <div class="url">thetide.co.nz</div>
@@ -210,32 +233,7 @@
           </div>
         </div>
 
-        <div class="mark">
-          <svg class="cup" viewBox="0 0 120 104" fill="none" aria-hidden="true">
-            <g stroke="#a2c5d3" stroke-width="5" stroke-linecap="round">
-              <path d="M45 34c-7-7 7-11 0-18" />
-              <path d="M62 32c-8-8 8-13 0-21" />
-              <path d="M79 34c-7-7 7-11 0-18" />
-            </g>
-            <path
-              d="M92 52c13 0 17 5 17 11s-7 11-19 11"
-              stroke="#45758c"
-              stroke-width="6"
-              stroke-linecap="round"
-            />
-            <path
-              d="M27 44H93L83 86H37Z"
-              fill="#faf5ea"
-              stroke="#45758c"
-              stroke-width="6"
-              stroke-linejoin="round"
-            />
-            <rect x="32" y="48" width="56" height="13" rx="3" fill="#23313c" opacity="0.9" />
-            <rect x="12" y="88" width="96" height="11" rx="5.5" fill="#45758c" />
-          </svg>
-
-          <img src="../../public/logo.webp" alt="The Tide" />
-        </div>
+        <img class="logo" src="../../public/logo.webp" alt="The Tide" />
       </main>
     </div>
   </body>
