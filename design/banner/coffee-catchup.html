@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Tide — coffee catch-up banner 600×300</title>
+    <style>
+      /* Fonts live with the billboard pages so there's one checked-in copy of
+         each: Baloo 2 (headline), Archivo Black (URL tag), Inter (the rest). */
+      @font-face {
+        font-family: 'Baloo 2';
+        font-weight: 800;
+        src: url('../billboard/baloo2-800.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('../billboard/archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('../billboard/inter-600.woff2') format('woff2');
+      }
+
+      /* Palette lifted straight from src/pages/index.astro. */
+      :root {
+        --sand: #f0e7d6;
+        --sand-light: #faf5ea;
+        --ink: #23313c;
+        --sea: #45758c;
+        --sky: #a2c5d3;
+        --slate: #5a6672;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: #d8cdb8;
+      }
+
+      /* The render script crops the top-left 600×300 of the page. */
+      .banner {
+        position: relative;
+        width: 600px;
+        height: 300px;
+        overflow: hidden;
+        background: var(--sand);
+        font-family: 'Inter', sans-serif;
+        color: var(--ink);
+      }
+
+      /* The site's own background wash, tightened to the banner's crop. */
+      .glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 90% at 50% 0%, var(--sand-light) 0%, var(--sand) 60%);
+      }
+
+      .waves {
+        position: absolute;
+        inset: auto 0 0;
+        width: 100%;
+        height: 82px;
+        display: block;
+      }
+
+      .frame {
+        position: absolute;
+        inset: 13px;
+        border: 2px solid rgba(69, 117, 140, 0.3);
+        border-radius: 14px;
+      }
+
+      main {
+        position: relative;
+        height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 132px;
+        align-items: center;
+        gap: 20px;
+        padding: 30px 38px 34px;
+      }
+
+      .copy {
+        display: grid;
+        justify-items: start;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--sea);
+      }
+
+      .eyebrow::before {
+        content: '';
+        width: 26px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--sea);
+      }
+
+      h1 {
+        margin-top: 10px;
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        font-size: 54px;
+        line-height: 0.94;
+        letter-spacing: -0.02em;
+        color: var(--ink);
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--sea);
+      }
+
+      .sub {
+        margin-top: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.35;
+        color: var(--slate);
+      }
+
+      .cta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .url {
+        padding: 8px 15px 9px;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 18px;
+        color: var(--sand-light);
+        background: var(--ink);
+        border-radius: 8px;
+        box-shadow: 0 7px 16px rgba(35, 49, 60, 0.24);
+      }
+
+      .badge {
+        padding: 8px 14px 9px;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--sea);
+        background: rgba(162, 197, 211, 0.28);
+        border: 2px solid rgba(69, 117, 140, 0.35);
+        border-radius: 999px;
+      }
+
+      .mark {
+        display: grid;
+        justify-items: center;
+        gap: 12px;
+      }
+
+      .mark .cup {
+        width: 106px;
+        height: auto;
+        filter: drop-shadow(0 7px 16px rgba(35, 49, 60, 0.14));
+      }
+
+      .mark img {
+        width: 92px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <div class="glow"></div>
+
+      <svg class="waves" viewBox="0 0 600 82" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="#a2c5d3"
+          opacity="0.45"
+          d="M0,34 C101,58 203,10 303,22 C404,34 501,70 600,46 L600,82 L0,82 Z"
+        ></path>
+        <path
+          fill="#a2c5d3"
+          d="M0,58 C118,34 217,75 317,64 C417,53 517,34 600,64 L600,82 L0,82 Z"
+        ></path>
+      </svg>
+
+      <div class="frame"></div>
+
+      <main>
+        <div class="copy">
+          <!-- EDIT ME: the three lines below are the whole ad. Keep the
+               headline to two words a line so it stays 54px. -->
+          <p class="eyebrow">Come say hi</p>
+          <h1>Coffee<br /><em>catch-up.</em></h1>
+          <p class="sub">Saturday 23 August · 10am · Ōrewa Beach</p>
+          <div class="cta">
+            <div class="url">thetide.co.nz</div>
+            <div class="badge">All welcome</div>
+          </div>
+        </div>
+
+        <div class="mark">
+          <svg class="cup" viewBox="0 0 120 104" fill="none" aria-hidden="true">
+            <g stroke="#a2c5d3" stroke-width="5" stroke-linecap="round">
+              <path d="M45 34c-7-7 7-11 0-18" />
+              <path d="M62 32c-8-8 8-13 0-21" />
+              <path d="M79 34c-7-7 7-11 0-18" />
+            </g>
+            <path
+              d="M92 52c13 0 17 5 17 11s-7 11-19 11"
+              stroke="#45758c"
+              stroke-width="6"
+              stroke-linecap="round"
+            />
+            <path
+              d="M27 44H93L83 86H37Z"
+              fill="#faf5ea"
+              stroke="#45758c"
+              stroke-width="6"
+              stroke-linejoin="round"
+            />
+            <rect x="32" y="48" width="56" height="13" rx="3" fill="#23313c" opacity="0.9" />
+            <rect x="12" y="88" width="96" height="11" rx="5.5" fill="#45758c" />
+          </svg>
+
+          <img src="../../public/logo.webp" alt="The Tide" />
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
