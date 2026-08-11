@@ -6,6 +6,7 @@ logo and type as `src/pages/index.astro`, laid out for a wide, short slot.
 | File | Size | Source |
 | --- | --- | --- |
 | `thetide-coffee-catchup-450x160.png` | 450 × 160 | `coffee-catchup.html` |
+| `thetide-facebook-1080x400.png` | 1080 × 400 | `facebook.html` |
 
 Rebuild after editing a page:
 
@@ -18,6 +19,24 @@ size. Override the browser with `CHROME=/path/to/chrome`. It needs Pillow
 (`pip install pillow`) for the downsample, same as the billboard script.
 
 ## Editing the copy
+
+### `facebook.html` — "Have you checked out our Facebook page?"
+
+The block marked `EDIT ME` is the whole ad: eyebrow, headline, the line under
+it, and the address in the dark URL tag. **`facebook.com/thetidenz` is a
+placeholder** — put the page's real handle there before this goes anywhere.
+
+Same nowrap rule as below: the headline breaks where the `<br>` is and nothing
+wraps on its own, so keep each line about its current width or it runs into the
+right-hand column. The headline is two lines by design — a third doesn't fit
+under the 400px height.
+
+The "f" tile is the one thing on the banner not in the site palette. It's
+Facebook's blue (`#1877f2`) with the standard glyph, which is what makes the
+banner readable as "Facebook" from a scroll; the rest — sand, sea, waves, the
+logo — is the home page's branding unchanged.
+
+### `coffee-catchup.html` — event strip
 
 The three lines marked `EDIT ME` in `coffee-catchup.html` — eyebrow, headline
 and details — are the whole ad. **The date, time and place currently in there

@@ -39,3 +39,4 @@ PY
 }
 
 render coffee-catchup 450 160
+render facebook 1080 400
