@@ -23,8 +23,9 @@ size. Override the browser with `CHROME=/path/to/chrome`. It needs Pillow
 ### `facebook.html` — "Have you checked out our Facebook page?"
 
 The block marked `EDIT ME` is the whole ad: eyebrow, headline, the line under
-it, and the address in the dark URL tag. **`facebook.com/thetidenz` is a
-placeholder** — put the page's real handle there before this goes anywhere.
+it, and the dark button. The button reads "Click here to follow us" rather than
+naming an address, so **the image has to be hyperlinked to the Facebook page
+wherever it's placed** — on its own it gives a reader nowhere to go.
 
 Same nowrap rule as below: the headline breaks where the `<br>` is and nothing
 wraps on its own, so keep each line about its current width or it runs into the
