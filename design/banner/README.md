@@ -5,7 +5,7 @@ logo and type as `src/pages/index.astro`, laid out for a wide, short slot.
 
 | File | Size | Source |
 | --- | --- | --- |
-| `thetide-coffee-catchup-450x160.png` | 450 × 160 | `coffee-catchup.html` |
+| `thetide-coffee-catchup-1080x150.png` | 1080 × 150 | `coffee-catchup.html` |
 | `thetide-facebook-1080x400.png` | 1080 × 400 | `facebook.html` |
 
 Rebuild after editing a page:
@@ -20,39 +20,48 @@ size. Override the browser with `CHROME=/path/to/chrome`. It needs Pillow
 
 ## Editing the copy
 
-### `facebook.html` — "Have you checked out our Facebook page?"
+### `coffee-catchup.html`, the event strip
+
+The three lines marked `EDIT ME` in `coffee-catchup.html` are the whole ad:
+eyebrow, headline and details. The details line reads "Dates to be confirmed";
+swap in the real date, time and place once they're set.
+
+The headline and details line are set at a fixed size with `white-space:
+nowrap`, so longer copy runs into the CTA rather than wrapping or shrinking.
+The copy takes the width the cup, CTA and logo leave it, about 415px, which
+at the details line's 17px is roughly 48 characters. A full date-time-place
+line fits comfortably. Re-render and look at the PNG after any copy change.
+
+At 7:1 the layout is a single row (cup, copy, CTA, logo) rather than the stack
+the taller billboards use: the copy grows to fill, which pushes the CTA across
+to the logo instead of leaving the right half of the strip empty.
+
+The banner is 150px tall and the logo is portrait, so the logo's width isn't a
+free choice. Much above 88px and it stops fitting between the paddings.
+
+### `facebook.html`, the Facebook page prompt
 
 The block marked `EDIT ME` is the whole ad: eyebrow, headline, the line under
 it, and the dark button. The button reads "Click here to follow us" rather than
 naming an address, so **the image has to be hyperlinked to the Facebook page
-wherever it's placed** — on its own it gives a reader nowhere to go.
+wherever it's placed**. On its own it gives a reader nowhere to go.
 
-Same nowrap rule as below: the headline breaks where the `<br>` is and nothing
-wraps on its own, so keep each line about its current width or it runs into the
-right-hand column. The headline is two lines by design — a third doesn't fit
-under the 400px height.
+Same nowrap rule as the strip: the headline breaks where the `<br>` is and
+nothing wraps on its own, so keep each line about its current width or it runs
+into the right-hand column. Two headline lines is the limit; a third doesn't
+fit under the 400px height.
 
 The "f" tile is the one thing on the banner not in the site palette. It's
 Facebook's blue (`#1877f2`) with the standard glyph, which is what makes the
-banner readable as "Facebook" from a scroll; the rest — sand, sea, waves, the
-logo — is the home page's branding unchanged.
+banner readable as "Facebook" from a scroll. The rest (sand, sea, waves, the
+logo) is the home page's branding unchanged.
 
-### `coffee-catchup.html` — event strip
+At 400px there's room to stack the tile and the logo in a right-hand column,
+which the 150px strip doesn't have. The logo is portrait, so that stack is
+sized off its rendered height: tile plus gap plus logo has to stay inside the
+304px of content box, or the logo's bottom is cropped by the banner edge.
 
-The three lines marked `EDIT ME` in `coffee-catchup.html` — eyebrow, headline
-and details — are the whole ad. **The date, time and place currently in there
-are placeholders**; replace them before the banner goes out.
-
-Keep all three about their current length. The strip is only 160px tall, so
-the headline and details line are set at a fixed size with `white-space:
-nowrap` — longer copy runs into the logo rather than wrapping or shrinking.
-Re-render and look at the PNG after any copy change.
-
-The cup and the logo flank the copy instead of stacking beside it, which is
-what the taller billboard layouts do — at this height there's no room for a
-second element in a column.
-
-Fonts come from `../billboard/` so there's one checked-in copy of each — Baloo
-2 (headline), Archivo Black (URL tag) and Inter (everything else), all SIL Open
+Fonts come from `../billboard/` so there's one checked-in copy of each: Baloo 2
+(headline), Archivo Black (URL tag) and Inter (everything else), all SIL Open
 Font License. The render script passes `--allow-file-access-from-files` so
 Chromium will load them across that directory boundary.
