@@ -8,7 +8,7 @@ const description =
 // supabase/migrations — if a form starts collecting something new, this page
 // is part of that change.
 const CONTACT = 'hello@thetide.co.nz';
-const UPDATED = '8 August 2026';
+const UPDATED = '17 August 2026';
 
 // Each form on the site, the table it writes to, and what lands in it. The
 // `tables` list is the reason this is data and not prose: tests/privacy.spec.js
@@ -61,9 +61,9 @@ const COLLECTION = [
     tables: ['Event'],
     where: '/submit-event',
     fields:
-      "The event details, plus the contact name, email and phone you give for it.",
+      'The event details, plus the contact name, email and phone you give for it — and, if you choose to feature the listing, the photo you attach.',
     detail:
-      'This one is different: the contact details you give are printed with the listing so readers can respond. Only send details you are happy to see published in the newsletter.',
+      'This one is different: the contact details you give are printed with the listing so readers can respond. Only send details you are happy to see published in the newsletter. A featured photo is published the same way, and is stored at a public web address so the newsletter can load it — send one you have the right to share, and leave other people out of it unless they are happy to appear.',
   },
   {
     form: 'Placing a classified',

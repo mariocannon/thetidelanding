@@ -25,6 +25,9 @@ const CATEGORIES = [
 
 // EVENT_WORD_MAX.
 const WORD_MAX = 70;
+
+// FEATURED_EVENT_FEE, formatted the way formatMoney(fee, true) formats it.
+const FEE = '$4.99';
 ---
 
 <!doctype html>
@@ -127,6 +130,47 @@ const WORD_MAX = 70;
           </select>
         </div>
 
+        {/*
+          The one paid extra on this form. Ticking it opens the picker; nothing
+          is charged here, and the copy says so — an invoice follows once the
+          desk has read the listing and picked an issue for it.
+        */}
+        <div class="featured">
+          <label class="check" for="featured">
+            <input id="featured" name="featured" type="checkbox" />
+            <span>
+              <span class="check-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m12 3 2.6 5.3 5.9.9-4.2 4.1 1 5.8-5.3-2.8-5.3 2.8 1-5.8L3.5 9.2l5.9-.9Z"></path>
+                </svg>
+                Feature my event — {FEE}
+              </span>
+              <span class="check-hint">
+                Add a photo and it runs with your listing in the newsletter.
+                We&rsquo;ll invoice you once we&rsquo;ve confirmed the issue —
+                nothing to pay now.
+              </span>
+            </span>
+          </label>
+
+          <div class="photo" id="photo" hidden>
+            <img id="preview" alt="The photo you picked" hidden />
+
+            <div class="field" data-field="image">
+              <label for="image">Your photo <span class="required">*</span></label>
+              <input
+                id="image"
+                name="image"
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+              />
+              <p class="hint" data-hint>
+                PNG, JPG, GIF or WEBP, up to 5MB. A landscape photo looks best.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div class="field" data-field="ticketUrl">
           <label for="ticketUrl">Tickets or more info</label>
           <input
@@ -191,6 +235,10 @@ const WORD_MAX = 70;
           question we'll get in touch using the details you gave us, and we'll
           confirm which issue it appears in.
         </p>
+        <p id="sent-featured" hidden>
+          You asked to feature it, so your photo comes along with the listing.
+          We'll send you an invoice for the {FEE} when we confirm the issue.
+        </p>
         <button type="button" id="send-another">Send another event</button>
       </section>
 
@@ -228,6 +276,23 @@ const WORD_MAX = 70;
       const WORD_MAX = 70;
       const MIN_SECONDS = 3;
 
+      // FEATURED_EVENT_FEE. The policy pins the same number, so a page that
+      // drifted from it would simply be refused.
+      const FEE = 4.99;
+      // The bucket the ad manager keeps creative in; reader photos go in a
+      // prefix of their own that the storage policy pins them to.
+      const BUCKET = 'creative';
+      const PREFIX = 'public-events';
+      const MAX_BYTES = 5 * 1024 * 1024;
+      // lib/upload.ts's list less SVG, which is a document that can carry
+      // script and isn't something to take from a stranger.
+      const IMAGE_TYPES = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+      };
+
       const form = document.getElementById('event-form');
       const sent = document.getElementById('sent');
       const message = document.getElementById('form-message');
@@ -237,6 +302,11 @@ const WORD_MAX = 70;
       const bodyField = document.getElementById('body');
       const titleField = document.getElementById('title');
       const honeypot = document.getElementById('website');
+      const featured = document.getElementById('featured');
+      const imageField = document.getElementById('image');
+      const photo = document.getElementById('photo');
+      const preview = document.getElementById('preview');
+      const sentFeatured = document.getElementById('sent-featured');
 
       // Stamped when the form renders; a submission returned faster than a
       // person could type one is refused.
@@ -349,6 +419,32 @@ const WORD_MAX = 70;
         message.hidden = text === null;
       }
 
+      /** The picked photo, or null — the empty file browsers send doesn't count. */
+      const picked = () => imageField.files?.[0] ?? null;
+
+      /** Object URLs are only valid until revoked; drop the last one each time. */
+      function showPreview() {
+        if (preview.src.startsWith('blob:')) URL.revokeObjectURL(preview.src);
+        const file = picked();
+        if (!file) {
+          preview.removeAttribute('src');
+          preview.hidden = true;
+          return;
+        }
+        preview.src = URL.createObjectURL(file);
+        preview.hidden = false;
+      }
+
+      function toggleFeatured() {
+        photo.hidden = !featured.checked;
+        // Un-ticking drops the photo too, so nothing is uploaded for a listing
+        // that isn't running one.
+        if (!featured.checked) {
+          imageField.value = '';
+          showPreview();
+        }
+      }
+
       /** publicEventSchema, checked in the browser before anything is posted. */
       function validate() {
         const errors = {};
@@ -392,6 +488,17 @@ const WORD_MAX = 70;
           errors.ticketUrl = 'Enter a full URL starting with http:// or https://';
         }
 
+        // The upgrade is a photo — without one there is nothing to feature,
+        // and the bucket refuses anything the picker shouldn't have let in.
+        const image = featured.checked ? picked() : null;
+        if (featured.checked) {
+          if (!image) errors.image = 'Add a photo, or untick featuring it';
+          else if (image.size > MAX_BYTES) errors.image = 'That image must be 5MB or smaller.';
+          else if (!IMAGE_TYPES[image.type]) {
+            errors.image = 'That image must be a PNG, JPG, GIF or WEBP.';
+          }
+        }
+
         const startDate = text('startDate');
         const startTime = text('startTime');
         const endDate = text('endDate');
@@ -423,6 +530,7 @@ const WORD_MAX = 70;
 
         return {
           errors,
+          image,
           values: {
             title,
             body,
@@ -438,18 +546,56 @@ const WORD_MAX = 70;
             status: 'DRAFT',
             source: 'PUBLIC',
             issueId: null,
+            // Asking to be featured is not paying for it: the fee is what we
+            // charge today and the listing waits for an invoice. imageUrl is
+            // filled in once the photo is up.
+            featured: featured.checked,
+            imageUrl: null,
+            featuredFee: featured.checked ? FEE : 0,
+            featuredPaid: 'UNPAID',
           },
         };
+      }
+
+      /**
+       * Puts the photo in the bucket and returns its public URL.
+       *
+       * A generated name keeps the submitter's filename out of the URL and is
+       * the shape the storage policy insists on. Nothing here can overwrite an
+       * existing object: there is no update policy, and the name is new every
+       * time.
+       */
+      async function upload(image) {
+        const name = `${PREFIX}/${crypto.randomUUID()}.${IMAGE_TYPES[image.type]}`;
+
+        // The key travels on `apikey` and nowhere else. A publishable key is
+        // not a JWT, and the gateway refuses one sent as `Authorization:
+        // Bearer` — it synthesises that header itself from this one, the same
+        // way it does for the insert below.
+        const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${name}`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            'Content-Type': image.type,
+          },
+          body: image,
+        });
+
+        if (!response.ok) return null;
+        return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${name}`;
       }
 
       function finish() {
         form.hidden = true;
         sent.hidden = false;
+        sentFeatured.hidden = !featured.checked;
         say(null);
         sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
 
       bodyField.addEventListener('input', updateCounter);
+      featured.addEventListener('change', toggleFeatured);
+      imageField.addEventListener('change', showPreview);
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -462,16 +608,28 @@ const WORD_MAX = 70;
           return say('That was quick — give it another go.');
         }
 
-        const { errors, values } = validate();
+        const { errors, values, image } = validate();
         showErrors(errors);
         if (Object.keys(errors).length > 0) return say('Check the highlighted fields.');
         say(null);
 
         const button = form.querySelector('button[type="submit"]');
         button.disabled = true;
-        button.textContent = 'Sending…';
+        button.textContent = image ? 'Uploading photo…' : 'Sending…';
 
         try {
+          // The photo goes up first: a listing that claims to be featured and
+          // has no image is one the policy would refuse anyway. A stray object
+          // is the worst a failure after this can leave behind — nobody sees a
+          // photo that no listing points at.
+          if (image) {
+            values.imageUrl = await upload(image);
+            if (!values.imageUrl) {
+              return say('Could not upload that photo. Please try again.');
+            }
+            button.textContent = 'Sending…';
+          }
+
           const response = await fetch(`${SUPABASE_URL}/rest/v1/Event`, {
             method: 'POST',
             headers: {
@@ -496,6 +654,10 @@ const WORD_MAX = 70;
         form.reset();
         showErrors({});
         updateCounter();
+        // form.reset() clears the checkbox and the file input, but the picker
+        // and the preview are ours to put back.
+        toggleFeatured();
+        showPreview();
         sent.hidden = true;
         form.hidden = false;
         startedAt = Date.now();
@@ -678,6 +840,90 @@ const WORD_MAX = 70;
 
   [aria-invalid='true'] {
     border-color: #b3372c;
+  }
+
+  /* The paid extra, boxed off from the fields it sits between. */
+  .featured {
+    display: grid;
+    gap: 0.9rem;
+    padding: 0.9rem;
+    background: #faf5ea;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 0.75rem;
+  }
+
+  .check {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.6rem;
+    align-items: start;
+    cursor: pointer;
+  }
+
+  .check input {
+    width: 1.05rem;
+    height: 1.05rem;
+    margin-top: 0.15rem;
+    padding: 0;
+    accent-color: #45758c;
+  }
+
+  .check-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .check-title svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #45758c;
+    stroke-linejoin: round;
+  }
+
+  .check-hint {
+    display: block;
+    margin-top: 0.25rem;
+    /* It sits inside the label, which is 600 — a hint reads as a hint. */
+    font-weight: 400;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #8a8272;
+  }
+
+  .photo {
+    display: grid;
+    gap: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(35, 65, 90, 0.12);
+  }
+
+  .photo[hidden] {
+    display: none;
+  }
+
+  /* Whatever they picked, uncropped — the newsletter prints it the same way. */
+  #preview {
+    width: 100%;
+    max-height: 14rem;
+    object-fit: contain;
+    background: #f0e7d6;
+    border-radius: 0.65rem;
+  }
+
+  #preview[hidden] {
+    display: none;
+  }
+
+  input[type='file'] {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  #sent-featured[hidden] {
+    display: none;
   }
 
   .honeypot {

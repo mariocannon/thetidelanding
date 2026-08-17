@@ -131,9 +131,50 @@ read, edit or delete anything — there is no select, update or delete policy.
 The operator's tooling connects as `postgres` and bypasses RLS, so none of this
 touches it.
 
-Adding a category to `src/pages/submit-event.astro` means adding it to that
-migration first: a test reads the list straight out of the SQL and fails when
-the two drift apart.
+Adding a category to `src/pages/submit-event.astro` means adding it to the
+latest of those migrations first: a test reads the list straight out of the SQL
+and fails when the two drift apart.
+
+### Featuring an event
+
+`20260817000000_featured_event_submissions.sql` adds the $4.99 upgrade, in two
+halves.
+
+The **listing** half restates the insert policy — a policy is replaced whole —
+with the four featured columns on the end. The fee is pinned to `4.99` and the
+payment state to `'UNPAID'`: a submitter can ask to be featured, but cannot
+price it, and cannot arrive claiming to have paid. A featured row must carry an
+`imageUrl`, and only one that matches a photo this project's own storage let
+in, so a listing can't point the newsletter at somebody else's server.
+
+The **photo** half is an insert-only policy on `storage.objects`:
+
+```
+POST /storage/v1/object/creative/public-events/<uuid>.png
+  → policy "Public event photos"  (anon, insert only)
+  → public URL, which the listing then carries
+```
+
+- It goes in `creative`, the bucket the ad manager already uploads booking
+  creative to, under a `public-events/` prefix. Same bucket on purpose: the ad
+  manager's `deleteFile()` parses that bucket out of the URL, so un-featuring
+  or deleting a listing still cleans the photo up.
+- The name has to be a generated UUID with a raster extension, which rules out
+  traversal, collisions with the operator's own creative at the bucket root,
+  and overwriting somebody else's photo. There is no update or delete policy,
+  so a name that exists cannot be replaced.
+- No SVG from this door — it is a document that can carry script, and not
+  something to take from a stranger on a public bucket. The operator's own
+  uploads still may; they come through the ad manager.
+- The bucket itself now carries `lib/upload.ts`'s limits — 5MB, images only —
+  so they hold for an uploader who never went through it.
+
+Two things this does not have, both worth knowing: there is no per-IP rate
+limit on the upload (the ad manager's own endpoint allows 5 submissions per IP
+per 10 minutes; PostgREST and Storage have no equivalent here, so the honeypot
+and the minimum time-on-page are the only brakes), and a photo whose listing
+then fails to insert stays in the bucket unreferenced, since anon has no delete
+policy to clean it up with.
 
 ## Classifieds — reader submissions
 
