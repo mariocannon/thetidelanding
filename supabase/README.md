@@ -179,13 +179,21 @@ listing is never printed away from the heading it belongs under.
 
 ### Changing the price
 
-The policies pin the fee exactly, so the price lives in three places that have
-to agree: `FEATURED_FEE` in the ad manager, the `FEE` constant on each page
-here, and the `with check` on both policies. Repricing means a new migration
-restating both — `20260817140000_featured_fee_1_99.sql` is the worked example —
-and the page deploying alongside it. Rows already sold keep the fee snapshotted
-on them, which is the point of the column: a price change never rewrites an
-invoice.
+Each listing type is priced separately — **$4.99** to feature an event,
+**$1.99** to feature a classified — and the policies pin each fee exactly. So a
+price lives in three places that have to agree: `FEATURED_EVENT_FEE` or
+`FEATURED_CLASSIFIED_FEE` in the ad manager, the `FEE` constant on the matching
+page here, and the `with check` on that policy.
+
+Repricing means a new migration restating the affected policy, and the page
+deploying alongside it: while the two disagree, a featured submission from the
+live site is refused at the door. `20260817140000_featured_fee_1_99.sql` and
+`20260817150000_featured_event_fee_4_99.sql` are the worked examples — the
+second splits the two prices apart again.
+
+Rows already sold keep the fee snapshotted on them, which is the point of the
+column: a price change never rewrites an invoice, and one list can hold listings
+sold at several different prices.
 
 Two things this does not have, both worth knowing: there is no per-IP rate
 limit on the upload (the ad manager's own endpoint allows 5 submissions per IP

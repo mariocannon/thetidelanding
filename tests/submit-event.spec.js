@@ -235,7 +235,7 @@ test('puts the photo in the bucket and files the listing pointing at it', async 
     // policy accepts.
     imageUrl: upload.url.replace('/object/creative/', '/object/public/creative/'),
     // Asking for the upgrade is not paying for it.
-    featuredFee: 1.99,
+    featuredFee: 4.99,
     featuredPaid: 'UNPAID',
     status: 'DRAFT',
     source: 'PUBLIC',
@@ -250,7 +250,7 @@ test('tells a featured submitter an invoice is coming', async ({ page }) => {
   await submitFeatured(page);
 
   await expect(page.locator('#sent-featured')).toBeVisible();
-  await expect(page.locator('#sent-featured')).toContainText('$1.99');
+  await expect(page.locator('#sent-featured')).toContainText('$4.99');
 });
 
 test('files nothing when the photo will not upload', async ({ page }) => {
