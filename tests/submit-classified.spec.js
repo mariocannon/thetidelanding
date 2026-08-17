@@ -215,6 +215,12 @@ test('tells a featured submitter an invoice is coming', async ({ page }) => {
 
   await expect(page.locator('#sent-featured')).toBeVisible();
   await expect(page.locator('#sent-featured')).toContainText('$1.99');
+  // How long the upgrade lasts, said again once the listing is in.
+  await expect(page.locator('#sent-featured')).toContainText('two weeks');
+});
+
+test('says how long a featured listing stays featured', async ({ page }) => {
+  await expect(page.locator('.check-hint')).toContainText('two weeks');
 });
 
 test('files nothing when the photo will not upload', async ({ page }) => {
