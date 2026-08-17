@@ -26,8 +26,8 @@ const CATEGORIES = [
 // EVENT_WORD_MAX.
 const WORD_MAX = 70;
 
-// FEATURED_EVENT_FEE, formatted the way formatMoney(fee, true) formats it.
-const FEE = '$4.99';
+// FEATURED_FEE, formatted the way formatMoney(fee, true) formats it.
+const FEE = '$1.99';
 ---
 
 <!doctype html>
@@ -276,9 +276,9 @@ const FEE = '$4.99';
       const WORD_MAX = 70;
       const MIN_SECONDS = 3;
 
-      // FEATURED_EVENT_FEE. The policy pins the same number, so a page that
+      // FEATURED_FEE. The policy pins the same number, so a page that
       // drifted from it would simply be refused.
-      const FEE = 4.99;
+      const FEE = 1.99;
       // The bucket the ad manager keeps creative in; reader photos go in a
       // prefix of their own that the storage policy pins them to.
       const BUCKET = 'creative';

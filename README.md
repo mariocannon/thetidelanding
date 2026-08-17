@@ -67,7 +67,7 @@ own site. It inserts into the `Event` table in the **Newsletter ad management**
 project (`tlderdsxnonhemkdxqns`) as an unassigned `DRAFT` tagged
 `source = 'PUBLIC'`, which is where the ad manager's What's On list picks it up.
 
-Listing an event is free. **Feature my event — $4.99** is the one paid extra:
+Listing an event is free. **Feature my event — $1.99** is the one paid extra:
 tick it, attach a photo, and the listing runs with the photo above its copy in
 the newsletter. The page takes no payment and says so — the fee lands on the
 row as `UNPAID` for the desk to invoice once the issue is confirmed. The photo
@@ -82,7 +82,7 @@ project as an unassigned `DRAFT` tagged `source = 'PUBLIC'`, which is where the
 ad manager's classifieds queue picks it up — a headline, up to 70 words, a
 category, and an email or phone number readers can reply to.
 
-It carries the same **$4.99 featured upgrade** the events form does: tick
+It carries the same **$1.99 featured upgrade** the events form does: tick
 **Feature my listing**, attach a photo, and the listing runs with it at the top
 of the classifieds block. Nothing is charged on the page — the fee lands
 `UNPAID` for the desk to invoice.

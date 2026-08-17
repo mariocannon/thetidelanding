@@ -137,12 +137,11 @@ and fails when the two drift apart.
 
 ### Featuring an event
 
-`20260817000000_featured_event_submissions.sql` adds the $4.99 upgrade, in two
-halves.
+`20260817000000_featured_event_submissions.sql` adds the upgrade, in two halves.
 
 The **listing** half restates the insert policy — a policy is replaced whole —
-with the four featured columns on the end. The fee is pinned to `4.99` and the
-payment state to `'UNPAID'`: a submitter can ask to be featured, but cannot
+with the four featured columns on the end. The fee is pinned to the current
+price and the payment state to `'UNPAID'`: a submitter can ask to be featured, but cannot
 price it, and cannot arrive claiming to have paid. A featured row must carry an
 `imageUrl`, and only one that matches a photo this project's own storage let
 in, so a listing can't point the newsletter at somebody else's server.
@@ -177,6 +176,16 @@ pinned the same way, photos under `public-classifieds/` instead of
 prefixes. In the newsletter a featured classified leads the block *and brings
 its category heading with it*, since that block is grouped by category — a
 listing is never printed away from the heading it belongs under.
+
+### Changing the price
+
+The policies pin the fee exactly, so the price lives in three places that have
+to agree: `FEATURED_FEE` in the ad manager, the `FEE` constant on each page
+here, and the `with check` on both policies. Repricing means a new migration
+restating both — `20260817140000_featured_fee_1_99.sql` is the worked example —
+and the page deploying alongside it. Rows already sold keep the fee snapshotted
+on them, which is the point of the column: a price change never rewrites an
+invoice.
 
 Two things this does not have, both worth knowing: there is no per-IP rate
 limit on the upload (the ad manager's own endpoint allows 5 submissions per IP
