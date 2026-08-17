@@ -67,8 +67,9 @@ own site. It inserts into the `Event` table in the **Newsletter ad management**
 project (`tlderdsxnonhemkdxqns`) as an unassigned `DRAFT` tagged
 `source = 'PUBLIC'`, which is where the ad manager's What's On list picks it up.
 
-Listing an event is free. **Feature my event — $4.99** is the one paid extra:
-tick it, attach a photo, and the listing runs with the photo above its copy in
+Listing an event is free. **Feature my event and stand out from the crowd —
+$4.99** is the one paid extra: tick it, attach a photo, and the listing runs at
+the top of the events list — one spot only — with the photo above its copy in
 the newsletter. The page takes no payment and says so — the fee lands on the
 row as `UNPAID` for the desk to invoice once the issue is confirmed. The photo
 goes to Supabase Storage first and the listing carries its public URL, so a
