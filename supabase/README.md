@@ -151,12 +151,13 @@ The **photo** half is an insert-only policy on `storage.objects`:
 
 ```
 POST /storage/v1/object/creative/public-events/<uuid>.png
-  → policy "Public event photos"  (anon, insert only)
+  → policy "Public listing photos"  (anon, insert only)
   → public URL, which the listing then carries
 ```
 
 - It goes in `creative`, the bucket the ad manager already uploads booking
-  creative to, under a `public-events/` prefix. Same bucket on purpose: the ad
+  creative to, under a `public-events/` prefix. (`20260817130000` renamed that
+  policy to `"Public listing photos"` when classifieds joined it.) Same bucket on purpose: the ad
   manager's `deleteFile()` parses that bucket out of the URL, so un-featuring
   or deleting a listing still cleans the photo up.
 - The name has to be a generated UUID with a raster extension, which rules out
@@ -168,6 +169,14 @@ POST /storage/v1/object/creative/public-events/<uuid>.png
   uploads still may; they come through the ad manager.
 - The bucket itself now carries `lib/upload.ts`'s limits — 5MB, images only —
   so they hold for an uploader who never went through it.
+
+Classifieds work the same way, added in
+`20260817130000_featured_classified_submissions.sql`: the same four columns
+pinned the same way, photos under `public-classifieds/` instead of
+`public-events/`, and one `"Public listing photos"` policy covering both
+prefixes. In the newsletter a featured classified leads the block *and brings
+its category heading with it*, since that block is grouped by category — a
+listing is never printed away from the heading it belongs under.
 
 Two things this does not have, both worth knowing: there is no per-IP rate
 limit on the upload (the ad manager's own endpoint allows 5 submissions per IP
@@ -197,6 +206,9 @@ POST /rest/v1/Classified   { …, "status": "DRAFT", "source": "PUBLIC", "issueI
 - `newsletter-ads/migrations/20260808090000_classified_public_submissions.sql` —
   the policy, plus database defaults for `id` and `updatedAt` (Prisma fills both
   in application code; PostgREST cannot).
+- `newsletter-ads/migrations/20260817130000_featured_classified_submissions.sql`
+  — the featured upgrade on classifieds, and the storage policy widened to take
+  a photo for either listing type.
 
 Headline and copy lengths, the 70-word cap (`CLASSIFIED_WORD_MAX`), a category
 from `CLASSIFIED_CATEGORIES`, and an email or a phone number to reply to. As

@@ -2,6 +2,17 @@ import { expect, test } from '@playwright/test';
 import { ADS_MIGRATIONS, allowedValues } from './schema.mjs';
 
 const ENDPOINT = '**/rest/v1/Classified*';
+const STORAGE = '**/storage/v1/object/creative/**';
+
+/** A real 1×1 PNG, so the picker and the preview get something to work with. */
+const PNG = {
+  name: 'kayak.png',
+  mimeType: 'image/png',
+  buffer: Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64'
+  ),
+};
 
 /** The form refuses submissions returned faster than a person could type. */
 const MIN_SECONDS = 3;
@@ -29,6 +40,10 @@ async function submit(page, { status = 201, wait = true } = {}) {
     await route.fulfill({ status, body: '' });
   });
   await page.click('button[type="submit"]');
+  // The post outlives the click, so settle on an outcome before reading what
+  // was sent — reading straight after the click is a race, and on a slow run
+  // it reads nothing.
+  await expect(status === 201 ? page.locator('#sent') : message(page)).toBeVisible();
   return body;
 }
 
@@ -60,10 +75,184 @@ test('files the listing as an unassigned draft from the public form', async ({ p
     status: 'DRAFT',
     source: 'PUBLIC',
     issueId: null,
+    // Nobody ticked the upgrade, so there is no photo and nothing to invoice.
+    featured: false,
+    imageUrl: null,
+    featuredFee: 0,
+    featuredPaid: 'UNPAID',
   });
 
   await expect(page.locator('#classified-form')).toBeHidden();
   await expect(page.locator('#sent h2')).toHaveText('Thanks — your listing is in.');
+  await expect(page.locator('#sent-featured')).toBeHidden();
+});
+
+/**
+ * Submits a featured listing, intercepting both hops — the photo going up and
+ * the listing going in — and returns what each one was sent.
+ */
+async function submitFeatured(page, { storage = 200, status = 201 } = {}) {
+  await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
+  let upload = null;
+  let body = null;
+
+  await page.route(STORAGE, async (route) => {
+    upload = {
+      url: route.request().url(),
+      type: route.request().headers()['content-type'],
+      method: route.request().method(),
+      headers: route.request().headers(),
+    };
+    await route.fulfill({ status: storage, contentType: 'application/json', body: '{}' });
+  });
+  await page.route(ENDPOINT, async (route) => {
+    body = JSON.parse(route.request().postData());
+    await route.fulfill({ status, body: '' });
+  });
+
+  await page.click('button[type="submit"]');
+  // Settle on an outcome before reading what was sent, so nothing is read
+  // mid-flight.
+  if (storage === 200 && status === 201) await expect(page.locator('#sent')).toBeVisible();
+  else await expect(message(page)).toBeVisible();
+
+  return { upload, body };
+}
+
+test('keeps the photo picker out of the way until the upgrade is ticked', async ({ page }) => {
+  await expect(page.locator('#featured')).not.toBeChecked();
+  await expect(page.locator('#photo')).toBeHidden();
+
+  await page.check('#featured');
+  await expect(page.locator('#photo')).toBeVisible();
+  await expect(page.locator('#preview')).toBeHidden();
+});
+
+test('asks for a photo once someone ticks the upgrade', async ({ page }) => {
+  let posted = 0;
+  await page.route(ENDPOINT, async (route) => {
+    posted += 1;
+    await route.fulfill({ status: 201, body: '' });
+  });
+
+  await fillRequired(page);
+  await page.check('#featured');
+
+  await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
+  await page.click('button[type="submit"]');
+
+  await expect(error(page, 'image')).toHaveText('Add a photo, or untick featuring it');
+  expect(posted).toBe(0);
+});
+
+test('refuses a file that is not an image we take', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', {
+    name: 'poster.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4'),
+  });
+
+  await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
+  await page.click('button[type="submit"]');
+  await expect(error(page, 'image')).toHaveText('That image must be a PNG, JPG, GIF or WEBP.');
+});
+
+test('refuses a photo over 5MB', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', {
+    name: 'huge.png',
+    mimeType: 'image/png',
+    buffer: Buffer.alloc(5 * 1024 * 1024 + 1),
+  });
+
+  await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
+  await page.click('button[type="submit"]');
+  await expect(error(page, 'image')).toHaveText('That image must be 5MB or smaller.');
+});
+
+test('puts the photo in the bucket and files the listing pointing at it', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', PNG);
+  await expect(page.locator('#preview')).toBeVisible();
+
+  const { upload, body } = await submitFeatured(page);
+
+  // A generated name under the prefix the storage policy pins photos to — the
+  // submitter's filename never reaches the URL.
+  expect(upload.method).toBe('POST');
+  expect(upload.type).toBe('image/png');
+  // A publishable key is not a JWT: the gateway takes it on `apikey` and
+  // refuses it as a Bearer token, so the upload must not send one.
+  expect(upload.headers.apikey).toMatch(/^sb_publishable_/);
+  expect(upload.headers.authorization).toBeUndefined();
+  expect(upload.url).toMatch(
+    /\/storage\/v1\/object\/creative\/public-classifieds\/[0-9a-f-]{36}\.png$/
+  );
+  expect(upload.url).not.toContain('kayak');
+
+  expect(body).toMatchObject({
+    featured: true,
+    // The public URL of what just went up, which is the only shape the insert
+    // policy accepts.
+    imageUrl: upload.url.replace('/object/creative/', '/object/public/creative/'),
+    // Asking for the upgrade is not paying for it.
+    featuredFee: 4.99,
+    featuredPaid: 'UNPAID',
+    status: 'DRAFT',
+    source: 'PUBLIC',
+  });
+});
+
+test('tells a featured submitter an invoice is coming', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', PNG);
+  await submitFeatured(page);
+
+  await expect(page.locator('#sent-featured')).toBeVisible();
+  await expect(page.locator('#sent-featured')).toContainText('$4.99');
+});
+
+test('files nothing when the photo will not upload', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', PNG);
+
+  const { body } = await submitFeatured(page, { storage: 400 });
+
+  // No listing without its photo — a featured row with no image is one the
+  // policy would refuse anyway.
+  expect(body).toBeNull();
+  await expect(message(page)).toHaveText('Could not upload that photo. Please try again.');
+  await expect(page.locator('#classified-form')).toBeVisible();
+  await expect(page.locator('button[type="submit"]')).toBeEnabled();
+});
+
+test('drops the photo when the upgrade is un-ticked', async ({ page }) => {
+  await fillRequired(page);
+  await page.check('#featured');
+  await page.setInputFiles('#image', PNG);
+  await page.uncheck('#featured');
+
+  await expect(page.locator('#photo')).toBeHidden();
+  await expect(page.locator('#preview')).toBeHidden();
+
+  let uploads = 0;
+  await page.route(STORAGE, async (route) => {
+    uploads += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+
+  expect(await submit(page)).toMatchObject({
+    featured: false,
+    imageUrl: null,
+    featuredFee: 0,
+  });
+  expect(uploads).toBe(0);
 });
 
 test('checks the highlighted fields before it posts anything', async ({ page }) => {

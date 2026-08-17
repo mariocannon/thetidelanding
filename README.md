@@ -82,5 +82,10 @@ project as an unassigned `DRAFT` tagged `source = 'PUBLIC'`, which is where the
 ad manager's classifieds queue picks it up — a headline, up to 70 words, a
 category, and an email or phone number readers can reply to.
 
+It carries the same **$4.99 featured upgrade** the events form does: tick
+**Feature my listing**, attach a photo, and the listing runs with it at the top
+of the classifieds block. Nothing is charged on the page — the fee lands
+`UNPAID` for the desk to invoice.
+
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.
