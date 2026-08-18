@@ -8,7 +8,7 @@ const description =
 // supabase/migrations — if a form starts collecting something new, this page
 // is part of that change.
 const CONTACT = 'hello@thetide.co.nz';
-const UPDATED = '17 August 2026';
+const UPDATED = '18 August 2026';
 
 // Each form on the site, the table it writes to, and what lands in it. The
 // `tables` list is the reason this is data and not prose: tests/privacy.spec.js
@@ -48,6 +48,15 @@ const COLLECTION = [
     fields: 'Your name, email address and the suburb you pick.',
     detail:
       'Used to run the giveaway and get in touch if you win. Entering also signs you up to the newsletter, which the form says before you enter.',
+  },
+  {
+    form: 'Pickleball lesson signups',
+    tables: ['pickleball_signups'],
+    where: '/orewapickleball',
+    fields:
+      'Your name, email address, the suburb you pick, your age, whether you have played before, and your phone number if you give one.',
+    detail:
+      "This one goes to somebody else: Orewa Pickleball Club runs the lesson, so we pass them the list of who has booked so they can confirm your spot and take the $75. Your age and playing experience go with it — that is how the coach splits the group. Nothing is charged on the page, and signing up doesn't subscribe you to the newsletter.",
   },
   {
     form: 'Orders',
@@ -147,7 +156,8 @@ const COLLECTION = [
             actually want covered.
           </li>
           <li>
-            Replying to you about a giveaway, an order or an event you sent in.
+            Replying to you about a giveaway, an order, an event you sent in
+            or a lesson you booked.
           </li>
           <li>
             Describing our readership to advertisers as totals and percentages.
@@ -160,7 +170,7 @@ const COLLECTION = [
       <section class="card" aria-labelledby="others">
         <h2 id="others">Who else handles it</h2>
         <p class="section-lede">
-          Two services, both handling your details only to do a job for us.
+          A short list, each handling your details only to do a job for us.
         </p>
         <div class="item">
           <h3>Supabase</h3>
@@ -187,6 +197,17 @@ const COLLECTION = [
             Takes the payment if you buy something. Checkout happens on Stripe's
             own pages under their privacy policy — card numbers are never typed
             into this site and never reach us.
+          </p>
+        </div>
+        <div class="item">
+          <h3>Orewa Pickleball Club</h3>
+          <p class="detail">
+            Runs the intro lesson you can book at <a href="/orewapickleball"
+              >/orewapickleball</a
+            >. We pass the club the name, email, phone, suburb, age and playing
+            experience of everyone who books, so they can confirm your spot and
+            take the $75. They are the only outside organisation we hand a list
+            of readers to, and only for the lesson you booked.
           </p>
         </div>
         <p class="detail">
@@ -232,6 +253,11 @@ const COLLECTION = [
           <li>
             <strong>Event listings</strong> — kept as part of the newsletter's
             archive of what ran.
+          </li>
+          <li>
+            <strong>Pickleball lesson signups</strong> — kept until the lesson
+            has run and the club has its list, and afterwards only as long as we
+            need them for our records.
           </li>
         </ul>
       </section>

@@ -1,0 +1,755 @@
+---
+const title = 'Learn to play pickleball — Orewa Pickleball Club';
+const description =
+  'A beginner-friendly intro group lesson with Orewa Pickleball Club. Saturday 3 October, 10:00 AM at Orewa Community Courts. $75 per person, equipment provided.';
+
+// The lesson, exactly as the club advertises it. One place to change when the
+// next date is set.
+const LESSON = {
+  date: 'Saturday, 3 October 2026',
+  time: '10:00 AM – 11:30 AM',
+  place: 'Orewa Community Courts',
+  cost: '$75 per person',
+  costNote: 'Equipment provided',
+};
+
+// The suburb list /local-giveaway offers, reordered so Orewa leads — the lesson
+// is there and most of the room will be too. Every option here has to match the
+// CHECK on public.pickleball_signups; tests/orewapickleball.spec.js reads the
+// migration and fails if one drifts.
+const LOCATIONS = [
+  'Orewa',
+  'Hatfields Beach',
+  'Millwater',
+  'Silverdale',
+  'Red Beach',
+  'Whangaparaoa',
+  'Stanmore Bay',
+  'Manly',
+  'Tindalls Bay',
+  'Matakatia',
+  'Arkles Bay',
+  'Army Bay',
+  'Gulf Harbour',
+  'Other',
+];
+
+// The one question that decides which drill someone starts on. Also CHECKed.
+const EXPERIENCE = [
+  'Never played',
+  'Played once or twice',
+  'I play socially',
+  'I play regularly',
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#1b4cc4" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%93%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    {/* Court lines and a couple of balls, drawn rather than photographed —
+        the page loads nothing off-host, same as every other page here. */}
+    <svg class="backdrop" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g stroke="#ffffff" stroke-opacity="0.16" stroke-width="3" fill="none">
+        <path d="M-40 700 L1240 700" />
+        <path d="M-40 560 L1240 560" />
+        <path d="M120 800 L330 480" />
+        <path d="M1080 800 L870 480" />
+        <path d="M330 480 L870 480" />
+      </g>
+      <g fill="#c7e735" fill-opacity="0.18">
+        <circle cx="1080" cy="140" r="86" />
+        <circle cx="90" cy="330" r="54" />
+        <circle cx="980" cy="640" r="34" />
+      </g>
+    </svg>
+
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+
+      <section id="signup-step">
+        <p class="eyebrow">Orewa Pickleball Club</p>
+        <h1>Learn to play <span class="shout">pickleball!</span></h1>
+        <p class="tagline">Intro group lesson in Orewa, NZ</p>
+
+        <ul class="badges">
+          <li class="badge badge-fun">Fun</li>
+          <li class="badge badge-social">Social</li>
+          <li class="badge badge-beginner">Beginner friendly</li>
+        </ul>
+
+        <dl class="details">
+          <div class="detail">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="16" rx="3" />
+              <path d="M3 10h18M8 3v4M16 3v4" />
+            </svg>
+            <div>
+              <dt>Date</dt>
+              <dd>{LESSON.date}</dd>
+            </div>
+          </div>
+          <div class="detail">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5.5l3.5 2" />
+            </svg>
+            <div>
+              <dt>Time</dt>
+              <dd>{LESSON.time}</dd>
+            </div>
+          </div>
+          <div class="detail">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
+              <circle cx="12" cy="10" r="2.6" />
+            </svg>
+            <div>
+              <dt>Location</dt>
+              <dd>{LESSON.place}</dd>
+            </div>
+          </div>
+          <div class="detail">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 6.5v11M14.8 9.3a3 3 0 0 0-2.8-1.6c-1.7 0-2.8.9-2.8 2.1 0 3 5.6 1.6 5.6 4.6 0 1.3-1.2 2.2-2.8 2.2a3 3 0 0 1-2.9-1.7" />
+            </svg>
+            <div>
+              <dt>Cost</dt>
+              <dd>{LESSON.cost} <span class="dd-note">({LESSON.costNote})</span></dd>
+            </div>
+          </div>
+        </dl>
+
+        <form id="signup-form" method="post" action="#" novalidate>
+          <h2>Book your spot</h2>
+
+          <label for="name">Your name</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            maxlength="200"
+            autocomplete="name"
+            placeholder="Jo Kirkpatrick"
+            required
+          />
+
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            maxlength="200"
+            placeholder="you@example.com"
+            required
+          />
+
+          <label for="phone">Phone <span class="optional">Optional</span></label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            maxlength="40"
+            autocomplete="tel"
+            placeholder="021 123 4567"
+          />
+
+          <label for="location">Where you live</label>
+          <select id="location" name="location" required>
+            <option value="" disabled selected>Choose your suburb…</option>
+            {LOCATIONS.map((suburb) => <option value={suburb}>{suburb}</option>)}
+          </select>
+
+          <label for="age">Your age</label>
+          <input
+            id="age"
+            name="age"
+            type="number"
+            inputmode="numeric"
+            min="5"
+            max="100"
+            step="1"
+            placeholder="42"
+            required
+          />
+
+          <fieldset>
+            <legend>Have you played before?</legend>
+            <div class="pills">
+              {
+                EXPERIENCE.map((option) => (
+                  <label class="pill">
+                    <input type="radio" name="played_before" value={option} required />
+                    <span>{option}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+
+          <button type="submit">Book now!</button>
+          <p class="limited">Space is limited!</p>
+        </form>
+
+        <p class="note" id="form-note" role="status" aria-live="polite">
+          The $75 is paid to the club — nothing is charged on this page. We'll
+          email you to confirm your spot.
+        </p>
+      </section>
+
+      <section id="done-step" hidden>
+        <p class="eyebrow">You're booked in</p>
+        <h1>See you on court!</h1>
+        <p class="tagline">{LESSON.date}, {LESSON.time} at {LESSON.place}</p>
+        <p class="note">
+          Orewa Pickleball Club will email you to confirm your spot and sort the
+          $75. Wear flat shoes — paddles and balls are provided.
+        </p>
+      </section>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <script is:inline>
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const PAYMENT_NOTE =
+        "The $75 is paid to the club — nothing is charged on this page. We'll email you to confirm your spot.";
+
+      const form = document.getElementById('signup-form');
+      const note = document.getElementById('form-note');
+      const signupStep = document.getElementById('signup-step');
+      const doneStep = document.getElementById('done-step');
+
+      function fail(message, field) {
+        note.textContent = message;
+        note.className = 'note error';
+        field?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        field?.focus({ preventScroll: true });
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const data = new FormData(form);
+        const text = (name) => String(data.get(name) ?? '').trim();
+
+        const name = text('name');
+        const email = text('email').toLowerCase();
+        const phone = text('phone');
+        const location = text('location');
+        const age = Number(text('age'));
+        const playedBefore = text('played_before');
+
+        // Checked here rather than left to the browser: the experience answer is
+        // a group of visually-hidden radios, so a native bubble would point at
+        // nothing a reader can see.
+        if (!name) return fail('Please tell us your name.', form.elements.name);
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+          return fail('Please give a valid email so we can confirm your spot.', form.elements.email);
+        }
+        if (!location) return fail('Please pick the suburb you live in.', form.elements.location);
+        if (!Number.isInteger(age) || age < 5 || age > 100) {
+          return fail('Please give an age between 5 and 100.', form.elements.age);
+        }
+        if (!playedBefore) {
+          return fail(
+            'Let us know whether you have played before.',
+            form.querySelector('input[name="played_before"]')
+          );
+        }
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Booking…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/pickleball_signups`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({
+              name,
+              email,
+              phone: phone || null,
+              location,
+              age,
+              played_before: playedBefore,
+            }),
+          });
+          if (!response.ok) throw new Error(`Signup failed with status ${response.status}`);
+          signupStep.hidden = true;
+          doneStep.hidden = false;
+          window.scrollTo({ top: 0 });
+        } catch {
+          note.textContent = 'Something went wrong — please try again in a moment.';
+          note.className = 'note error';
+          button.disabled = false;
+          button.textContent = 'Book now!';
+        }
+      });
+
+      form.addEventListener('input', () => {
+        if (note.classList.contains('error')) {
+          note.textContent = PAYMENT_NOTE;
+          note.className = 'note';
+        }
+      });
+      form.addEventListener('change', () => {
+        if (note.classList.contains('error')) {
+          note.textContent = PAYMENT_NOTE;
+          note.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  /* The club's flyer palette, not The Tide's. This page is the one place on the
+     site that wears somebody else's colours. */
+  :root {
+    color-scheme: light;
+    --blue: #1b4cc4;
+    --blue-deep: #0f3496;
+    --green: #3e8e1b;
+    --lime: #c7e735;
+    --yellow: #ffd800;
+    --orange: #f26a21;
+    --orange-deep: #e04e12;
+    --red: #e8412a;
+    --sky: #1f7fd4;
+    --navy: #10265e;
+    --card: #ffffff;
+    --muted: #5b6a86;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  /* The gradient goes on html, not body: html's background is propagated to the
+     canvas, so it fills the whole page however tall it is, and leaves the
+     court-lines layer below (z-index: -1) somewhere to show through. Painting
+     it on body as well would bury that layer. */
+  html {
+    min-height: 100%;
+    background: linear-gradient(125deg, #0f3496 0%, #1b4cc4 34%, #1a8a94 64%, #3e8e1b 100%)
+      no-repeat;
+    background-size: cover;
+  }
+
+  body {
+    min-height: 100%;
+    color: var(--navy);
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
+    overflow-x: hidden;
+  }
+
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  main {
+    width: min(42rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 5rem;
+  }
+
+  /* The Tide's own mark, on a chip so it still reads against the blue. */
+  .home {
+    display: inline-block;
+    padding: 0.5rem 0.7rem;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 0.9rem;
+  }
+
+  .home img {
+    display: block;
+    width: min(4.5rem, 18vw);
+    height: auto;
+  }
+
+  section[hidden] {
+    display: none;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lime);
+  }
+
+  /* The flyer's headline: heavy, italic, shouted. System fonts only — the page
+     loads nothing off-host. */
+  h1 {
+    margin-top: 0.6rem;
+    font-size: clamp(2.1rem, 6.5vw, 3.4rem);
+    font-weight: 900;
+    font-style: italic;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 3px 0 rgba(6, 26, 74, 0.35);
+    text-wrap: balance;
+  }
+
+  h1 .shout {
+    display: block;
+    font-size: 1.28em;
+    color: var(--yellow);
+  }
+
+  .tagline {
+    margin-top: 0.7rem;
+    font-size: clamp(1rem, 2.6vw, 1.25rem);
+    font-weight: 700;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 1.4rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .badge {
+    padding: 0.45rem 1.1rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+  }
+
+  .badge-fun {
+    background: var(--sky);
+  }
+
+  .badge-social {
+    background: var(--red);
+  }
+
+  .badge-beginner {
+    background: var(--green);
+  }
+
+  .details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    margin: 1.6rem 0 0;
+    padding: 1.35rem;
+    text-align: left;
+    background: var(--card);
+    border-radius: 1.1rem;
+    box-shadow: 0 14px 34px rgba(6, 26, 74, 0.22);
+  }
+
+  .detail {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+  }
+
+  .icon {
+    flex: none;
+    width: 1.6rem;
+    height: 1.6rem;
+    stroke: var(--orange);
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+  }
+
+  dt {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--orange);
+  }
+
+  dd {
+    margin: 0.15rem 0 0;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .dd-note {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+
+  form {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 1.25rem;
+    padding: 1.5rem 1.35rem 1.6rem;
+    text-align: left;
+    background: var(--card);
+    border-radius: 1.1rem;
+    box-shadow: 0 14px 34px rgba(6, 26, 74, 0.22);
+  }
+
+  h2 {
+    margin-bottom: 0.6rem;
+    font-size: 1.4rem;
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    color: var(--blue);
+  }
+
+  label,
+  legend {
+    margin-top: 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--navy);
+  }
+
+  .optional {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  fieldset {
+    padding: 0;
+    border: 0;
+  }
+
+  /* Floating the legend keeps it lined up with the labels above it rather than
+     straddling the (removed) fieldset border. */
+  legend {
+    float: left;
+    width: 100%;
+    padding: 0;
+  }
+
+  legend + * {
+    clear: both;
+  }
+
+  input[type='text'],
+  input[type='email'],
+  input[type='tel'],
+  input[type='number'],
+  select {
+    width: 100%;
+    margin-top: 0.3rem;
+    padding: 0.8rem 1rem;
+    font: inherit;
+    color: inherit;
+    background: #f7f9fd;
+    border: 2px solid #d5deee;
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  select:invalid {
+    color: #8d99b1;
+  }
+
+  input::placeholder {
+    color: #8d99b1;
+  }
+
+  input:focus-visible,
+  select:focus-visible {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(27, 76, 196, 0.25);
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.55rem;
+  }
+
+  .pill {
+    margin-top: 0;
+    cursor: pointer;
+  }
+
+  .pill input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .pill span {
+    display: block;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: none;
+    background: #f7f9fd;
+    border: 2px solid #d5deee;
+    border-radius: 999px;
+    transition:
+      background 0.12s,
+      border-color 0.12s,
+      color 0.12s;
+  }
+
+  .pill input:checked + span {
+    color: #fff;
+    background: var(--blue);
+    border-color: var(--blue-deep);
+  }
+
+  .pill input:focus-visible + span {
+    box-shadow: 0 0 0 3px rgba(27, 76, 196, 0.25);
+  }
+
+  button {
+    margin-top: 1.3rem;
+    padding: 1rem 1.6rem;
+    font: inherit;
+    font-size: 1.25rem;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(180deg, var(--orange) 0%, var(--orange-deep) 100%);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(224, 78, 18, 0.45);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .limited {
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-style: italic;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .note {
+    margin: 1.1rem auto 0;
+    max-width: 30rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .note.error {
+    font-weight: 700;
+    color: var(--yellow);
+  }
+
+  .privacy-link {
+    margin-top: 1.75rem;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: rgba(255, 255, 255, 0.85);
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: var(--yellow);
+  }
+
+  @media (max-width: 32rem) {
+    .details {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    .pill span {
+      transition: none;
+    }
+  }
+</style>

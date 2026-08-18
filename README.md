@@ -89,3 +89,17 @@ the fee lands `UNPAID` for the desk to invoice.
 
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.
+
+## Pickleball lessons
+
+`/orewapickleball` is a landing page for somebody else's event: Orewa Pickleball
+Club's intro group lesson. It wears the club's colours rather than The Tide's --
+it is the one page on the site that does -- and takes a booking into the
+`pickleball_signups` table in the **the-tide** project: name, email, an optional
+phone, suburb, age, and whether they have played before. The last two are what
+the coach splits the group by.
+
+No money moves on the page. The $75 is settled with the club, which is what the
+page says and what `/privacy` repeats. The club is the only outside organisation
+the site hands a list of readers to, so it is named on `/privacy` alongside
+Supabase, Beehiiv and Stripe.
