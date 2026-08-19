@@ -4,14 +4,25 @@ A personal email signature in the home page's branding: same palette, wave
 motif, logo and Baloo 2 headline type as `src/pages/index.astro`, laid out
 around a round photo.
 
-Two things come out of it, from one source of copy:
+Three things come out of it, from one source of copy:
 
 | File | What it's for |
 | --- | --- |
-| `signature-email.html` | **The signature.** Paste it into Gmail, Outlook or Apple Mail. Real `mailto:` and site links. |
+| `signature-email-inline.html` | **Start here.** The signature with its images baked in, so it works before the site is deployed. |
+| `signature-email.html` | The same signature, loading its images from `thetide.co.nz`. Switch to this once the site is live. |
 | `public/signature/signature.png` | The same card as one flat 1040×400 image, for anywhere that only takes a picture. |
 
-Plus the pieces the pasteable version loads: `portrait.png`, `name.png` and
+Both HTML versions are the real thing — tables, inline styles, working
+`mailto:` and site links. They differ only in where the three small PNGs come
+from:
+
+- **inline** carries them as `data:` URIs. Nothing to deploy, but it adds about
+  150KB to every email, and Outlook on Windows refuses to load a `data:` image,
+  so it shows the alt text there instead.
+- **hosted** points at `https://thetide.co.nz/signature/…`. Tiny, and it renders
+  everywhere including Outlook — but only once `public/signature/` is live.
+
+Plus the pieces those load: `portrait.png`, `name.png` and
 `logo.png`, all under `public/signature/`.
 
 Rebuild everything after any edit:
@@ -52,11 +63,11 @@ silhouette, `portrait-source.jpg` hasn't been replaced.
 
 The four lines in `signature.html` marked `EDIT ME` are the whole signature:
 name, role, publication, email and site. Nothing else needs touching —
-`build-email.py` reads them back out of that page and rebuilds
-`signature-email.html`, so there's one place to change a job title.
+`build-email.py` reads them back out of that page and rebuilds both
+pasteable versions, so there's one place to change a job title.
 
-**Don't hand-edit `signature-email.html`.** It's generated, and the next
-`render.sh` overwrites it.
+**Don't hand-edit either `signature-email*.html`.** They're generated, and the
+next `render.sh` overwrites them.
 
 Like the banners, the lines are set at a fixed size with `white-space: nowrap`,
 so a name much longer than the current one runs into the logo rather than
@@ -66,13 +77,13 @@ look at the PNG after any copy change.
 
 ## Installing it
 
-The signature loads its images from `https://thetide.co.nz/signature/…`, so
-**the site has to be deployed with the new `public/signature/` files before the
-signature will look right in anyone's inbox.** Push first, then install.
+Use `signature-email-inline.html` today. Once the site has been deployed with
+the new `public/signature/` files, re-install from `signature-email.html`
+instead — it's smaller and it survives Outlook on Windows.
 
-Then, in any client:
+In any client:
 
-1. Open `signature-email.html` in a browser.
+1. Open the file in a browser.
 2. Select the whole card — click just above its top-left corner and drag past
    the bottom-right — and copy.
 3. Paste into the signature box: Gmail → Settings → General → Signature;
@@ -84,7 +95,7 @@ the layout — use a plain paste.
 
 ### Why the markup looks like that
 
-`signature-email.html` is tables and inline styles, which is not how the rest of
+Both pasteable files are tables and inline styles, which is not how the rest of
 this repo is written. Mail clients are not browsers:
 
 - **Tables, not flexbox or grid.** Outlook on Windows renders through Word,
