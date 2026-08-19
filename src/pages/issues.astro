@@ -1,0 +1,441 @@
+---
+// The Tide — the back catalogue. Every issue lives on Beehiiv; this page is the
+// list that points at them, built from `src/data/issues.js` at build time. Same
+// rule as every other page here: nothing is fetched from anywhere else on load.
+import { issues } from '../data/issues.js';
+
+const title = 'The Tide — past issues';
+const description =
+  "Read past issues of The Tide, the weekly newsletter bringing Coasties the week's local stories, news and events.";
+
+// Newest first, whatever order the data file happens to be in.
+const ordered = [...issues].sort((a, b) => b.date.localeCompare(a.date));
+
+// Local midnight, not UTC: `new Date('2026-08-14')` parses as UTC, which formats
+// as the 13th on a build machine west of Greenwich.
+const formatter = new Intl.DateTimeFormat('en-NZ', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const entries = ordered.map((issue) => ({
+  ...issue,
+  label: formatter.format(new Date(`${issue.date}T00:00:00`)),
+}));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Past issues</p>
+      <h1>Every issue of The Tide</h1>
+      {
+        entries.length > 0 ? (
+          <p class="lede">
+            Have a read before you sign up, or catch up on one you missed. Each
+            issue opens in a new tab.
+          </p>
+        ) : (
+          <p class="lede empty">
+            The archive fills up here as issues go out — nothing to read just
+            yet. Sign up below and the next one lands in your inbox.
+          </p>
+        )
+      }
+
+      {
+        entries.length > 0 && (
+          <ul class="issues">
+            {entries.map((issue) => (
+              <li class="issue">
+                <p class="issue-date">
+                  <time datetime={issue.date}>{issue.label}</time>
+                </p>
+                <h2 class="issue-title">
+                  <a href={issue.url} target="_blank" rel="noopener">
+                    {issue.title}
+                  </a>
+                </h2>
+                <p class="issue-blurb">{issue.blurb}</p>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+
+      <section id="subscribe">
+        <p class="subscribe-pitch">
+          Want the week's local stories, news and events? Join The Tide.
+        </p>
+        <form id="subscribe-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="note" id="subscribe-note" role="status" aria-live="polite">
+          Free forever. Unsubscribe any time.
+        </p>
+      </section>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      // Same insert as the home page's form: the `subscribers` table, with the
+      // publishable key. Row-level security only allows inserts.
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      const subscribeEmail = subscribeForm.querySelector('#email');
+      const subscribeNote = document.getElementById('subscribe-note');
+
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!subscribeEmail.checkValidity()) {
+          subscribeNote.textContent = 'Please enter a valid email address.';
+          subscribeNote.className = 'note error';
+          subscribeEmail.focus();
+          return;
+        }
+
+        const subscribeButton = subscribeForm.querySelector('button');
+        subscribeButton.disabled = true;
+        subscribeButton.textContent = 'Subscribing…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ email: subscribeEmail.value.trim().toLowerCase() }),
+          });
+
+          // 409 = duplicate email: already subscribed, treat as success.
+          if (response.ok || response.status === 409) {
+            subscribeForm.hidden = true;
+            subscribeNote.textContent =
+              "You're in! Check your inbox for your welcome email, then keep an eye out for your weekly issue of The Tide.";
+            subscribeNote.className = 'note success';
+            return;
+          }
+          throw new Error(`Signup failed with status ${response.status}`);
+        } catch {
+          subscribeNote.textContent = 'Something went wrong — please try again in a moment.';
+          subscribeNote.className = 'note error';
+          subscribeButton.disabled = false;
+          subscribeButton.textContent = 'Subscribe';
+        }
+      });
+
+      subscribeEmail.addEventListener('input', () => {
+        if (subscribeNote.classList.contains('error')) {
+          subscribeNote.textContent = 'Free forever. Unsubscribe any time.';
+          subscribeNote.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  /* The archive grows, so the page is a normal scrolling document rather than
+     the viewport-centred grid the one-screen pages use. */
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .issues {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* One card an issue, in the same white-on-sand card the forms use. */
+  .issue {
+    padding: 1.35rem 1.35rem 1.5rem;
+    text-align: left;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  .issue-date {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a8272;
+  }
+
+  .issue-title {
+    margin-top: 0.4rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .issue-title a {
+    color: #23313c;
+    text-decoration-color: rgba(69, 117, 140, 0.45);
+    text-underline-offset: 0.15em;
+  }
+
+  .issue-title a:hover,
+  .issue-title a:focus-visible {
+    color: #45758c;
+  }
+
+  .issue-blurb {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  #subscribe {
+    margin-top: 3rem;
+  }
+
+  .subscribe-pitch {
+    margin-inline: auto;
+    max-width: 30rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  form {
+    display: flex;
+    gap: 0.6rem;
+    margin: 1.25rem auto 0;
+    max-width: 28rem;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    margin-inline: auto;
+    max-width: 30rem;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #1e7a4d;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .privacy-link {
+    margin-top: 1.75rem;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: #8a8272;
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: #45758c;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (max-width: 30rem) {
+    form {
+      flex-direction: column;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style>

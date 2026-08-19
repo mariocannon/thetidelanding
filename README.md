@@ -59,6 +59,23 @@ insert-only row-level security. The browser never talks to Beehiiv directly.
 A database trigger on `subscribers` then forwards each new row to Beehiiv
 through the `beehiiv-sync` edge function.
 
+## Past issues
+
+`/issues` is the back catalogue: every issue of The Tide, newest first, each one
+linking out to its copy on Beehiiv. Nothing is re-hosted and nothing is fetched
+at build or on load — the page is the same self-contained HTML document the rest
+of the site is.
+
+The list is [`src/data/issues.js`](src/data/issues.js), kept by hand. Adding an
+issue is one entry — date, title, a one-line blurb, and its Beehiiv URL — and a
+commit. No API key, no build secret, and Beehiiv being slow can never fail a
+deploy.
+
+While the list is empty the home page doesn't link to `/issues` at all, so a
+reader can't land on an empty archive. The page carries the same signup form the
+rest of the site does: somebody who has just read three issues is the best
+prospect there is.
+
 ## What's on
 
 `/submit-event` is the ad manager's `/submit/event` form rebuilt here — same

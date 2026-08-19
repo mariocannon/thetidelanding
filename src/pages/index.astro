@@ -1,4 +1,6 @@
 ---
+import { issues } from '../data/issues.js';
+
 // The Tide — newsletter signup landing page.
 // Self-contained on purpose: no web fonts, no external CSS/JS, no images,
 // so the page ships as a single small HTML document.
@@ -51,6 +53,14 @@ const description =
       <p class="note" id="form-note" role="status" aria-live="polite">
         Free forever. Unsubscribe any time.
       </p>
+
+      {
+        issues.length > 0 && (
+          <p class="archive-link">
+            <a href="/issues">Read a past issue first</a>
+          </p>
+        )
+      }
 
       <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
       <p class="event-link">
@@ -310,6 +320,20 @@ const description =
     button {
       transition: none;
     }
+  }
+
+  /* Sits between the form and the fine print, and reads a size up from it:
+     a reason to trust the signup rather than a footer link. Rendered only
+     when there are issues to read — see src/data/issues.js. */
+  .archive-link {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .archive-link a {
+    font-weight: 600;
+    color: #45758c;
+    text-underline-offset: 0.15em;
   }
 
   .privacy-link {
