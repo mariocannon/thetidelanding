@@ -26,6 +26,14 @@ const WORD_MAX = 70;
 
 // FEATURED_CLASSIFIED_FEE, formatted the way formatMoney(fee, true) formats it.
 const FEE = '$1.99';
+
+// The Stripe Payment Link the featured fee is paid through — the same link the
+// ad manager hands out, so a payment arrives in one place however it was asked
+// for. A link rather than a Stripe integration: no API key, no webhook, and
+// nothing here ever learns that it was paid, which is why the operator still
+// marks the fee off by hand. The amount lives at Stripe's end, so FEE above and
+// this link have to be changed together.
+const PAY_URL = 'https://buy.stripe.com/6oU14pdDt8nF2uoaX64gg04';
 ---
 
 <!doctype html>
@@ -98,8 +106,8 @@ const FEE = '$1.99';
 
         {/*
           The one paid extra on this form. Ticking it opens the picker; nothing
-          is charged here, and the copy says so — an invoice follows once the
-          desk has read the listing and picked an issue for it.
+          is charged here — the fee is paid on the way out, through the payment
+          link the thank-you panel hands over.
         */}
         <div class="featured">
           <label class="check" for="featured">
@@ -113,8 +121,8 @@ const FEE = '$1.99';
               </span>
               <span class="check-hint">
                 Add a photo and your listing runs with it, at the top of the
-                classifieds. We&rsquo;ll invoice you once we&rsquo;ve confirmed
-                the issue — nothing to pay now.
+                classifieds. You&rsquo;ll pay the fee as soon as you&rsquo;ve
+                sent this.
               </span>
             </span>
           </label>
@@ -190,8 +198,20 @@ const FEE = '$1.99';
         </p>
         <p id="sent-featured" hidden>
           You asked to feature it, so your photo comes along with the listing.
-          We'll send you an invoice for the {FEE} when we confirm the issue.
+          Pay the {FEE} below and it's sorted.
         </p>
+        {/*
+          Opens in a new tab, so the listing they just sent is still behind them
+          if they change their mind. The href is filled in once the row is
+          written, so the payment carries the listing's id with it.
+        */}
+        <a id="pay" class="pay" href={PAY_URL} target="_blank" rel="noopener noreferrer" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+            <path d="M2 10h20"></path>
+          </svg>
+          Pay here
+        </a>
         <button type="button" id="send-another">Send another listing</button>
       </section>
 
@@ -231,6 +251,9 @@ const FEE = '$1.99';
       // the policy pins this number, so a page that drifted from it would
       // simply be refused.
       const FEE = 1.99;
+      // Same link as the frontmatter's PAY_URL; the script gets its own copy of
+      // every constant on this page.
+      const PAY_URL = 'https://buy.stripe.com/6oU14pdDt8nF2uoaX64gg04';
       // The bucket the ad manager keeps creative in; reader photos go in a
       // prefix of their own that the storage policy pins them to.
       const BUCKET = 'creative';
@@ -257,10 +280,15 @@ const FEE = '$1.99';
       const photo = document.getElementById('photo');
       const preview = document.getElementById('preview');
       const sentFeatured = document.getElementById('sent-featured');
+      const pay = document.getElementById('pay');
 
       // Stamped when the form renders; a submission returned faster than a
       // person could type one is refused.
       let startedAt = Date.now();
+
+      // Where the fee gets paid. Tagged with the row once one has been written;
+      // the bare link until then, so the panel never offers a link to nowhere.
+      let payHref = PAY_URL;
 
       /**
        * Whitespace-separated tokens that contain at least one letter or digit.
@@ -422,9 +450,15 @@ const FEE = '$1.99';
             status: 'DRAFT',
             source: 'PUBLIC',
             issueId: null,
+            // PostgREST has no application layer to generate a key, so the
+            // column carries a database default. We send one anyway: knowing
+            // the id before the insert is what lets the payment link name the
+            // listing it is paying for, and the row is never read back — the
+            // policy is insert-only, so `return=minimal` is all we can ask for.
+            id: crypto.randomUUID(),
             // Asking to be featured is not paying for it: the fee is what we
-            // charge today and the listing waits for an invoice. imageUrl is
-            // filled in once the photo is up.
+            // charge today, and the fee is collected on the way out rather than
+            // invoiced. imageUrl is filled in once the photo is up.
             featured: featured.checked,
             imageUrl: null,
             featuredFee: featured.checked ? FEE : 0,
@@ -465,6 +499,8 @@ const FEE = '$1.99';
         form.hidden = true;
         sent.hidden = false;
         sentFeatured.hidden = !featured.checked;
+        pay.href = payHref;
+        pay.hidden = !featured.checked;
         say(null);
         sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
@@ -516,7 +552,12 @@ const FEE = '$1.99';
             body: JSON.stringify(values),
           });
 
-          if (response.ok) return finish();
+          if (response.ok) {
+            // Stripe records this against the payment, so one in the dashboard
+            // can be matched back to the listing it paid for.
+            payHref = `${PAY_URL}?client_reference_id=${values.id}`;
+            return finish();
+          }
           say('Something went wrong saving that. Please try again.');
         } catch {
           say('Could not reach us just now. Please check your connection and retry.');
@@ -536,6 +577,8 @@ const FEE = '$1.99';
         showPreview();
         sent.hidden = true;
         form.hidden = false;
+        pay.hidden = true;
+        payHref = PAY_URL;
         startedAt = Date.now();
         headlineField.focus();
       });
@@ -884,6 +927,40 @@ const FEE = '$1.99';
     justify-self: center;
     background: transparent;
     border: 1px solid rgba(35, 65, 90, 0.25);
+  }
+
+  /* The brand button, as an anchor: Sea Glass fill, Deep Harbor label. */
+  .pay {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-self: center;
+    padding: 0.8rem 1.6rem;
+    font-weight: 700;
+    color: #23313c;
+    text-decoration: none;
+    background: #a2c5d3;
+    border-radius: 0.65rem;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+
+  /* `display` above would otherwise win over the hidden attribute. */
+  .pay[hidden] {
+    display: none;
+  }
+
+  .pay:hover,
+  .pay:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  .pay svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: inherit;
   }
 
   .footnote {

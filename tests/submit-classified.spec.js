@@ -66,6 +66,10 @@ test('files the listing as an unassigned draft from the public form', async ({ p
   await page.fill('#contactPhone', '021 555 0134');
 
   expect(await submit(page)).toEqual({
+    // Generated in the page rather than left to the column default: the payment
+    // link has to name the listing it is paying for, and an insert-only policy
+    // means the row can never be read back to find out what it was called.
+    id: expect.stringMatching(/^[0-9a-f-]{36}$/),
     headline: 'Tidy 4.2m alloy runabout, Ōrewa',
     body: LISTING,
     category: 'SERVICES',
@@ -207,14 +211,36 @@ test('puts the photo in the bucket and files the listing pointing at it', async 
   });
 });
 
-test('tells a featured submitter an invoice is coming', async ({ page }) => {
+test('hands a featured submitter the payment link, tagged with their listing', async ({
+  page,
+}) => {
   await fillRequired(page);
   await page.check('#featured');
   await page.setInputFiles('#image', PNG);
-  await submitFeatured(page);
+  const { body } = await submitFeatured(page);
 
   await expect(page.locator('#sent-featured')).toBeVisible();
   await expect(page.locator('#sent-featured')).toContainText('$1.99');
+
+  // The fee is collected here, not invoiced later.
+  const pay = page.locator('#pay');
+  await expect(pay).toBeVisible();
+  await expect(pay).toHaveText(/Pay here/);
+  await expect(pay).toHaveAttribute('target', '_blank');
+  await expect(pay).toHaveAttribute('rel', /noopener/);
+  // Stripe records client_reference_id against the payment, which is what lets
+  // one in the dashboard be matched back to the row that was just written.
+  await expect(pay).toHaveAttribute(
+    'href',
+    `https://buy.stripe.com/6oU14pdDt8nF2uoaX64gg04?client_reference_id=${body.id}`
+  );
+});
+
+test('offers no payment link to a listing that was not featured', async ({ page }) => {
+  await fillRequired(page);
+  await submit(page);
+
+  await expect(page.locator('#pay')).toBeHidden();
 });
 
 test('files nothing when the photo will not upload', async ({ page }) => {
