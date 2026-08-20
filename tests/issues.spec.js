@@ -9,9 +9,31 @@ test('every issue in the data file is listed, newest first', async ({ page }) =>
   test.skip(issues.length === 0, 'no issues in src/data/issues.js yet');
   await page.goto('/issues');
   await expect(page.locator('.issue')).toHaveCount(issues.length);
-  await expect(page.locator('.issue-title a')).toHaveText(
-    newestFirst.map((issue) => issue.title)
-  );
+  // Ordered on the links rather than the headings: a heading is the title when
+  // there is one and the date when there isn't, but the link never changes.
+  const hrefs = await page
+    .locator('.issue-title a')
+    .evaluateAll((links) => links.map((link) => link.href));
+  expect(hrefs).toEqual(newestFirst.map((issue) => issue.url));
+});
+
+test('an issue with a title shows it; one without is listed by its date', async ({ page }) => {
+  test.skip(issues.length === 0, 'no issues in src/data/issues.js yet');
+  await page.goto('/issues');
+
+  for (const [i, issue] of newestFirst.entries()) {
+    const card = page.locator('.issue').nth(i);
+    if (issue.title) {
+      await expect(card.locator('.issue-title a')).toHaveText(issue.title);
+      await expect(card.locator('.issue-date time')).toHaveAttribute('datetime', issue.date);
+    } else {
+      // No title: the date is the link, and isn't also printed above it.
+      await expect(card.locator('.issue-date')).toHaveCount(0);
+      await expect(card.locator('.issue-title a time')).toHaveAttribute('datetime', issue.date);
+      await expect(card.locator('.issue-title a')).not.toBeEmpty();
+    }
+    await expect(card.locator('.issue-blurb')).toHaveCount(issue.blurb ? 1 : 0);
+  }
 });
 
 test('each issue links out to its own copy, in a new tab', async ({ page }) => {

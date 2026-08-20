@@ -65,16 +65,28 @@ const entries = ordered.map((issue) => ({
         entries.length > 0 && (
           <ul class="issues">
             {entries.map((issue) => (
-              <li class="issue">
-                <p class="issue-date">
-                  <time datetime={issue.date}>{issue.label}</time>
-                </p>
-                <h2 class="issue-title">
-                  <a href={issue.url} target="_blank" rel="noopener">
-                    {issue.title}
-                  </a>
-                </h2>
-                <p class="issue-blurb">{issue.blurb}</p>
+              <li class:list={['issue', { compact: !issue.title }]}>
+                {/* A title and a blurb are optional. Without a title the date
+                    is the link, rather than sitting above an empty heading. */}
+                {issue.title ? (
+                  <>
+                    <p class="issue-date">
+                      <time datetime={issue.date}>{issue.label}</time>
+                    </p>
+                    <h2 class="issue-title">
+                      <a href={issue.url} target="_blank" rel="noopener">
+                        {issue.title}
+                      </a>
+                    </h2>
+                  </>
+                ) : (
+                  <h2 class="issue-title untitled">
+                    <a href={issue.url} target="_blank" rel="noopener">
+                      <time datetime={issue.date}>{issue.label}</time>
+                    </a>
+                  </h2>
+                )}
+                {issue.blurb && <p class="issue-blurb">{issue.blurb}</p>}
               </li>
             ))}
           </ul>
@@ -264,12 +276,29 @@ const entries = ordered.map((issue) => ({
     border-radius: 1rem;
   }
 
+  /* Date-only: one line, so the card closes up around it rather than leaving
+     the room a date, title and blurb would have taken. */
+  .issue.compact {
+    padding-block: 1rem 1.05rem;
+  }
+
+  .issue:hover,
+  .issue:focus-within {
+    border-color: rgba(69, 117, 140, 0.4);
+  }
+
   .issue-date {
     font-size: 0.78rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: #8a8272;
+  }
+
+  /* A date-only card is a single line, so it loses the top margin the title
+     carries under its date. */
+  .issue-title.untitled {
+    margin-top: 0;
   }
 
   .issue-title {

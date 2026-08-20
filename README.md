@@ -67,9 +67,13 @@ at build or on load — the page is the same self-contained HTML document the re
 of the site is.
 
 The list is [`src/data/issues.js`](src/data/issues.js), kept by hand. Adding an
-issue is one entry — date, title, a one-line blurb, and its Beehiiv URL — and a
-commit. No API key, no build secret, and Beehiiv being slow can never fail a
-deploy.
+issue is one entry and a commit. No API key, no build secret, and Beehiiv being
+slow can never fail a deploy.
+
+An entry needs only a `date` and a `url`, which lists the issue by its date —
+how a reader picks one out of a newsletter archive anyway. Give it a `title` and
+a `blurb` as well when there's a reason to read one issue over another, and the
+card grows to carry them.
 
 While the list is empty the home page doesn't link to `/issues` at all, so a
 reader can't land on an empty archive. The page carries the same signup form the
