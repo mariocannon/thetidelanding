@@ -45,11 +45,13 @@ test('offers exactly the options the database will accept', async ({ page }) => 
 
   for (const field of [
     'topics',
+    'years_on_coast',
     'education',
     'age_range',
     'gender',
     'relationship_status',
     'home_ownership',
+    'property_plans',
     'household_income',
     'children_at_home',
     'children_ages',
@@ -64,11 +66,13 @@ test('offers exactly the options the database will accept', async ({ page }) => 
 
 test('every personal question offers a way out', async ({ page }) => {
   for (const field of [
+    'years_on_coast',
     'education',
     'age_range',
     'gender',
     'relationship_status',
     'home_ownership',
+    'property_plans',
     'household_income',
     'children_at_home',
   ]) {
@@ -123,16 +127,16 @@ test("only asks about children's ages when there are children", async ({ page })
 
 test('counts the questions it is actually asking', async ({ page }) => {
   const progress = page.locator('#progress-text');
-  await expect(progress).toHaveText('0 of 12 answered');
+  await expect(progress).toHaveText('0 of 14 answered');
 
   await page.selectOption('#area', REQUIRED.area);
-  await expect(progress).toHaveText('1 of 12 answered');
+  await expect(progress).toHaveText('1 of 14 answered');
 
   // The ages question joins the count only once it appears.
   await option(page, 'children_at_home', 'Yes').click();
-  await expect(progress).toHaveText('2 of 13 answered');
+  await expect(progress).toHaveText('2 of 15 answered');
   await option(page, 'children_at_home', 'No').click();
-  await expect(progress).toHaveText('2 of 12 answered');
+  await expect(progress).toHaveText('2 of 14 answered');
 });
 
 test('posts skipped questions as null', async ({ page }) => {
@@ -146,11 +150,13 @@ test('posts skipped questions as null', async ({ page }) => {
     occupation: null,
     hobby: null,
     hobby_other: null,
+    years_on_coast: null,
     education: null,
     age_range: null,
     gender: null,
     relationship_status: null,
     home_ownership: null,
+    property_plans: null,
     household_income: null,
     children_at_home: null,
     children_ages: null,
@@ -194,8 +200,10 @@ test('sends the answers it was given', async ({ page }) => {
   await answerRequired(page);
   await page.fill('#occupation', 'Builder');
   await page.selectOption('#hobby', 'Exercising (gym, running, yoga)');
+  await option(page, 'years_on_coast', '10+ years').click();
   await option(page, 'age_range', '35-44').click();
   await option(page, 'home_ownership', 'I own my home and am moving soon').click();
+  await option(page, 'property_plans', 'Selling').click();
   await option(page, 'household_income', '$150,000-$199,999').click();
   await option(page, 'children_at_home', 'Yes').click();
   await option(page, 'children_ages', '6-10').click();
@@ -206,8 +214,10 @@ test('sends the answers it was given', async ({ page }) => {
     occupation: 'Builder',
     hobby: 'Exercising (gym, running, yoga)',
     hobby_other: null,
+    years_on_coast: '10+ years',
     age_range: '35-44',
     home_ownership: 'I own my home and am moving soon',
+    property_plans: 'Selling',
     household_income: '$150,000-$199,999',
     children_at_home: 'Yes',
     children_ages: ['6-10', '14-18'],

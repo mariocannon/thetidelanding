@@ -55,8 +55,26 @@ const HOBBIES = [
   'Other',
 ];
 
-// Q5–Q11: one radio group each, rendered in a loop.
+// Q5–Q13: one radio group each, rendered in a loop.
 const CHOICE_QUESTIONS = [
+  {
+    name: 'years_on_coast',
+    legend: 'How long have you lived on the Coast?',
+    options: [
+      'Less than a year',
+      '1 year',
+      '2 years',
+      '3 years',
+      '4 years',
+      '5 years',
+      '6 years',
+      '7 years',
+      '8 years',
+      '9 years',
+      '10+ years',
+      'Prefer not to say',
+    ],
+  },
   {
     name: 'education',
     legend: 'What is the highest level of education you have finished?',
@@ -118,6 +136,11 @@ const CHOICE_QUESTIONS = [
       'Other',
       'Prefer not to say',
     ],
+  },
+  {
+    name: 'property_plans',
+    legend: 'Are you thinking of buying or selling a home?',
+    options: ['Buying', 'Selling', 'Both', 'Not right now', 'Prefer not to say'],
   },
   {
     name: 'household_income',
@@ -429,11 +452,13 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
           hobby,
           // The table only accepts a typed hobby alongside 'Other'.
           hobby_other: hobby === 'Other' ? single('hobby_other') : null,
+          years_on_coast: single('years_on_coast'),
           education: single('education'),
           age_range: single('age_range'),
           gender: single('gender'),
           relationship_status: single('relationship_status'),
           home_ownership: single('home_ownership'),
+          property_plans: single('property_plans'),
           household_income: single('household_income'),
           children_at_home: childrenAtHome,
           children_ages: childrenAtHome === 'Yes' ? multi('children_ages') : null,

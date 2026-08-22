@@ -65,6 +65,10 @@ the unique index on `lower(email)` has nothing left to enforce.
 - `migrations/20260807091642_survey_responses_hobby.sql` — Q4, "What are your
   hobbies?": a `hobby` dropdown of ten, and `hobby_other` free text that the
   table only accepts alongside `hobby = 'Other'`.
+- `migrations/20260822093000_survey_responses_tenure_and_property_plans.sql` —
+  `years_on_coast` ("Less than a year" through "10+ years") and
+  `property_plans` (buying, selling, both, not right now), the two answers a
+  real estate sponsor buys against.
 
 Every option in `src/pages/reader-survey.astro` has to match a CHECK constraint on the
 table. Adding a suburb, a topic or an income bracket to the page means adding it
