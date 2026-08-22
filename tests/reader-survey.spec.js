@@ -58,7 +58,7 @@ test('offers exactly the options the database will accept', async ({ page }) => 
     'pets',
   ]) {
     const rendered = await page
-      .locator(`[data-field="${field}"] input`)
+      .locator(`[data-field="${field}"] label.pill input`)
       .evaluateAll((inputs) => inputs.map((input) => input.value));
     expect(rendered.sort(), `options for ${field}`).toEqual(allowedValues(field).sort());
   }
@@ -147,6 +147,7 @@ test('posts skipped questions as null', async ({ page }) => {
   expect(await submit(page)).toEqual({
     area: REQUIRED.area,
     topics: [REQUIRED.topic, 'Real estate'],
+    topics_other: null,
     occupation: null,
     hobby: null,
     hobby_other: null,
@@ -166,6 +167,46 @@ test('posts skipped questions as null', async ({ page }) => {
   await expect(note(page)).toHaveText('Thanks — please keep an eye out for our welcome email.');
   await expect(page.locator('#survey-form')).toBeHidden();
   await expect(page.locator('#progress')).toBeHidden();
+});
+
+test('only asks what else you want when the topic is not on the list', async ({ page }) => {
+  const other = page.locator('#topics-other');
+  await expect(other).toBeHidden();
+
+  await option(page, 'topics', 'Real estate').click();
+  await expect(other).toBeHidden();
+
+  await option(page, 'topics', 'Other').click();
+  await expect(other).toBeVisible();
+  await other.fill('Tide times and surf reports');
+
+  await page.selectOption('#area', REQUIRED.area);
+  expect(await submit(page)).toMatchObject({
+    topics: ['Real estate', 'Other'],
+    topics_other: 'Tide times and surf reports',
+  });
+});
+
+test('drops the typed topic when Other is un-ticked', async ({ page }) => {
+  await answerRequired(page);
+  await option(page, 'topics', 'Other').click();
+  await page.fill('#topics-other', 'Tide times and surf reports');
+  await option(page, 'topics', 'Other').click();
+
+  await expect(page.locator('#topics-other')).toBeHidden();
+  expect(await submit(page)).toMatchObject({
+    topics: [REQUIRED.topic],
+    topics_other: null,
+  });
+});
+
+test('counts a ticked topic as answered whether or not Other is filled in', async ({ page }) => {
+  const progress = page.locator('#progress-text');
+  await option(page, 'topics', REQUIRED.topic).click();
+  await expect(progress).toHaveText('1 of 14 answered');
+
+  await option(page, 'topics', 'Other').click();
+  await expect(progress).toHaveText('1 of 14 answered');
 });
 
 test('only asks what the hobby is when it is not on the list', async ({ page }) => {

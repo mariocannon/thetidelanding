@@ -30,12 +30,15 @@ const AREAS = [
   'Ōkura',
 ];
 
+// Q2. 'Other' opens a text box, the same way it does under hobbies — a fixed
+// list can only ever confirm what we already thought readers wanted.
 const TOPICS = [
   'Event coverage',
   'Restaurant news',
   'Government updates',
   'School news',
   'Real estate',
+  'Other',
 ];
 
 // Q4. The ten things Coast readers this age actually spend a Saturday on —
@@ -251,6 +254,15 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
               ))
             }
           </div>
+          <label class="visually-hidden" for="topics-other">What else you want more of</label>
+          <input
+            id="topics-other"
+            name="topics_other"
+            type="text"
+            maxlength="100"
+            placeholder="Tell us what you'd like to read…"
+            hidden
+          />
         </fieldset>
 
         <fieldset class="card" data-field="occupation">
@@ -365,11 +377,20 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
 
       const form = document.getElementById('survey-form');
       const note = document.getElementById('form-note');
+      const topicsOther = document.getElementById('topics-other');
       const hobbyOther = document.getElementById('hobby-other');
       const childrenAges = document.getElementById('children-ages');
       const progress = document.getElementById('progress');
       const progressFill = document.getElementById('progress-fill');
       const progressText = document.getElementById('progress-text');
+
+      // Same as the hobby box below: the field appears once 'Other' is ticked,
+      // and un-ticking it clears whatever was typed rather than sending it.
+      function syncTopicsOther() {
+        const show = form.querySelector('input[name="topics"][value="Other"]').checked;
+        topicsOther.hidden = !show;
+        if (!show) topicsOther.value = '';
+      }
 
       // The 'Other' box only exists once 'Other' is the answer, and picking a
       // listed hobby afterwards clears whatever was typed in it.
@@ -398,16 +419,21 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
         const asked = [...form.querySelectorAll('fieldset[data-field]')].filter(
           (fieldset) => !fieldset.hidden
         );
+        // A question is answered by a tick or by anything typed or chosen in
+        // it — Q2 carries both, and ticking a topic answers it whether or not
+        // the 'Other' box beside it is filled in.
         const answered = asked.filter((fieldset) => {
-          const typed = fieldset.querySelector('input[type="text"], select');
-          if (typed) return typed.value.trim() !== '';
-          return fieldset.querySelector('input:checked') !== null;
+          if (fieldset.querySelector('input:checked')) return true;
+          return [...fieldset.querySelectorAll('input[type="text"], select')].some(
+            (field) => field.value.trim() !== ''
+          );
         }).length;
         progressFill.style.width = `${(answered / asked.length) * 100}%`;
         progressText.textContent = `${answered} of ${asked.length} answered`;
       }
 
       form.addEventListener('change', () => {
+        syncTopicsOther();
         syncHobbyOther();
         syncChildrenAges();
         updateProgress();
@@ -448,6 +474,8 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
         const payload = {
           area,
           topics,
+          // The table only accepts a typed topic alongside 'Other'.
+          topics_other: topics.includes('Other') ? single('topics_other') : null,
           occupation: single('occupation'),
           hobby,
           // The table only accepts a typed hobby alongside 'Other'.
@@ -500,6 +528,7 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
         }
       });
 
+      syncTopicsOther();
       syncHobbyOther();
       syncChildrenAges();
       updateProgress();
@@ -735,7 +764,8 @@ const TOTAL_QUESTIONS = 4 + CHOICE_QUESTIONS.length + 2;
     display: none;
   }
 
-  /* The 'Other' box sits under the dropdown that opens it. */
+  /* The 'Other' box sits under the pills or dropdown that opens it. */
+  .pills + label + input,
   select + label + input {
     margin-top: 0.6rem;
   }

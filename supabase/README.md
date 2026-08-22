@@ -69,6 +69,9 @@ the unique index on `lower(email)` has nothing left to enforce.
   `years_on_coast` ("Less than a year" through "10+ years") and
   `property_plans` (buying, selling, both, not right now), the two answers a
   real estate sponsor buys against.
+- `migrations/20260822141500_survey_responses_topics_other.sql` — Q2 gains an
+  'Other' topic and a `topics_other` box, which the table only accepts when
+  `'Other' = any(topics)`.
 
 Every option in `src/pages/reader-survey.astro` has to match a CHECK constraint on the
 table. Adding a suburb, a topic or an income bracket to the page means adding it
