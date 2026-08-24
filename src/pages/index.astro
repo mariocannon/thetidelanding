@@ -2,34 +2,106 @@
 import { issues } from '../data/issues.js';
 
 // The Tide — newsletter signup landing page.
-// Self-contained on purpose: no web fonts, no external CSS/JS, no images,
-// so the page ships as a single small HTML document.
-const title = 'The Tide — a newsletter worth waiting for';
+// Self-contained on purpose: no web fonts, no external CSS/JS, no images
+// beyond the logo, so the page ships as a single small HTML document.
+
+// Origin comes from `site` in astro.config.mjs rather than being typed here,
+// so the domain is written down once for the canonical tag and the sitemap.
+const SITE = Astro.site.href.replace(/\/$/, '');
+const PATH = '/';
+const SOCIAL_IMAGE = `${SITE}/social/home-social.png`;
+
+// The suburbs The Tide actually covers. Listed once and reused by the copy,
+// the meta description and the structured data, so a change to the patch we
+// serve can't leave one of the three saying something else.
+// Macronised, matching the reader-facing survey and the `survey_responses`
+// CHECK constraint. Slugs and file names stay ASCII — /orewa-best-coffee.
+const SUBURBS = ['Ōrewa', 'Whangaparāoa', 'Silverdale', 'Red Beach'];
+
+// "The Coast" is the insider term and holds the identity lines (the eyebrow);
+// "Hibiscus Coast" is the name people actually search, so it goes here and in
+// the coverage line. Kept under 60 characters so the phrase that carries the
+// voice isn't the half Google truncates — this string is the og:title too.
+const title = 'The Tide — the Hibiscus Coast newsletter worth waiting for';
 const description =
-  "The Tide is a weekly email newsletter bringing Coasties the week's local stories, news and events. Sign up with just your email.";
+  "A free weekly email for Coasties — the week's local stories, news and events from Ōrewa, Whangaparāoa, Silverdale and Red Beach. Sign up with just your email.";
+
+// Structured data: who we are and where we cover. The home page is the one
+// page a search engine should be able to read the whole publication off, so
+// it carries the organisation and the site-level entry, and leaves the
+// page-specific lists to the pages that have them (see orewa-best-coffee).
+const organisationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'NewsMediaOrganization',
+  '@id': `${SITE}/#organisation`,
+  name: 'The Tide',
+  url: `${SITE}/`,
+  logo: `${SITE}/logo.webp`,
+  description,
+  email: 'hello@thetide.co.nz',
+  areaServed: SUBURBS.map((suburb) => ({
+    '@type': 'Place',
+    name: `${suburb}, Auckland, New Zealand`,
+  })),
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': `${SITE}/#website`,
+  name: 'The Tide',
+  url: `${SITE}/`,
+  description,
+  inLanguage: 'en-NZ',
+  publisher: { '@id': `${SITE}/#organisation` },
+};
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en-NZ">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={`${SITE}${PATH}`} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="The Tide" />
+    <meta property="og:url" content={`${SITE}${PATH}`} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:image" content={SOCIAL_IMAGE} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The Tide — the Hibiscus Coast newsletter" />
+    <meta property="og:locale" content="en_NZ" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={SOCIAL_IMAGE} />
+
     <meta name="theme-color" content="#f0e7d6" />
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
     />
+
+    <script type="application/ld+json" set:html={JSON.stringify(organisationJsonLd)} />
+    <script type="application/ld+json" set:html={JSON.stringify(websiteJsonLd)} />
   </head>
   <body>
     <main>
       <p class="eyebrow">The Coast's newsletter.</p>
       <h1>
-        <img src="/logo.webp" alt="The Tide" width="783" height="979" />
+        <img
+          src="/logo.webp"
+          alt="The Tide — the Hibiscus Coast newsletter"
+          width="783"
+          height="979"
+        />
       </h1>
       <p class="tagline">
         You're in good company! Hundreds of Coasties get the week's local
@@ -53,6 +125,21 @@ const description =
       <p class="note" id="form-note" role="status" aria-live="polite">
         Free forever. Unsubscribe any time.
       </p>
+
+      {/* Sits below the form on purpose: it's the only block on the page that
+          names the patch we cover, so it has to be indexable text rather than
+          alt text — but it must not push the signup down the page to get
+          there. Written as what arrives in a reader's inbox, not as things to
+          go and submit; turning it toward submission would make it a third
+          call to action. */}
+      <section class="coverage">
+        <h2>What lands in your inbox</h2>
+        <p>
+          One email a week: what's on around the Hibiscus Coast — Ōrewa,
+          Whangaparāoa, Silverdale and Red Beach — the local news worth
+          knowing, and the events and classifieds your neighbours have put up.
+        </p>
+      </section>
 
       <p class="cta-buttons">
         <a class="btn-outline" href="/submit-event">List your event</a>
@@ -156,6 +243,9 @@ const description =
 <style>
   :root {
     color-scheme: light;
+    /* Declared once and used by both the waves and the space reserved above
+       them, so the reserve can't drift out of step with what it's clearing. */
+    --wave-height: clamp(90px, 18vh, 220px);
   }
 
   * {
@@ -163,16 +253,29 @@ const description =
     margin: 0;
   }
 
-  html,
-  body {
+  html {
     height: 100%;
   }
 
   body {
+    /* min-height rather than height, and relative, so the waves below can
+       anchor to the foot of the *document* instead of the viewport. Both are
+       load-bearing: `position: absolute` with no positioned ancestor resolves
+       against the initial containing block, which puts the waves back at the
+       100vh mark — the bug this replaced. */
+    min-height: 100%;
+    position: relative;
     display: grid;
     place-items: center;
-    background:
+    /* no-repeat, with Sand underneath. The background area is the root box,
+       which `html { height: 100% }` pins to the viewport — so on any page long
+       enough to scroll the gradient tiled, restarting at Foam and drawing a
+       hard line across the page. The wash ends at Sand, so painting Sand
+       behind it continues it seamlessly however far the page runs. */
+    background-color: #f0e7d6;
+    background-image:
       radial-gradient(120% 90% at 50% 0%, #faf5ea 0%, #f0e7d6 60%);
+    background-repeat: no-repeat;
     color: #23313c;
     font-family:
       system-ui,
@@ -187,7 +290,12 @@ const description =
 
   main {
     width: min(40rem, 100% - 3rem);
-    padding-block: 4rem 8rem;
+    /* Clears the waves by a fixed margin at every height, because it's the
+       wave height plus breathing room rather than a second clamp of its own.
+       The guide's clamp(7rem, 20vh, 11rem) only tracks the waves while
+       neither clamp is biting: past roughly 978px tall the reserve stops at
+       11rem while the waves keep growing to 220px, and copy lands on them. */
+    padding-block: 4rem calc(var(--wave-height) + 2rem);
   }
 
   .eyebrow {
@@ -302,11 +410,16 @@ const description =
     white-space: nowrap;
   }
 
+  /* Anchored to the foot of the page, not the viewport. `fixed` is only
+     correct while a page fits on one screen — the moment this one scrolls,
+     fixed waves float over whatever copy is passing under them, which the
+     brand guide forbids outright. This one has scrolled at every viewport
+     under ~1165px tall, so it never held. */
   .waves {
-    position: fixed;
+    position: absolute;
     inset: auto 0 0;
     width: 100%;
-    height: clamp(90px, 18vh, 220px);
+    height: var(--wave-height);
     pointer-events: none;
   }
 
@@ -332,6 +445,29 @@ const description =
     button {
       transition: none;
     }
+  }
+
+  /* Supporting copy, so it reads a step quieter than the tagline above the
+     form rather than competing with it. Heading weight and tracking are the
+     H2 treatment from the brand guide. */
+  .coverage {
+    margin: 2.5rem auto 0;
+    max-width: 34rem;
+  }
+
+  .coverage h2 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    color: #23313c;
+  }
+
+  .coverage p {
+    margin-top: 0.6rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
   }
 
   /* Sits below the CTA buttons, and reads a size up from the fine print

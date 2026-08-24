@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Reachable only straight after a signup — a form mid-flow, not a landing page.
+Disallow: /reader-survey
+
+Sitemap: https://thetide.co.nz/sitemap-index.xml

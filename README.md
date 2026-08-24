@@ -6,6 +6,31 @@ A fast, single-page signup site for **The Tide** email newsletter, built with [A
 - System fonts, inlined CSS, inline SVG artwork, tiny inline form script
 - Statically prerendered — nothing to hydrate
 
+`inlineStylesheets: 'always'` in `astro.config.mjs` is what keeps the first
+point true. Astro's default only inlines a stylesheet under 4kB and silently
+drops to an external `<link>` above it, so a page would start making a
+blocking request the first time its CSS grew past the limit.
+
+## Search and social
+
+`site` in `astro.config.mjs` is the one place the live origin is written down;
+canonical tags and the sitemap both read from it.
+
+`@astrojs/sitemap` writes `sitemap-index.xml` at build, and
+[`public/robots.txt`](public/robots.txt) points at it. Both exclude
+`/reader-survey` — it's only reachable straight after a signup, so it's a form
+mid-flow rather than a page anybody should land on from a search result.
+
+The home page and `/orewa-best-coffee` carry the full set: canonical, robots,
+Open Graph and Twitter Card tags with a 1200×630 image, and JSON-LD. The home
+page's is a `NewsMediaOrganization` with `areaServed` covering the suburbs, plus
+a `WebSite` entry that points back at it — enough for a search engine to read
+who The Tide is and where it covers off the front page alone. The other pages
+still carry only title, description and the three basic `og:` tags.
+
+Reader-facing copy uses the macronised spellings — Ōrewa, Whangaparāoa. Slugs
+stay ASCII, which is why the route is `/orewa-best-coffee`.
+
 ## Develop
 
 ```sh
