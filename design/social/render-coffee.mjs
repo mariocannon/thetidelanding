@@ -5,11 +5,15 @@
 // page actually says. Edit the copy in src/pages/orewa-best-coffee.astro or
 // the list in src/data/coffee.js, then re-run this.
 //
+// Unlike render-question.mjs, this one shoots straight at 1x and skips the
+// supersample-then-downsample step — no Python/Pillow dependency. Fine for a
+// static logo-and-headline card; switch back to the 2x+Pillow approach if the
+// text edges ever look rough enough to matter.
+//
 // Usage: npm run build && node design/social/render-coffee.mjs
 import { createServer } from 'node:http';
 import { existsSync, readdirSync } from 'node:fs';
-import { readFile, unlink } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
@@ -28,12 +32,10 @@ function sandboxChromium() {
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
 const DIST = join(ROOT, 'dist');
 const OUT = join(ROOT, 'public/social/orewa-best-coffee-social.png');
-const RAW = join(ROOT, 'dist/coffee-social-raw.png');
 // 1200x630 is the standard og:image / Twitter summary_large_image size — see
 // the meta tags in src/pages/orewa-best-coffee.astro.
 const WIDTH = 1200;
 const HEIGHT = 630;
-const SCALE = 2; // supersample, then downsample for clean type and edges
 
 const TYPES = {
   '.html': 'text/html',
@@ -62,7 +64,7 @@ const { port } = server.address();
 const browser = await chromium.launch({ executablePath: sandboxChromium() });
 const page = await browser.newPage({
   viewport: { width: WIDTH, height: HEIGHT },
-  deviceScaleFactor: SCALE,
+  deviceScaleFactor: 1,
 });
 await page.goto(`http://127.0.0.1:${port}/orewa-best-coffee/`, { waitUntil: 'networkidle' });
 
@@ -102,15 +104,8 @@ await page.addStyleTag({
     }
   `,
 });
-await page.screenshot({ path: RAW });
+await page.screenshot({ path: OUT });
 await browser.close();
 server.close();
 
-execFileSync('python3', ['-c', `
-from PIL import Image
-raw = Image.open("${RAW}").convert('RGB')
-assert raw.size == (${WIDTH * SCALE}, ${HEIGHT * SCALE}), raw.size
-raw.resize((${WIDTH}, ${HEIGHT}), Image.LANCZOS).save("${OUT}", optimize=True)
-`]);
-await unlink(RAW);
 console.log('wrote', OUT, `${WIDTH}x${HEIGHT}`);

@@ -20,9 +20,11 @@ node design/social/render-coffee.mjs
 ```
 
 Needs Playwright's Chromium (already a dev dependency — `npx playwright
-install chromium` if it isn't downloaded yet) and Pillow (`pip install
-pillow`) for the downsample step, same as the banner and billboard renderers
-in `../banner` and `../billboard`.
+install chromium` if it isn't downloaded yet). `render-question.mjs`
+additionally needs Pillow (`pip install pillow`) for its supersample-then-
+downsample step, same as the banner and billboard renderers in `../banner`
+and `../billboard`; `render-coffee.mjs` shoots straight at 1x and has no
+Python dependency.
 
 ## Sizing
 
