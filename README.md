@@ -111,6 +111,24 @@ the fee lands `UNPAID` for the desk to invoice.
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.
 
+## Best coffee in Orewa
+
+`/orewa-best-coffee` is a hand-kept roundup of Orewa cafés worth a visit — name,
+location and a line on why, with a link out to each one's own site or Facebook
+page where they have one. The list is
+[`src/data/coffee.js`](src/data/coffee.js), the same pattern as `issues.js`:
+adding a spot is one entry and a commit. The home page links to it from the
+footer row alongside the event and classifieds links, so it isn't an orphaned
+page as far as crawlers or readers are concerned.
+
+Unlike the rest of the site, this page carries canonical, Open Graph and
+Twitter Card tags plus JSON-LD (`BreadcrumbList` and an `ItemList` of
+`CafeOrCoffeeShop`) — it's the page most likely to be found from a search
+rather than a newsletter link, so it's worth the extra markup. The `og:image`
+it points at is rendered from the page itself; see
+[`design/social/README.md`](design/social/README.md) for how to regenerate it
+after the list changes.
+
 ## Pickleball lessons
 
 `/orewapickleball` is a landing page for somebody else's event: Orewa Pickleball
