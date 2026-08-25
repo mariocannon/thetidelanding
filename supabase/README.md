@@ -242,3 +242,66 @@ listing and can never read, edit or remove one — not even their own.
 Both tables check a column called `category`, so the test helper takes the
 table name (`allowedValues('category', ADS_MIGRATIONS, 'Classified')`) and one
 list can't answer for the other.
+
+## Business directory — reading `DirectoryListing`
+
+`/hibiscus-coast-business-directory` and its category pages are the one place
+this repo *reads* from the ad manager's project instead of writing to it. The
+category taxonomy (slugs, names, SEO copy, wave, the towns list) stays
+hand-kept in `src/data/directory/index.js`; the businesses inside each
+published category come from `public."DirectoryListing"` in the **Newsletter
+ad management** project (`tlderdsxnonhemkdxqns`) — the operator's own
+`/directory` page in the ad manager, not a public submission form. There is no
+draft/approval workflow on this table: everything the operator saves there is
+meant to be public immediately.
+
+```
+GET /rest/v1/DirectoryListing?category=eq.plumbers&order=featured.desc,createdAt.asc&select=*
+  → policy "Public directory listings"  (anon, select only)
+  → folded into categories in src/data/directory/index.js at build time
+```
+
+- `newsletter-ads/migrations/20260826010000_directory_listings_public_read.sql`
+  — the blanket read-all policy. Prisma's own migration
+  (`bizdata/prisma/migrations/20260826000000_add_directory_listings`) enables
+  row-level security on the table with no policies, the same convention this
+  project already uses for a table with no legitimate PostgREST caller — until
+  this one gained one. Without the policy, the anon key doesn't error; it
+  silently gets zero rows back, which is why the build fetch throws loudly on
+  anything other than a clean 200 rather than let the site publish an empty
+  directory.
+- A category only fetches, and only gets a page, once it carries
+  `published: true` in `rawCategories` — a row the operator adds for a
+  category that isn't published yet (e.g. `hairdressers`) sits in the table
+  without appearing anywhere on the public site until that flag is set and the
+  category clears `tests/directory.spec.js`'s own listings-count and
+  intro-copy checks.
+- The operator picks at most one `featured: true` listing per category from
+  the ad manager (enforced there, not re-checked here); the category page
+  pulls it out into its own block above the town groups, and the hub tile
+  teaser leads with its name.
+
+**Two manual steps this repo can't do for you:**
+
+1. **Push the new policy.** Like every other migration in this folder, nobody
+   here can run `supabase db push` against someone else's project.  Whoever
+   holds the `tlderdsxnonhemkdxqns` credential needs to apply
+   `20260826010000_directory_listings_public_read.sql` (and, if it hasn't
+   landed yet via the ad manager's own Netlify build, the table-creating
+   migration on the bizdata side) the same way as the existing cross-project
+   migrations documented above:
+
+   ```sh
+   supabase link --project-ref tlderdsxnonhemkdxqns
+   supabase db push --db-url "$AD_MANAGER_DB_URL"   # or paste it in the SQL editor
+   ```
+
+2. **Wire up the rebuild hook.** For a listing saved or deleted in the ad
+   manager's `/directory` page to show up here without someone manually
+   re-deploying, create a **Netlify Build Hook** on this site (thetidelanding's
+   Netlify dashboard → Site configuration → Build & deploy → Build hooks) and
+   set the resulting URL as `THETIDELANDING_BUILD_HOOK_URL` in the ad
+   manager's Netlify environment variables. The ad manager's
+   `saveDirectoryListing`/`deleteDirectoryListing` actions already POST to
+   that env var, best-effort, on every save and delete — this is only the
+   one-time Netlify dashboard setup that makes the env var mean something.

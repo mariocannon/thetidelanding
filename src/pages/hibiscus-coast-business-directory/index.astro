@@ -1,8 +1,9 @@
 ---
-// The Tide — Hibiscus Coast business directory hub. The taxonomy lives in
-// `src/data/directory/index.js`; the businesses inside each category live in a
-// sibling file per slug. Same rule as every other page here: nothing is fetched
-// from anywhere else on load.
+// The Tide — Hibiscus Coast business directory hub. The taxonomy (slugs,
+// names, SEO copy, wave, towns) is hand-kept in `src/data/directory/index.js`;
+// the businesses inside each published category are fetched from the ad
+// manager's `DirectoryListing` table at *build* time, not at load — same rule
+// as every other page here: nothing is fetched from anywhere else on load.
 //
 // Category pages get built one at a time, so this hub only ever links to the
 // ones that exist (`liveCategories`). Until there are enough of those to be

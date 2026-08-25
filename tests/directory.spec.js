@@ -3,12 +3,20 @@ import { expect, test } from '@playwright/test';
 import {
   BASE as PATH,
   categories,
+  deriveCategory,
   INDEX_THRESHOLD,
   isIndexable,
   liveCategories,
   pagedCategories,
   towns,
 } from '../src/data/directory/index.js';
+
+// Importing the module above runs its build-time fetch against the ad
+// manager's live `DirectoryListing` table (see the module's own doc comment)
+// — every test below shares that one fetch, the same way the rest of this
+// suite already depends on a live build. `deriveCategory` itself is pure
+// (listings in, shaped category out), so the tests for it further down don't
+// depend on what that fetch returned.
 
 /**
  * The floor a category has to clear before it earns a page. A dynamic route
@@ -78,7 +86,10 @@ test('every listing names a real business in a town we cover', () => {
       // A one-liner isn't a recommendation. This is the difference between a
       // curated directory and a scraped one.
       expect(listing.blurb?.trim().length ?? 0, `blurb on ${where}`).toBeGreaterThan(60);
-      if (listing.url) expect(listing.url, `url on ${where}`).toMatch(/^https:\/\//);
+      // bizdata's own validation for this table accepts either scheme (its
+      // seeded/operator-entered urls aren't guaranteed https) — this repo
+      // isn't the source of truth for what's a valid listing url any more.
+      if (listing.url) expect(listing.url, `url on ${where}`).toMatch(/^https?:\/\//);
       if (listing.phone) expect(listing.phone, `phone on ${where}`).toMatch(/^[\d\s+()-]{7,}$/);
     }
   }
@@ -96,6 +107,16 @@ test('the hub tile counts match what the category pages actually hold', () => {
     expect(category.count, `count on ${category.slug}`).toBe(category.listings.length);
     expect(category.featured.length, `featured on ${category.slug}`).toBeLessThanOrEqual(3);
     expect(category.href).toBe(`${PATH}/${category.slug}`);
+  }
+});
+
+test('the hub tile teaser leads with the featured listing, when there is one', () => {
+  // Same "no live featured row today" caveat as the per-category featured
+  // test above — self-validating, and backed by the deterministic
+  // `deriveCategory` unit tests further down.
+  for (const category of pagedCategories) {
+    if (!category.featuredListing) continue;
+    expect(category.featured[0], `teaser on ${category.slug}`).toBe(category.featuredListing.name);
   }
 });
 
@@ -193,6 +214,22 @@ test('the breadcrumb walks back to the home page', async ({ page }) => {
 
 // --- The category pages -------------------------------------------------------
 
+/**
+ * A category's listings with the operator's featured pick (if any) taken out
+ * — what actually lands in the town groups. `!==` is safe here: within one
+ * `categories` module instance, `featuredListing` is a reference into
+ * `listings`, not a copy.
+ */
+const townGrouped = (category) =>
+  category.listings.filter((listing) => listing !== category.featuredListing);
+
+/** The order the page prints in: the featured pick, then everyone else in
+ *  town (coast) order. */
+const expectedOrder = (category) => [
+  ...(category.featuredListing ? [category.featuredListing] : []),
+  ...towns.flatMap((town) => townGrouped(category).filter((listing) => listing.town === town)),
+];
+
 for (const category of pagedCategories) {
   test(`/${category.slug} lists every business in its data file`, async ({ page }) => {
     const response = await page.goto(category.href);
@@ -211,13 +248,52 @@ for (const category of pagedCategories) {
   test(`/${category.slug} groups its listings by town, in coast order`, async ({ page }) => {
     await page.goto(category.href);
 
+    // Only what actually lands in a town section — a featured pick is pulled
+    // out into its own block above these, so it shouldn't grow a one-listing
+    // town a heading of its own if it's the only thing in that town.
     const expected = towns.filter((town) =>
-      category.listings.some((listing) => listing.town === town),
+      townGrouped(category).some((listing) => listing.town === town),
     );
     const headings = await page
       .locator('.town-name')
       .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
     expect(headings).toEqual(expected);
+  });
+
+  test(`/${category.slug} puts a featured listing above the town groups, and out of them`, async ({
+    page,
+  }) => {
+    // No listing is seeded featured today (bizdata-coder's 26 Aug handoff),
+    // so this exercises the "no featured pick" branch in the common case —
+    // it's written to self-validate the moment the operator marks one
+    // featured from the ad manager's /directory page and this rebuilds, with
+    // no test change needed. The exact shaping this depends on (which
+    // listing is pulled out, what leads the hub tile teaser) is covered
+    // deterministically, independent of live data, by the `deriveCategory`
+    // unit tests below.
+    await page.goto(category.href);
+
+    if (!category.featuredListing) {
+      await expect(page.locator('.featured-listing')).toHaveCount(0);
+      return;
+    }
+
+    await expect(page.locator('.featured-listing')).toHaveCount(1);
+    await expect(page.locator('.featured-listing .card-name')).toContainText(
+      category.featuredListing.name,
+    );
+
+    const townNames = await page
+      .locator('.town .card-name')
+      .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
+    expect(townNames, 'featured listing repeated inside a town group').not.toContain(
+      category.featuredListing.name,
+    );
+
+    const sectionOrder = await page.evaluate(() =>
+      [...document.querySelectorAll('.featured-listing, .town')].map((el) => el.className),
+    );
+    expect(sectionOrder[0]).toContain('featured-listing');
   });
 
   test(`/${category.slug} describes the same businesses in its structured data`, async ({
@@ -229,8 +305,10 @@ for (const category of pagedCategories) {
       .evaluateAll((scripts) => scripts.map((script) => JSON.parse(script.textContent)));
 
     const itemList = blocks.find((block) => block['@type'] === 'ItemList');
+    // Featured first, then town groups — same order the page renders in, not
+    // the DB's featured-then-createdAt fetch order.
     expect(itemList.itemListElement.map((entry) => entry.item.name)).toEqual(
-      category.listings.map((listing) => listing.name),
+      expectedOrder(category).map((listing) => listing.name),
     );
     for (const entry of itemList.itemListElement) {
       expect(entry.item['@type']).toBe(category.schemaType);
@@ -341,4 +419,71 @@ test('never scrolls sideways', async ({ page }) => {
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(0);
+});
+
+// --- deriveCategory — pure, no live data ---------------------------------------
+//
+// The page-level featured-listing tests above are self-validating but
+// currently vacuous: nothing in the live `DirectoryListing` table is marked
+// `featured` yet (bizdata-coder's 26 Aug handoff seeded all 21 rows
+// unfeatured, and this repo has no credential to change a row in someone
+// else's project from a test). `deriveCategory` is the one function that
+// decides what a `featured: true` row does to a category — which listing
+// leads, what it excludes from the town groups, what the hub tile teaser
+// shows — so it's tested here directly, against a synthetic `listings` array,
+// independent of the network fetch the rest of this file depends on.
+
+const RAW = { slug: 'plumbers', href: undefined };
+
+test('deriveCategory pulls the featured listing out and leads the teaser with it', () => {
+  const a = { name: 'Ace Plumbing', town: 'Orewa', featured: false };
+  const featured = { name: 'Best Plumbing', town: 'Silverdale', featured: true };
+  const c = { name: 'Coast Plumbing', town: 'Manly', featured: false };
+
+  const category = deriveCategory(RAW, [featured, a, c]);
+
+  expect(category.featuredListing).toBe(featured);
+  expect(category.listings).toEqual([featured, a, c]);
+  expect(category.count).toBe(3);
+  // Featured name first, then the rest in listing order, capped at three.
+  expect(category.featured).toEqual(['Best Plumbing', 'Ace Plumbing', 'Coast Plumbing']);
+});
+
+test('deriveCategory caps the teaser at three even with a featured pick', () => {
+  const featured = { name: 'Best Plumbing', town: 'Silverdale', featured: true };
+  const rest = ['Ace', 'Coast', 'Delta', 'Echo'].map((name) => ({
+    name,
+    town: 'Orewa',
+    featured: false,
+  }));
+
+  const category = deriveCategory(RAW, [featured, ...rest]);
+  expect(category.featured).toEqual(['Best Plumbing', 'Ace', 'Coast']);
+});
+
+test('deriveCategory leaves featuredListing null and the teaser unchanged when nothing is featured', () => {
+  const listings = ['Ace', 'Best', 'Coast', 'Delta'].map((name) => ({
+    name,
+    town: 'Orewa',
+    featured: false,
+  }));
+
+  const category = deriveCategory(RAW, listings);
+  expect(category.featuredListing).toBeNull();
+  expect(category.featured).toEqual(['Ace', 'Best', 'Coast']);
+});
+
+test('deriveCategory passes a category through unchanged when it has no listings (unpublished)', () => {
+  const category = deriveCategory(RAW, undefined);
+  expect(category).toBe(RAW);
+});
+
+test('deriveCategory derives href from BASE and the slug when the category has none of its own', () => {
+  const category = deriveCategory(RAW, []);
+  expect(category.href).toBe(`${PATH}/plumbers`);
+});
+
+test('deriveCategory keeps an explicit href rather than deriving one', () => {
+  const category = deriveCategory({ ...RAW, href: '/somewhere-else' }, []);
+  expect(category.href).toBe('/somewhere-else');
 });

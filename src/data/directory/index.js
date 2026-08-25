@@ -1,16 +1,21 @@
 /**
  * The Tide's Hibiscus Coast business directory — the category taxonomy.
  *
- * This file holds *categories only*. The businesses inside each one live in a
- * sibling file named for its slug (`plumbers.js`, `marine.js`, …), the same
- * hand-kept way `coffee.js` and `issues.js` work. Nothing is fetched at build
- * or at load.
+ * This file holds the *categories* (slug, name, SEO copy, wave, towns list) —
+ * hand-kept here, the same as ever. The *listings* inside a published category
+ * no longer live in a sibling file: they come from `DirectoryListing` in the
+ * ad manager's Supabase project (`tlderdsxnonhemkdxqns`), the same "Newsletter
+ * ad management" project `/submit-event` and `/submit-classified` already
+ * write to — fetched over PostgREST at build time with a top-level `await`.
+ * See `supabase/newsletter-ads/migrations` for the table and the read policy,
+ * and `supabase/README.md` for the two manual deploy steps that make this
+ * live in production.
  *
- * A category goes live by being listed in `pages` below — add its file there
- * and it gets a URL, a route, a hub tile and its counts, all derived. There is
- * no `live` flag to forget to flip. Categories absent from `pages` are the
- * build queue: they render nowhere on the public page, because a directory of
- * dead ends is worse than a short one.
+ * A category goes live by carrying `published: true` below — that, not the
+ * presence of a file, is what gets it a fetch, a URL, a route, a hub tile and
+ * its counts. Categories without it are the build queue: they render nowhere
+ * on the public page, whatever rows the operator has already added for them
+ * in the ad manager (see the note on `published` below).
  *
  *   {
  *     slug:       'plumbers',              // URL segment under the hub
@@ -18,6 +23,8 @@
  *     tileBlurb:  'One line, hand-written.',
  *     schemaType: 'Plumber',               // schema.org LocalBusiness subtype
  *     wave:        1,                      // which build wave it belongs to
+ *     published:   true,                   // fetches listings and gets a page
+ *     intro:      'Hand-written SEO intro for the category page.',
  *     href:       '/…',                    // only to override the derived URL
  *   }
  *
@@ -25,10 +32,6 @@
  * Coast is too small to carry a page per category per town without them all
  * reading as the same page.
  */
-import { cafes } from './cafes.js';
-import { electricians } from './electricians.js';
-import { mechanics } from './mechanics.js';
-import { plumbers } from './plumbers.js';
 
 /** Where the hub lives. Category pages hang off it. */
 export const BASE = '/hibiscus-coast-business-directory';
@@ -55,18 +58,6 @@ export const towns = [
  */
 export const INDEX_THRESHOLD = 3;
 
-/**
- * The categories that have listings of their own, keyed by slug. Adding a file
- * here is what publishes a category — see `categories` at the foot of this file
- * for what gets derived from it.
- */
-const pages = {
-  cafes,
-  plumbers,
-  electricians,
-  mechanics,
-};
-
 const rawCategories = [
   {
     slug: 'cafes',
@@ -75,6 +66,9 @@ const rawCategories = [
       'Where Coasties actually go for a flat white, from the ones worth a detour to the ones worth a morning.',
     schemaType: 'CafeOrCoffeeShop',
     wave: 1,
+    published: true,
+    intro:
+      "Orewa has its own roundup — there are enough good ones on that one strip to justify it, and it's linked below. This is everywhere else: the peninsula, Stanmore Bay, Manly and the marina, where the coffee is more spread out and worth knowing about in advance. A couple roast their own, one is small enough that you will wait for a table on a Saturday, and one is the only reason to walk up from the boatyard.",
     // Orewa is deliberately not on the category page — it has its own roundup,
     // it was here first, and two pages listing the same four cafés would split
     // the same query between them and win neither.
@@ -91,6 +85,9 @@ const rawCategories = [
       'The ones who turn up when they say they will — for the burst pipe and for the bathroom you have been putting off.',
     schemaType: 'Plumber',
     wave: 1,
+    published: true,
+    intro:
+      "Every plumber here is based on the Coast rather than driving up from town, which is the difference between an hour and a morning when something is leaking. Most cover the whole stretch from Silverdale out to Gulf Harbour, and a few run around the clock for the burst pipe that never picks a weekday. Where someone is a Master Plumbers member, a certifying gasfitter or a registered drainlayer, we've said so — that's the thing worth checking before you agree to the big job, not after.",
   },
   {
     slug: 'electricians',
@@ -99,6 +96,9 @@ const rawCategories = [
       'Registered sparkies working the Coast, for everything from a dead socket to a whole rewire.',
     schemaType: 'Electrician',
     wave: 1,
+    published: true,
+    intro:
+      "Electrical work is the one trade where the paperwork matters as much as the job — a Certificate of Compliance is what your insurer asks for after a fire, and what a buyer's lawyer asks for at sale. Everyone here is registered and working out of the Coast rather than driving up from town. Where a firm is a Master Electricians member, that adds a workmanship guarantee on top of the certificate, which is worth the difference on a rewire or a new build.",
   },
   {
     slug: 'mechanics',
@@ -107,6 +107,9 @@ const rawCategories = [
       'WOFs, servicing and the second opinion worth getting before you agree to the big job.',
     schemaType: 'AutoRepair',
     wave: 1,
+    published: true,
+    intro:
+      "Most of the Coast's workshops sit in Silverdale, close enough to the motorway that a WOF and a service can be a lunch-hour job rather than a day without the car. The mobile mechanics are the other half of the picture — they come to the driveway, which is worth more than it sounds if the car is the reason you cannot get anywhere. Where a place has a specialty, a European marque or heavy diesel, we've said so, because that is usually the difference between a diagnosis and a guess.",
   },
   {
     slug: 'hairdressers',
@@ -219,25 +222,112 @@ const rawCategories = [
   },
 ];
 
+// The noticeboard lives in the Newsletter ad management project, not the
+// one the-tide's own signup forms write to — same project, same publishable
+// key, `src/pages/submit-event.astro` already hardcodes both.
+const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
 /**
- * The taxonomy with each published category's own data folded in — its URL,
- * intro, listings, count and the three names the hub tile shows. All derived,
- * so a listing added to `plumbers.js` shows up in the count and the tile
- * without anyone having to remember to update them here.
+ * One published category's rows, in DB order: the operator's featured pick
+ * (if any) first, then the rest oldest-first. `select=*` is safe here — the
+ * table has no column this repo shouldn't see, unlike Event/Classified, which
+ * carry an operator-only `notes` field this project never reads.
+ *
+ * Throws on anything other than a clean 200 with a JSON array, on purpose: a
+ * silent empty directory (RLS denying `anon` with a 200, a typo'd category, a
+ * network blip) is worse than a build that fails loudly and gets noticed.
  */
-export const categories = rawCategories.map((category) => {
-  const page = pages[category.slug];
-  if (!page) return category;
+async function fetchListings(slug) {
+  const url =
+    `${SUPABASE_URL}/rest/v1/DirectoryListing` +
+    `?category=eq.${encodeURIComponent(slug)}&order=featured.desc,createdAt.asc&select=*`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+      },
+    });
+  } catch (cause) {
+    throw new Error(`Directory: could not reach Supabase for "${slug}" listings.`, { cause });
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(
+      `Directory: fetching "${slug}" listings failed with ${response.status} ${response.statusText}. ${body}`.trim(),
+    );
+  }
+
+  const listings = await response.json();
+  if (!Array.isArray(listings)) {
+    throw new Error(`Directory: unexpected response fetching "${slug}" listings (not an array).`);
+  }
+  return listings;
+}
+
+/**
+ * Folds a published category's fetched listings into its taxonomy entry.
+ * A category with no `listings` (not `published`) passes through unchanged —
+ * the build queue, same as before.
+ *
+ * Pulled out as its own function, rather than inlined in the `.map` below, so
+ * it can be unit tested against a synthetic `listings` array without needing
+ * the network fetch above — see tests/directory.spec.js.
+ */
+export function deriveCategory(category, listings) {
+  if (!listings) return category;
+
+  // At most one `featured: true` row per category is enforced server-side in
+  // the ad manager (a transaction, not this repo's job to re-check) — `find`
+  // rather than `filter` on purpose, so this still behaves sanely if that
+  // ever slipped.
+  const featuredListing = listings.find((listing) => listing.featured) ?? null;
+  const rest = listings.filter((listing) => listing !== featuredListing);
+
+  // The hub tile teaser: the featured listing's name leads when there is one,
+  // then fill to three with the rest in the order the page groups them.
+  const featuredTeaser = [
+    ...(featuredListing ? [featuredListing.name] : []),
+    ...rest.map((listing) => listing.name),
+  ].slice(0, 3);
 
   return {
     ...category,
     href: category.href ?? `${BASE}/${category.slug}`,
-    intro: page.intro,
-    listings: page.listings,
-    count: page.listings.length,
-    featured: page.listings.slice(0, 3).map((listing) => listing.name),
+    listings,
+    featuredListing,
+    count: listings.length,
+    featured: featuredTeaser,
   };
-});
+}
+
+const publishedCategories = rawCategories.filter((category) => category.published);
+
+// Only the categories with `published: true` fetch anything — the same gate
+// the old `pages` map enforced, so a couple of rows added to `hairdressers`
+// from the ad manager's new /directory page can't spawn a half-built public
+// page before its intro copy is written and it clears the listings minimum
+// `tests/directory.spec.js` enforces.
+const fetchedListings = await Promise.all(
+  publishedCategories.map((category) => fetchListings(category.slug)),
+);
+const listingsBySlug = new Map(
+  publishedCategories.map((category, index) => [category.slug, fetchedListings[index]]),
+);
+
+/**
+ * The taxonomy with each published category's fetched listings folded in —
+ * its URL, listings, featured pick, count and the (up to three) names the hub
+ * tile teaser shows. All derived, so a listing added in the ad manager shows
+ * up here on the next build without anyone touching this file.
+ */
+export const categories = rawCategories.map((category) =>
+  deriveCategory(category, listingsBySlug.get(category.slug)),
+);
 
 /** The categories the hub has somewhere to send a reader. */
 export const liveCategories = categories.filter((category) => category.href);

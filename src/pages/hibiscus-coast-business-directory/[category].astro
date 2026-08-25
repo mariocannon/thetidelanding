@@ -1,8 +1,9 @@
 ---
 // One page per published category in the business directory. Every one of them
-// comes from `src/data/directory/<slug>.js` via `pagedCategories`, so adding a
-// category is a data file and a line in that folder's `pages` map — never a new
-// copy of this file.
+// comes from `pagedCategories` in `src/data/directory/index.js`, whose
+// listings are fetched from the ad manager's `DirectoryListing` table at
+// build time — so adding a category is `published: true` and an `intro` on
+// its taxonomy entry, never a new copy of this file.
 //
 // The temptation a route like this creates is twenty pages of the same shape
 // with nothing in them. `tests/directory.spec.js` is the thing standing in the
@@ -26,10 +27,25 @@ const UPDATED = '25 August 2026';
 
 // Grouped in the towns file's order rather than the listings' — the page reads
 // down the Coast the way someone driving it would, and the order can't drift
-// when a listing is added in the middle.
+// when a listing is added in the middle. The featured pick (if any) leads the
+// page on its own, above these groups, so it's excluded here rather than
+// printed twice.
 const byTown = towns
-  .map((town) => ({ town, listings: category.listings.filter((listing) => listing.town === town) }))
+  .map((town) => ({
+    town,
+    listings: category.listings.filter(
+      (listing) => listing.town === town && listing !== category.featuredListing,
+    ),
+  }))
   .filter((group) => group.listings.length > 0);
+
+// Same order the page prints in: the featured listing leads, then everyone
+// else in town order — not the DB's featured-then-createdAt order, which
+// doesn't read the way the page does.
+const orderedListings = [
+  ...(category.featuredListing ? [category.featuredListing] : []),
+  ...byTown.flatMap((group) => group.listings),
+];
 
 const title = `${category.name} on the Hibiscus Coast | The Tide`;
 const description = `${category.count} ${category.name.toLowerCase()} based on the Hibiscus Coast — Orewa, Whangaparāoa, Silverdale, Red Beach and around — kept by hand by The Tide.`;
@@ -64,7 +80,7 @@ const itemListJsonLd = {
   '@type': 'ItemList',
   name: `${category.name} on the Hibiscus Coast`,
   description,
-  itemListElement: category.listings.map((listing, index) => ({
+  itemListElement: orderedListings.map((listing, index) => ({
     '@type': 'ListItem',
     position: index + 1,
     item: {
@@ -95,6 +111,33 @@ const itemListJsonLd = {
   ]}
   jsonLd={[breadcrumbJsonLd, itemListJsonLd]}
 >
+  {category.featuredListing && (
+    <section class="featured-listing">
+      <p class="featured-eyebrow">Featured</p>
+      <ul class="listings">
+        <li class="card featured-card" id={slug(category.featuredListing.name)}>
+          <h3 class="card-name">
+            {category.featuredListing.url ? (
+              <a href={category.featuredListing.url} target="_blank" rel="noopener">
+                {category.featuredListing.name}
+              </a>
+            ) : (
+              category.featuredListing.name
+            )}
+          </h3>
+          <p class="card-blurb">{category.featuredListing.blurb}</p>
+          {category.featuredListing.phone && (
+            <p class="card-phone">
+              <a href={`tel:${category.featuredListing.phone.replace(/\s+/g, '')}`}>
+                {category.featuredListing.phone}
+              </a>
+            </p>
+          )}
+        </li>
+      </ul>
+    </section>
+  )}
+
   {byTown.map((group) => (
     <section class="town">
       <h2 class="town-name">{group.town}</h2>
@@ -140,6 +183,34 @@ const itemListJsonLd = {
 </Directory>
 
 <style>
+  /* The operator's pick, pulled out above the town groups — the same pattern
+     the ad manager already uses for a featured event or classified: it leads
+     the block. Reuses the brand's existing Steel Blue / Sea Glass tokens,
+     nothing new. */
+  .featured-listing {
+    margin-top: 2rem;
+  }
+
+  .featured-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #23313c;
+    background: #a2c5d3;
+    border-radius: 999px;
+  }
+
+  .featured-card {
+    background: rgba(162, 197, 211, 0.16);
+    border-color: #45758c;
+    border-width: 1.5px;
+  }
+
   .town {
     margin-top: 2rem;
   }
