@@ -1,0 +1,63 @@
+{
+  "issue": {
+    "number": 1,
+    "month": "September",
+    "label": "September 2026",
+    "slug": "2026-09",
+    "kicker": "The Tide — Local Gardening Guide",
+    "intro": "Spring's here, Coasties, and there's plenty for the garden to be getting on with."
+  },
+  "tips": [
+    {
+      "lead": "Feed the soil before you feed the garden.",
+      "body": "Dig in compost, well-rotted manure and a slow-release fertiliser now, ahead of the big spring and summer plantings — easier to do while beds are still empty than once they're full.",
+      "icon": "leaf"
+    },
+    {
+      "lead": "Mulch while the ground's still moist.",
+      "body": "A layer around plants and tree roots holds onto spring moisture as the days warm up, and it'll save you watering duties later on.",
+      "icon": "droplet"
+    },
+    {
+      "lead": "Watch for slugs and snails.",
+      "body": "They come out of hibernation this month with an appetite for tender new growth. Pellets, traps or a simple barrier around seedlings will save some heartbreak.",
+      "icon": "bug"
+    },
+    {
+      "lead": "Hold your nerve on the tender stuff.",
+      "body": "Coastal gardens on the Hibiscus Coast are about as close to frost-free as Auckland gets, but late cold snaps can still catch tomatoes, courgettes and other warm-season seedlings out — more so if you're a little inland or in a low-lying spot. Keep them under cover a while longer; October's their month.",
+      "icon": "frost"
+    }
+  ],
+  "plantingCalendar": {
+    "groups": [
+      {
+        "tag": "Under cover",
+        "body": "Tomato, capsicum, chilli, eggplant, courgette, cucumber, corn, beans, pumpkin, squash, melon and basil all want sowing now, in trays or a mini greenhouse. Hold them there until the soil's properly warmed and the frost risk has passed — for most of the Coast that's October, with Labour Weekend the traditional marker for planting tomatoes out.",
+        "icon": "tray"
+      },
+      {
+        "tag": "Direct sow",
+        "body": "Carrots, beetroot, parsnip, radish, leeks, lettuce, spinach, silverbeet, peas, swede, turnips, spring onions, celery, kale, pak choi, rocket and herbs like coriander, parsley, dill and chives can all go direct into prepared beds. It's also the month to get seed potatoes chitting and into the ground, and to plant out asparagus crowns, rhubarb and new strawberry plants.",
+        "icon": "seed"
+      },
+      {
+        "tag": "Flowers & colour",
+        "body": "Sow sweet peas, cosmos, marigold, zinnia and sunflower now (some prefer starting under cover first), tuck in dahlia tubers and begonias for summer blooms, and grab a punnet of pansies or violas if you want colour straight away.",
+        "icon": "flower"
+      }
+    ],
+    "frostNote": "Our stretch of coast is close to frost-free, but every gardening guide we checked still counsels a little caution in September — cold nights can catch young seedlings out before the soil's truly warmed. If you're gardening inland or somewhere low-lying, it's worth being a touch more patient than your coastal neighbours."
+  },
+  "produceSwaps": {
+    "intro": "Got a glut of silverbeet, or more lemons than you know what to do with? Bring your extras along and swap with fellow Coasties.",
+    "listing": {
+      "placeholder": true,
+      "location": "confirm venue",
+      "date": "confirm date",
+      "time": "confirm time",
+      "bring": "any home-grown produce, seedlings, seeds or cuttings you'd like to swap — take home whatever catches your eye, no cash needed.",
+      "organiser": "confirm organiser/contact"
+    }
+  }
+}

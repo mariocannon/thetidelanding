@@ -1,0 +1,706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Tide — Local Gardening Guide</title>
+    <style>
+      /* Fonts referenced from ../billboard/ rather than duplicated, same
+         approach design/banner/facebook.html already uses — one checked-in
+         copy of each, all SIL Open Font License. */
+      @font-face {
+        font-family: 'Baloo 2';
+        font-weight: 800;
+        src: url('../billboard/baloo2-800.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('../billboard/archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        /* Declared over 100 900 like billboard.html, but verified (see
+           README) to actually render distinct weights at 400 vs 600 vs
+           700+ rather than collapsing to one static face — body copy below
+           is set at 400, not the semibold the filename suggests. */
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('../billboard/inter-600.woff2') format('woff2');
+      }
+
+      /* Palette lifted straight from bizdata/docs/BRANDING.md §1. No new
+         tokens added for the 2026-08 redesign — every accent below (icon
+         badges, card tints, the wave-rule divider) is built from these
+         eight values only. */
+      :root {
+        --foam: #faf5ea;
+        --sand: #f0e7d6;
+        --paper: #fffdf8;
+        --harbor: #23313c;
+        --slate: #5a6672;
+        --driftwood: #8a8272;
+        --steel: #45758c;
+        --seaglass: #a2c5d3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--paper);
+        color: var(--harbor);
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+        font-size: 12.5pt;
+        line-height: 1.6;
+      }
+
+      /* Print sizing. render.mjs passes matching format/margin options to
+         page.pdf() — see the README for why both are set. */
+      @page {
+        size: A4;
+        margin: 22mm 20mm 26mm;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        color: var(--harbor);
+        margin: 0;
+        /* Headings otherwise inherit body's line-height: 1.6, sized for
+           paragraphs — on a single-line H2 that pads out ~15px of dead
+           space nobody asked for. Tightened here rather than by squeezing
+           card padding, which is where the "more breathing room" ask
+           actually wants the space spent. */
+        line-height: 1.15;
+      }
+
+      p {
+        margin: 0 0 0.9em;
+      }
+
+      p:last-child {
+        margin-bottom: 0;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 10.5pt;
+        line-height: 1.2;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--steel);
+        margin: 0 0 8px;
+      }
+
+      .eyebrow::before {
+        content: '';
+        width: 30px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--seaglass);
+      }
+
+      /* ---------- Icon system ----------
+         One small hand-drawn line-icon set, defined once as <symbol>s and
+         reused via <use> everywhere a page needs an accent — the section
+         headers, tip cards, calendar groups, the frost callout, the swap
+         listing's fields and the cover's "what's inside" row. Every shape
+         resolves its colour from the CSS `color` property on whichever
+         wrapper it sits in (`currentColor`), so the same 14 symbols serve
+         every context without duplicating markup. This is the thread that
+         ties the cover, the three section pages and design/banner/
+         gardening-guide.html's own sprout tile into one family — see the
+         README for the full icon-key reference. */
+
+      .icon {
+        display: block;
+      }
+
+      /* Steel Blue rounded-square tile, Foam icon — the one constant device
+         repeated at the top of every section page (and, smaller, in the
+         frost callout and the cover's feature row), so a reader flipping
+         through feels the same hand throughout rather than three unrelated
+         pages. */
+      .tile-icon {
+        flex: 0 0 auto;
+        width: 46px;
+        height: 46px;
+        border-radius: 14px;
+        background: var(--steel);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .tile-icon .icon {
+        width: 24px;
+        height: 24px;
+        color: var(--foam);
+      }
+
+      .tile-icon.sm {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+      }
+
+      .tile-icon.sm .icon {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* ---------- Cover page ---------- */
+
+      .cover {
+        position: relative;
+        min-height: 240mm; /* fills an A4 content area so the section that
+                               follows starts on its own page */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        /* Reserves room for the wave band + colophon at the foot of the
+           page and centers the logo/kicker/h1/intro/badge/features block in
+           the space above it, rather than in the full 240mm box — centering
+           on the full height (now that the wash is a continuous, seamless
+           background rather than cutting out partway down) left an
+           oversized, unbalanced gap between the badge and the footer. */
+        padding-bottom: 78mm;
+        text-align: center;
+        break-after: page;
+        page-break-after: always;
+        overflow: hidden;
+      }
+
+      /* Both decorative layers used to bleed past .cover via negative
+         offsets (e.g. inset: -30mm ... ) on the assumption the page would
+         let them run into the print margin. Playwright's page.pdf() clips
+         at the printable content-box edge instead, so that bled-off portion
+         was silently cut — the wash lost ~90mm off its bottom and ended
+         mid-page, and the waves lost their intended off-page anchor
+         entirely. Both now stay fully inside .cover's own box (which
+         .cover already clips with overflow: hidden), so there's nothing
+         left relying on margin bleed. Untouched by the 2026-08 redesign —
+         this fix stays exactly as it was. */
+      .cover .wash {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 70% at 50% 0%, var(--foam) 0%, var(--sand) 100%);
+        z-index: -1;
+      }
+
+      .cover .waves {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 70mm;
+        display: block;
+        z-index: -1;
+      }
+
+      .cover img.logo {
+        width: 92px;
+        height: auto;
+        margin-bottom: 22px;
+      }
+
+      .cover .badge {
+        display: inline-block;
+        padding: 7px 18px 8px;
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 10pt;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--steel);
+        background: rgba(162, 197, 211, 0.28);
+        border: 1.5px solid rgba(69, 117, 140, 0.35);
+        border-radius: 999px;
+        margin-bottom: 0;
+      }
+
+      .cover .kicker {
+        font-weight: 700;
+        font-size: 12pt;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--steel);
+        margin: 0 0 14px;
+      }
+
+      .cover h1 {
+        font-size: 40pt;
+        line-height: 1.05;
+        letter-spacing: -0.01em;
+      }
+
+      .cover h1 em {
+        font-style: normal;
+        color: var(--steel);
+      }
+
+      .cover .intro {
+        max-width: 30em;
+        margin: 22px auto 0;
+        font-size: 13.5pt;
+        line-height: 1.55;
+        color: var(--slate);
+      }
+
+      /* A small "what's inside" row previewing the three fixed sections —
+         new in the 2026-08 redesign. Sits in what used to be a large empty
+         gap between the badge and the footer reserve (see .cover's
+         padding-bottom comment), using the same tile-icon device the
+         section pages open with, so the cover reads as a contents preview
+         rather than a dead end before the wave. Purely decorative/
+         structural chrome — the three labels are the fixed section names
+         from template.html, not per-issue content, so this needs no
+         content.json field. */
+      .cover-features {
+        display: flex;
+        gap: 44px;
+        margin-top: 34px;
+      }
+
+      .cover-features .feature {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .cover-features .feature span {
+        font-weight: 700;
+        font-size: 9.5pt;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--steel);
+      }
+
+      .cover .colophon {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 40mm; /* clears the waves' topmost crest (see .waves) with
+                          room to spare, so the line sits on the plain wash,
+                          not across the wave graphic where it loses
+                          contrast */
+        font-size: 9.5pt;
+        letter-spacing: 0.04em;
+        color: var(--driftwood);
+      }
+
+      /* ---------- Section pages ---------- */
+
+      .section {
+        break-before: page;
+        page-break-before: always;
+      }
+
+      /* Icon tile + eyebrow/H2 stack, replacing the old bare eyebrow-then-H2
+         pairing repeated identically on all three pages. Each section keeps
+         its own icon (trowel / calendar / swap arrows), so the three pages
+         are distinguishable at a glance instead of reading as the same
+         template three times. */
+      .section-head {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .section-head .eyebrow {
+        margin-bottom: 4px;
+      }
+
+      .section h2 {
+        font-size: 24pt;
+        margin-bottom: 0;
+      }
+
+      /* A small recurring squiggle echoing the cover's waves, used once as
+         a divider under every section H2 — the "subtle motif tying pages
+         together" the brief asked about, without putting copy anywhere
+         near the actual wave graphic (which stays cover-only). */
+      .wave-rule {
+        display: block;
+        width: 96px;
+        height: 12px;
+        color: var(--seaglass);
+        margin: 8px 0 12px;
+      }
+
+      /* ---------- Gardening tips ---------- */
+
+      .tip-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        background: var(--sand);
+        border-radius: 14px;
+        padding: 13px 20px;
+        margin-bottom: 11px;
+        box-shadow: 0 2px 10px rgba(35, 49, 60, 0.07);
+      }
+
+      /* Sea Glass fill + Steel Blue icon — the tip section's own pairing,
+         distinct from the calendar section's inverted Steel-fill/Foam-icon
+         circle below, so the two list-style sections still read apart even
+         though both are now "icon + card" in shape. */
+      .tip-icon {
+        flex: 0 0 auto;
+        width: 40px;
+        height: 40px;
+        margin-top: 2px;
+        border-radius: 50%;
+        background: var(--seaglass);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .tip-icon .icon {
+        width: 20px;
+        height: 20px;
+        color: var(--steel);
+      }
+
+      .tip-body {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .tip-card .lead {
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+
+      .tip-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* ---------- Planting calendar ---------- */
+
+      .calendar-group {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        background: rgba(162, 197, 211, 0.16);
+        border: 1px solid rgba(69, 117, 140, 0.16);
+        border-radius: 14px;
+        padding: 12px 20px;
+        margin-bottom: 10px;
+      }
+
+      .cal-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      /* Inverted from .tip-icon on purpose (Steel fill, Foam icon) — see
+         the .tip-icon comment above. */
+      .cal-icon {
+        flex: 0 0 auto;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--steel);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .cal-icon .icon {
+        width: 18px;
+        height: 18px;
+        color: var(--foam);
+      }
+
+      .calendar-group .tag {
+        display: inline-block;
+        font-family: 'Archivo Black', sans-serif;
+        font-weight: 400;
+        font-size: 9.5pt;
+        line-height: 1.2;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--harbor);
+        background: var(--seaglass);
+        padding: 5px 12px 6px;
+        border-radius: 6px;
+      }
+
+      .calendar-group p:last-child {
+        margin-bottom: 0;
+      }
+
+      .frost-note {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        background: var(--sand);
+        border-radius: 14px;
+        padding: 12px 20px;
+        margin-top: 0;
+        box-shadow: 0 2px 10px rgba(35, 49, 60, 0.07);
+      }
+
+      .frost-note .note-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+
+      .frost-note .note-label {
+        margin-bottom: 0;
+      }
+
+      .frost-note p:last-child {
+        font-style: italic;
+        color: var(--slate);
+      }
+
+      /* ---------- Community produce swaps ---------- */
+
+      .swap-intro {
+        font-size: 13pt;
+        color: var(--harbor);
+      }
+
+      .swap-listing {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        background: var(--sand);
+        border: 1.5px dashed var(--steel);
+        border-radius: 14px;
+        padding: 16px 22px;
+        margin-top: 6px;
+        box-shadow: 0 2px 10px rgba(35, 49, 60, 0.07);
+      }
+
+      .swap-listing.is-real {
+        border-style: solid;
+      }
+
+      .swap-listing .placeholder-tag {
+        margin-bottom: 12px;
+      }
+
+      .swap-listing dl {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 9.5em 1fr;
+        row-gap: 10px;
+        column-gap: 14px;
+      }
+
+      .swap-listing dt {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: var(--harbor);
+      }
+
+      /* Fixed per field (location/date/time/bring/organiser), not
+         content-driven — see the .dl-icon README note. */
+      .dl-icon {
+        width: 16px;
+        height: 16px;
+        color: var(--steel);
+        flex: 0 0 auto;
+      }
+
+      .swap-listing dd {
+        margin: 0;
+        color: var(--slate);
+      }
+
+      .swap-listing.is-placeholder dd {
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Icon library: 14 hand-drawn symbols, defined once and reused via
+         <use> throughout the document. Every shape resolves colour from
+         `currentColor`, i.e. whatever `color` the wrapping element sets —
+         see the ".icon" comment in <style> above and the README's icon-key
+         reference. This block renders nothing itself (0×0, position:
+         absolute) and only needs to exist once. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="icon-leaf" viewBox="0 0 24 24">
+          <path d="M5 19c0-8 4-13 14-14-1 10-6 14-14 14Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M5 19c3-3 6-7 9-11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="icon-droplet" viewBox="0 0 24 24">
+          <path d="M12 3c4 5 7 9 7 12.5A7 7 0 0 1 5 15.5C5 12 8 8 12 3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="icon-bug" viewBox="0 0 24 24">
+          <ellipse cx="12" cy="14" rx="5" ry="6" fill="none" stroke="currentColor" stroke-width="1.9"/>
+          <path d="M12 8V5M9 6l-1.5-2M15 6l1.5-2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M7 12H4M7 16H4M17 12h3M17 16h3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="icon-frost" viewBox="0 0 24 24">
+          <path d="M12 3v18M4.8 7.5l14.4 9M19.2 7.5l-14.4 9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="icon-tray" viewBox="0 0 24 24">
+          <path d="M5 9h14l-1.5 11h-11L5 9Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M12 9V4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M12 4c0-1.8-1.8-2.6-3.5-2.6 0 1.8 1.4 3.2 3.5 2.6Z" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-seed" viewBox="0 0 24 24">
+          <ellipse cx="9" cy="15" rx="2.4" ry="3.4" transform="rotate(-20 9 15)" fill="currentColor" stroke="none"/>
+          <ellipse cx="16" cy="17" rx="1.9" ry="2.6" transform="rotate(12 16 17)" fill="currentColor" stroke="none"/>
+          <path d="M12 4v6M9 7l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="icon-flower" viewBox="0 0 24 24">
+          <circle cx="12" cy="6.5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="17.5" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="12" cy="17.5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="6.5" cy="12" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <circle cx="12" cy="12" r="2.1" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-trowel" viewBox="0 0 24 24">
+          <path d="M12 3v7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M9 4.2h6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M8 11c0 4 1.8 7 4 9.5 2.2-2.5 4-5.5 4-9.5a4 4 0 0 0-8 0Z" fill="currentColor" stroke="none"/>
+        </symbol>
+        <symbol id="icon-calendar" viewBox="0 0 24 24">
+          <rect x="4" y="5" width="16" height="15" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.9"/>
+          <path d="M4 9.5h16" fill="none" stroke="currentColor" stroke-width="1.9"/>
+          <path d="M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        </symbol>
+        <symbol id="icon-swap" viewBox="0 0 24 24">
+          <path d="M4 8h13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 4.3l3 3.7-3 3.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M20 16H7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 20.3l-3-3.7 3-3.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="icon-pin" viewBox="0 0 24 24">
+          <path d="M12 21s7-7.2 7-12a7 7 0 0 0-14 0c0 4.8 7 12 7 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+          <circle cx="12" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.9"/>
+        </symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.9"/>
+          <path d="M12 7.5v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </symbol>
+        <symbol id="icon-basket" viewBox="0 0 24 24">
+          <path d="M5 10h14l-1.6 9h-10.8L5 10Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M9 10c0-4 1.5-6.2 3-6.2s3 2.2 3 6.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M5 10h14" fill="none" stroke="currentColor" stroke-width="1.9"/>
+        </symbol>
+        <symbol id="icon-person" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/>
+          <path d="M5 20c1-4.5 4-6.5 7-6.5s6 2 7 6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="cover">
+      <div class="wash"></div>
+      <img class="logo" src="../../public/logo.webp" alt="The Tide" />
+      <p class="kicker">{{ISSUE_KICKER}}</p>
+      <h1>Local Gardening <em>Guide</em></h1>
+      <p class="intro">{{ISSUE_INTRO}}</p>
+      <p class="badge">Issue {{ISSUE_NUMBER}} · {{ISSUE_LABEL}}</p>
+
+      <div class="cover-features">
+        <div class="feature">
+          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-trowel"></use></svg></div>
+          <span>Tips</span>
+        </div>
+        <div class="feature">
+          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg></div>
+          <span>Calendar</span>
+        </div>
+        <div class="feature">
+          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-swap"></use></svg></div>
+          <span>Swaps</span>
+        </div>
+      </div>
+
+      <p class="colophon">thetide.co.nz — a Beehiiv extra for Coasties, not a web page</p>
+
+      <svg class="waves" viewBox="0 0 1408 176" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="#a2c5d3"
+          opacity="0.45"
+          d="M0,74 C238,124 476,22 712,48 C948,74 1176,150 1408,100 L1408,176 L0,176 Z"
+        ></path>
+        <path
+          fill="#a2c5d3"
+          d="M0,124 C276,74 510,162 744,138 C978,114 1214,74 1408,138 L1408,176 L0,176 Z"
+        ></path>
+      </svg>
+    </div>
+
+    <section class="section" id="tips">
+      <div class="section-head">
+        <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-trowel"></use></svg></div>
+        <div>
+          <p class="eyebrow">Section 01</p>
+          <h2>Gardening Tips</h2>
+        </div>
+      </div>
+      <svg class="wave-rule" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,9 C10,2 20,2 30,9 C40,16 50,16 60,9 C70,2 80,2 90,9 C100,16 110,16 120,9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <!--TIPS_ITEMS-->
+    </section>
+
+    <section class="section" id="calendar">
+      <div class="section-head">
+        <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg></div>
+        <div>
+          <p class="eyebrow">Section 02</p>
+          <h2>{{ISSUE_MONTH}} Planting Calendar</h2>
+        </div>
+      </div>
+      <svg class="wave-rule" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,9 C10,2 20,2 30,9 C40,16 50,16 60,9 C70,2 80,2 90,9 C100,16 110,16 120,9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <!--CALENDAR_GROUPS-->
+      <div class="frost-note">
+        <div class="note-head">
+          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-frost"></use></svg></div>
+          <p class="eyebrow note-label">A note on frost</p>
+        </div>
+        <p>{{FROST_NOTE}}</p>
+      </div>
+    </section>
+
+    <section class="section" id="swaps">
+      <div class="section-head">
+        <div class="tile-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-swap"></use></svg></div>
+        <div>
+          <p class="eyebrow">Section 03</p>
+          <h2>Community Produce Swaps</h2>
+        </div>
+      </div>
+      <svg class="wave-rule" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,9 C10,2 20,2 30,9 C40,16 50,16 60,9 C70,2 80,2 90,9 C100,16 110,16 120,9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <p class="swap-intro">{{SWAP_INTRO}}</p>
+      <!--SWAP_LISTING-->
+    </section>
+  </body>
+</html>

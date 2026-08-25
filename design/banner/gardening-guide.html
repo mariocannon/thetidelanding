@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Tide gardening guide promo banner 750×300</title>
+    <style>
+      /* Fonts live with the billboard pages so there's one checked-in copy of
+         each: Baloo 2 (headline), Archivo Black (CTA), Inter (the rest). */
+      @font-face {
+        font-family: 'Baloo 2';
+        font-weight: 800;
+        src: url('../billboard/baloo2-800.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('../billboard/archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('../billboard/inter-600.woff2') format('woff2');
+      }
+
+      /* Palette lifted straight from src/pages/index.astro, same names the
+         other banners use. No new colours — the sprout tile below is built
+         entirely out of Sea Glass and Steel Blue, both already fills in the
+         site's system, so unlike facebook.html this banner needs no
+         off-palette exception. */
+      :root {
+        --sand: #f0e7d6;
+        --sand-light: #faf5ea;
+        --ink: #23313c;
+        --sea: #45758c;
+        --sky: #a2c5d3;
+        --slate: #5a6672;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: #d8cdb8;
+      }
+
+      /* The render script crops the top-left 750×300 of the page. */
+      .banner {
+        position: relative;
+        width: 750px;
+        height: 300px;
+        overflow: hidden;
+        background: var(--sand);
+        font-family: 'Inter', sans-serif;
+        color: var(--ink);
+      }
+
+      /* The site's own background wash, tightened to the banner's crop —
+         same treatment as coffee-catchup.html and facebook.html, and the
+         same wash gardening-guide/template.html uses on its cover page,
+         which is the visual thread tying this promo back to the PDF. */
+      .glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 90% at 50% 0%, var(--sand-light) 0%, var(--sand) 60%);
+      }
+
+      .waves {
+        position: absolute;
+        inset: auto 0 0;
+        width: 100%;
+        height: 78px;
+        display: block;
+      }
+
+      .frame {
+        position: absolute;
+        inset: 13px;
+        border: 2px solid rgba(69, 117, 140, 0.3);
+        border-radius: 16px;
+      }
+
+      /* Copy on the left, a sprout tile and the logo stacked on the right —
+         the same two-column shape facebook.html uses at 400px tall, sized
+         down for 300px. */
+      main {
+        position: relative;
+        height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 100px;
+        align-items: center;
+        gap: 24px;
+        padding: 26px 30px 28px;
+      }
+
+      .copy {
+        display: grid;
+        justify-items: start;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--sea);
+      }
+
+      .eyebrow::before {
+        content: '';
+        width: 24px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--sea);
+      }
+
+      /* Same headline text and em treatment as gardening-guide/template.html's
+         cover h1, so the two read as the same product at a glance. */
+      h1 {
+        margin-top: 10px;
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        font-size: 38px;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        color: var(--ink);
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--sea);
+      }
+
+      /* EDIT ME: the CTA below is the whole ask. It's set at a fixed size and
+         told not to wrap, so a longer line runs into the flank column
+         instead of shrinking. */
+      .cta {
+        margin-top: 18px;
+      }
+
+      .url {
+        display: inline-block;
+        padding: 11px 22px 13px;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 17px;
+        white-space: nowrap;
+        color: var(--sand-light);
+        background: var(--ink);
+        border-radius: 10px;
+        box-shadow: 0 8px 18px rgba(35, 49, 60, 0.24);
+      }
+
+      /* The logo is portrait (783×979), so the stack is sized off its
+         rendered height: tile + gap + logo has to stay inside main's 246px
+         of content box, or the logo's bottom is cropped by the banner edge. */
+      .flank {
+        display: grid;
+        justify-items: center;
+        gap: 16px;
+      }
+
+      .tile {
+        width: 100px;
+        height: 100px;
+        display: block;
+        filter: drop-shadow(0 10px 20px rgba(35, 49, 60, 0.22));
+      }
+
+      .logo {
+        width: 78px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <div class="glow"></div>
+
+      <svg class="waves" viewBox="0 0 750 78" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="#a2c5d3"
+          opacity="0.45"
+          d="M0,31.5 C126.3,54.75 253.3,9 378.2,21 C504.6,31.5 626,67.5 750,44.25 L750,78 L0,78 Z"
+        ></path>
+        <path
+          fill="#a2c5d3"
+          d="M0,54.75 C146.4,31.5 271.35,71.25 396.3,60 C521.1,49.5 646.1,31.5 750,60 L750,78 L0,78 Z"
+        ></path>
+      </svg>
+
+      <div class="frame"></div>
+
+      <main>
+        <div class="copy">
+          <p class="eyebrow">Fresh this month</p>
+          <h1>Local Gardening <em>Guide</em></h1>
+          <div class="cta">
+            <div class="url">Grab our gardening guide here</div>
+          </div>
+        </div>
+
+        <div class="flank">
+          <svg class="tile" viewBox="0 0 100 100" aria-hidden="true">
+            <rect width="100" height="100" rx="22" fill="#45758c" />
+            <path d="M50 78V52" stroke="#faf5ea" stroke-width="5" stroke-linecap="round" />
+            <path
+              d="M50 52c0-14-12-20-24-20 0 14 10 24 24 20Z"
+              fill="#faf5ea"
+            />
+            <path
+              d="M50 58c0-12 11-17 21-17 0 12-9 21-21 17Z"
+              fill="#a2c5d3"
+            />
+            <path d="M34 82h32" stroke="#faf5ea" stroke-width="5" stroke-linecap="round" opacity="0.9" />
+          </svg>
+
+          <img class="logo" src="../../public/logo.webp" alt="The Tide" />
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

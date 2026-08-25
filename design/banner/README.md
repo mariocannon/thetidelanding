@@ -7,6 +7,7 @@ logo and type as `src/pages/index.astro`, laid out for a wide, short slot.
 | --- | --- | --- |
 | `thetide-coffee-catchup-1080x150.png` | 1080 × 150 | `coffee-catchup.html` |
 | `thetide-facebook-1080x400.png` | 1080 × 400 | `facebook.html` |
+| `thetide-gardening-guide-750x300.png` | 750 × 300 | `gardening-guide.html` |
 
 Rebuild after editing a page:
 
@@ -60,6 +61,34 @@ At 400px there's room to stack the tile and the logo in a right-hand column,
 which the 150px strip doesn't have. The logo is portrait, so that stack is
 sized off its rendered height: tile plus gap plus logo has to stay inside the
 304px of content box, or the logo's bottom is cropped by the banner edge.
+
+### `gardening-guide.html`, the gardening guide promo
+
+Promotes `design/gardening-guide/`'s monthly PDF inside the newsletter itself.
+The eyebrow, the headline (deliberately the same text and `em` treatment as
+the PDF cover's own `<h1>`, so the two read as one product) and the CTA pill
+are the whole ad — same "these lines are it" rule as the other two pages.
+
+**This banner has nowhere to link to.** The gardening guide is a Beehiiv
+email attachment only, by design — there's no landing page or URL for it.
+Unlike `facebook.html`, where the button's wording *requires* a hyperlink,
+this CTA ("Grab our gardening guide here") is written to work unlinked: place
+it next to the actual PDF attachment in the email rather than wiring it to a
+URL. If a future use needs it clickable (e.g. linking out to an archive page
+that doesn't exist yet), that's a decision for whoever places it, not
+something to invent here.
+
+Same nowrap rule as the other two: the headline and the CTA pill are sized
+for their current copy and don't wrap. The copy column is about 560px at its
+750px width (750 minus padding, the gap and the 100px flank column), which
+comfortably fits the current headline and CTA at their set sizes — recheck by
+re-rendering if either line gets much longer.
+
+The right-hand tile is a small sprout icon in Steel Blue and Sand Light/Sea
+Glass — no off-palette colour needed here, unlike Facebook's blue, since Sea
+Glass and Steel Blue are both already brand fills. It stacks above the logo
+the same way the Facebook tile does, sized off the logo's rendered height so
+neither is cropped by the banner edge.
 
 Fonts come from `../billboard/` so there's one checked-in copy of each: Baloo 2
 (headline), Archivo Black (URL tag) and Inter (everything else), all SIL Open

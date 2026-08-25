@@ -40,3 +40,4 @@ PY
 
 render coffee-catchup 1080 150
 render facebook 1080 400
+render gardening-guide 750 300
