@@ -11,6 +11,7 @@ then downsamples with Pillow for clean type and edges.
 | `thetide-northern-expressway-toll-question.png` (`render-question.mjs`) | 1080 × 1080 | `/questions` |
 | `home-social.png` (`render-home.mjs`) | 1200 × 630 | `/` |
 | `orewa-best-coffee-social.png` (`render-coffee.mjs`) | 1200 × 630 | `/orewa-best-coffee` |
+| `directory-social.png` (`render-directory.mjs`) | 1200 × 630 | `/hibiscus-coast-business-directory` — and every category page under it |
 | `submit-event-social.png`, `submit-classified-social.png` (`render-submit.mjs`) | 1200 × 630 | `/submit-event`, `/submit-classified` |
 
 Rebuild after the source page's copy changes:
@@ -20,8 +21,17 @@ npm run build
 node design/social/render-question.mjs
 node design/social/render-home.mjs
 node design/social/render-coffee.mjs
+node design/social/render-directory.mjs
 node design/social/render-submit.mjs
 ```
+
+`render-directory.mjs` is the one card shared by more than one page — the hub
+and all five category pages point their `og:image` at it, via the default in
+[`../../src/layouts/Directory.astro`](../../src/layouts/Directory.astro). It
+keeps the coverage line, because a card for a *local* directory has to name the
+locality to somebody who has never heard of us. That line wraps to two lines,
+so the whole stack is sized around it: grow the logo, headline or lede and the
+towns fall off the bottom edge. Look at the PNG after changing any of them.
 
 Needs Playwright's Chromium (already a dev dependency — `npx playwright
 install chromium` if it isn't downloaded yet). `render-question.mjs`

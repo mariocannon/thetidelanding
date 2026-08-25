@@ -1,58 +1,41 @@
 ---
-// The Tide — Orewa coffee roundup. List lives in `src/data/coffee.js`, kept by
-// hand the same way `issues.js` is. Same rule as every other page here:
-// nothing is fetched from anywhere else on load.
-import { coffee } from '../data/coffee.js';
+// Shared chrome for the business directory — the hub and every category page.
+//
+// The first layout in this repo, and it exists for one reason: the directory is
+// the first thing here that is more than one page of the same shape, and the
+// subscribe form is 60 lines of script nobody should be maintaining N copies of.
+// Astro still inlines the CSS, so the "one self-contained document, no external
+// requests on load" rule in astro.config.mjs holds exactly as before.
+//
+// Everything a page differs on comes in as a prop. Page-specific markup goes in
+// the default slot and is styled by the page's own scoped <style> block.
+const {
+  title,
+  description,
+  path,
+  robots = 'index, follow',
+  // One card for the whole section, rendered from the hub itself by
+  // design/social/render-directory.mjs. A per-category card would mean
+  // regenerating a PNG every time a listing lands, and a link preview for
+  // /…/plumbers reads perfectly well off the directory's own identity.
+  socialImage = '/social/directory-social.png',
+  socialImageAlt = 'The Tide — Hibiscus Coast business directory',
+  eyebrow,
+  heading,
+  lede,
+  updated,
+  // [{ name, href }] — the last entry is the current page and takes no href.
+  breadcrumb = [],
+  jsonLd = [],
+  // The roundup pages are a single column at 42rem; the hub carries a grid and
+  // wants more room. Passed down as a custom property so a page can widen the
+  // layout without having to reach into its scoped styles.
+  width = '42rem',
+} = Astro.props;
 
 const SITE = 'https://thetide.co.nz';
-const PATH = '/orewa-best-coffee';
-const UPDATED = '24 August 2026';
-
-const title = 'Best coffee in Orewa, NZ | The Tide';
-// Count comes from the data, not typed by hand, so the copy can't drift out
-// of sync the next time an entry is added or removed.
-const description = `Where Coasties actually go for coffee in Orewa — ${coffee.length} local cafés worth the trip, hand-picked and hand-kept by The Tide.`;
-
-// Structured data so a search engine can show this as a proper local list
-// rather than a wall of text. `address` is kept as a plain string — we know
-// each spot's landmark, not always its exact street number, and schema.org
-// accepts Text for `address` as well as a full PostalAddress. Every entry's
-// `location` already ends in "Orewa" (see coffee.js), so only the wider
-// region needs appending here.
-// Sits under the business directory's Cafés category, which covers the rest of
-// the Coast and hands Orewa off to this page rather than repeating it.
-const DIRECTORY = '/hibiscus-coast-business-directory';
-const breadcrumbJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'The Tide', item: `${SITE}/` },
-    { '@type': 'ListItem', position: 2, name: 'Business directory', item: `${SITE}${DIRECTORY}` },
-    { '@type': 'ListItem', position: 3, name: 'Cafés & coffee', item: `${SITE}${DIRECTORY}/cafes` },
-    { '@type': 'ListItem', position: 4, name: 'Best coffee in Orewa', item: `${SITE}${PATH}` },
-  ],
-};
-
-const itemListJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'ItemList',
-  name: 'Best coffee in Orewa',
-  description,
-  itemListElement: coffee.map((spot, index) => ({
-    '@type': 'ListItem',
-    position: index + 1,
-    item: {
-      '@type': 'CafeOrCoffeeShop',
-      name: spot.name,
-      address: `${spot.location}, Auckland, New Zealand`,
-      ...(spot.url ? { url: spot.url } : {}),
-    },
-  })),
-};
-
-// Same slugify a reader would expect: lets `/orewa-best-coffee#drifter` link
-// straight to one spot, for sharing a single recommendation.
-const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const canonical = `${SITE}${path}`;
+const socialImageUrl = `${SITE}${socialImage}`;
 ---
 
 <!doctype html>
@@ -62,24 +45,24 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href={`${SITE}${PATH}`} />
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonical} />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="The Tide" />
-    <meta property="og:url" content={`${SITE}${PATH}`} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={`${SITE}/social/orewa-best-coffee-social.png`} />
+    <meta property="og:image" content={socialImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Best coffee in Orewa — The Tide" />
+    <meta property="og:image:alt" content={socialImageAlt} />
     <meta property="og:locale" content="en_NZ" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${SITE}/social/orewa-best-coffee-social.png`} />
+    <meta name="twitter:image" content={socialImageUrl} />
 
     <meta name="theme-color" content="#f0e7d6" />
     <link
@@ -87,58 +70,33 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
     />
 
-    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} />
-    <script type="application/ld+json" set:html={JSON.stringify(itemListJsonLd)} />
+    {jsonLd.map((block) => <script type="application/ld+json" set:html={JSON.stringify(block)} />)}
   </head>
-  <body>
+  <body style={`--main-width: ${width}`}>
     <main>
       <a class="home" href="/">
         <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
       </a>
 
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="/">The Tide</a>
-        <span aria-hidden="true">/</span>
-        <a href={DIRECTORY}>Business directory</a>
-        <span aria-hidden="true">/</span>
-        <a href={`${DIRECTORY}/cafes`}>Cafés &amp; coffee</a>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">Best coffee in Orewa</span>
+        {breadcrumb.map((crumb, index) => (
+          <>
+            {index > 0 && <span aria-hidden="true">/</span>}
+            {crumb.href ? (
+              <a href={crumb.href}>{crumb.name}</a>
+            ) : (
+              <span aria-current="page">{crumb.name}</span>
+            )}
+          </>
+        ))}
       </nav>
 
-      <p class="eyebrow">Local roundup</p>
-      <h1>Best coffee in Orewa</h1>
-      <p class="lede">
-        Where Coasties actually go for a decent flat white — {coffee.length}{' '}
-        local spots worth the trip, no two of them alike.
-      </p>
-      <p class="updated">
-        Last updated {UPDATED} · a working list, we'll add to it as we find more
-      </p>
+      <p class="eyebrow">{eyebrow}</p>
+      <h1>{heading}</h1>
+      <p class="lede">{lede}</p>
+      <p class="updated">{updated}</p>
 
-      <ul class="spots">
-        {coffee.map((spot) => (
-          <li class="spot" id={slug(spot.name)}>
-            <h2 class="spot-name">
-              {spot.url ? (
-                <a href={spot.url} target="_blank" rel="noopener">
-                  {spot.name}
-                </a>
-              ) : (
-                spot.name
-              )}
-            </h2>
-            <address class="spot-location">{spot.location}</address>
-            <p class="spot-blurb">{spot.blurb}</p>
-          </li>
-        ))}
-      </ul>
-
-      <p class="feedback-note">
-        Know a spot that should be on this list? Email{' '}
-        <a href="mailto:hello@thetide.co.nz">hello@thetide.co.nz</a> and we'll
-        go try it.
-      </p>
+      <slot />
 
       <section id="subscribe">
         <p class="subscribe-pitch">
@@ -239,7 +197,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
   </body>
 </html>
 
-<style>
+<style is:global>
   :root {
     color-scheme: light;
   }
@@ -266,7 +224,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
   }
 
   main {
-    width: min(42rem, 100% - 2.5rem);
+    width: min(var(--main-width, 42rem), 100% - 2.5rem);
     margin-inline: auto;
     padding-block: 2.5rem 9rem;
     text-align: center;
@@ -331,16 +289,11 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
     color: #8a8272;
   }
 
-  .spots {
-    display: grid;
-    gap: 1rem;
-    margin-top: 2rem;
-    padding: 0;
-    list-style: none;
-  }
-
-  /* One card per spot, in the same white-on-sand card the issues list uses. */
-  .spot {
+  /* Shared by the hub's tiles and the category pages' listing cards — the same
+     white-on-sand card the issues list and the coffee roundup use. */
+  .card {
+    display: flex;
+    flex-direction: column;
     padding: 1.35rem 1.35rem 1.5rem;
     text-align: left;
     background: #fffdf8;
@@ -349,39 +302,29 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
     scroll-margin-top: 1.5rem;
   }
 
-  .spot:hover,
-  .spot:focus-within {
+  .card:hover,
+  .card:focus-within {
     border-color: rgba(69, 117, 140, 0.4);
   }
 
-  .spot-name {
+  .card-name {
     font-size: 1.2rem;
     font-weight: 700;
     line-height: 1.3;
   }
 
-  .spot-name a {
+  .card-name a {
     color: #23313c;
     text-decoration-color: rgba(69, 117, 140, 0.45);
     text-underline-offset: 0.15em;
   }
 
-  .spot-name a:hover,
-  .spot-name a:focus-visible {
+  .card-name a:hover,
+  .card-name a:focus-visible {
     color: #45758c;
   }
 
-  .spot-location {
-    margin-top: 0.3rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    font-style: normal;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #8a8272;
-  }
-
-  .spot-blurb {
+  .card-blurb {
     margin-top: 0.6rem;
     font-size: 0.95rem;
     line-height: 1.6;
@@ -389,7 +332,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
     text-wrap: pretty;
   }
 
-  .feedback-note {
+  .footnote {
     margin: 1.5rem auto 0;
     max-width: 30rem;
     font-size: 0.9rem;
@@ -398,7 +341,7 @@ const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(
     text-wrap: pretty;
   }
 
-  .feedback-note a {
+  .footnote a {
     color: #35657d;
     text-underline-offset: 0.15em;
   }

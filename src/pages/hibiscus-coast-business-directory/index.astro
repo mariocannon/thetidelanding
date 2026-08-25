@@ -1,0 +1,174 @@
+---
+// The Tide — Hibiscus Coast business directory hub. The taxonomy lives in
+// `src/data/directory/index.js`; the businesses inside each category live in a
+// sibling file per slug. Same rule as every other page here: nothing is fetched
+// from anywhere else on load.
+//
+// Category pages get built one at a time, so this hub only ever links to the
+// ones that exist (`liveCategories`). Until there are enough of those to be
+// worth landing on, the page ships `noindex, follow` and stays out of the
+// sitemap — see `isIndexable` in the data file.
+import Directory from '../../layouts/Directory.astro';
+import {
+  BASE,
+  categories,
+  isIndexable,
+  liveCategories,
+  towns,
+} from '../../data/directory/index.js';
+
+const SITE = 'https://thetide.co.nz';
+const UPDATED = '25 August 2026';
+
+const liveCount = liveCategories.length;
+
+// Everything still on the build queue, in wave order. Only ever shown while the
+// page is unindexed — the moment it goes public this block disappears on its
+// own, because a public directory shouldn't advertise its own empty shelves.
+const planned = categories.filter((category) => !category.href);
+
+const title = 'Hibiscus Coast business directory | The Tide';
+// Counts come from the data, not typed by hand, so the copy can't drift out of
+// sync the next time a category or a listing lands.
+const description = `Hand-picked local businesses across Orewa, Whangaparāoa, Silverdale, Red Beach and the rest of the Hibiscus Coast — ${liveCount} ${liveCount === 1 ? 'category' : 'categories'} kept by hand by The Tide.`;
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'The Tide', item: `${SITE}/` },
+    { '@type': 'ListItem', position: 2, name: 'Hibiscus Coast business directory', item: `${SITE}${BASE}` },
+  ],
+};
+
+// A CollectionPage whose ItemList is the categories — the hub describes the
+// sections, and each category page carries the businesses inside it. No
+// ratings anywhere: we don't collect them, and inventing them is both a lie
+// and a structured-data manual action waiting to happen.
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Hibiscus Coast business directory',
+  description,
+  url: `${SITE}${BASE}`,
+  isPartOf: { '@type': 'WebSite', name: 'The Tide', url: `${SITE}/` },
+  about: {
+    '@type': 'Place',
+    name: 'Hibiscus Coast',
+    address: { '@type': 'PostalAddress', addressRegion: 'Auckland', addressCountry: 'NZ' },
+  },
+  mainEntity: {
+    '@type': 'ItemList',
+    name: 'Business categories on the Hibiscus Coast',
+    itemListElement: liveCategories.map((category, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: category.name,
+      url: `${SITE}${category.href}`,
+    })),
+  },
+};
+---
+
+<Directory
+  title={title}
+  description={description}
+  path={BASE}
+  robots={isIndexable ? 'index, follow' : 'noindex, follow'}
+  eyebrow="Local directory"
+  heading="Hibiscus Coast business directory"
+  lede="The plumber who turns up, the café worth the detour, the mechanic who gives you the honest number. Businesses based on the Coast, listed by what they actually do."
+  updated={`Last updated ${UPDATED} · a working list, we'll keep adding to it`}
+  breadcrumb={[{ name: 'The Tide', href: '/' }, { name: 'Business directory' }]}
+  jsonLd={[breadcrumbJsonLd, collectionJsonLd]}
+  width="48rem"
+>
+  <ul class="categories">
+    {liveCategories.map((category) => (
+      <li class="card">
+        <h2 class="card-name">
+          <a class="category-link" href={category.href}>{category.name}</a>
+        </h2>
+        <p class="card-blurb">{category.tileBlurb}</p>
+        {category.featured?.length > 0 && (
+          <p class="category-featured">
+            {category.featured.join(' · ')}
+            {category.count > category.featured.length &&
+              ` · and ${category.count - category.featured.length} more`}
+          </p>
+        )}
+      </li>
+    ))}
+  </ul>
+
+  <p class="coverage">
+    Covering {towns.slice(0, -1).join(', ')} and {towns.at(-1)}.
+  </p>
+
+  {
+    !isIndexable && planned.length > 0 && (
+      <p class="planned">
+        <strong>Not yet published.</strong> Still to come: {planned.map((category) => category.name).join(', ')}.
+      </p>
+    )
+  }
+
+  <p class="footnote">
+    Run a business on the Coast, or know one that belongs here? Email{' '}
+    <a href="mailto:hello@thetide.co.nz">hello@thetide.co.nz</a> — or{' '}
+    <a href="/submit-classified">place a classified</a> and reach the whole
+    list at once.
+  </p>
+</Directory>
+
+<style>
+  /* Auto-fit so a short directory doesn't stretch two tiles into billboards
+     while the rest are still being written. */
+  .categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Real business names, not just a link — the tile should say something on
+     its own to anyone reading it, search engine or otherwise. */
+  .category-featured {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(35, 65, 90, 0.1);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #8a8272;
+    text-wrap: pretty;
+  }
+
+  .coverage {
+    margin: 1.5rem auto 0;
+    max-width: 34rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  /* Build-queue note. Only rendered while the page is unindexed, so it never
+     reaches a public reader. */
+  .planned {
+    margin: 1.25rem auto 0;
+    max-width: 34rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #8a8272;
+    background: rgba(162, 197, 211, 0.18);
+    border-radius: 0.65rem;
+    text-wrap: pretty;
+  }
+
+  .planned strong {
+    color: #45758c;
+  }
+</style>

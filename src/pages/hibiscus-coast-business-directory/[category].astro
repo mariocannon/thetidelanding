@@ -1,0 +1,195 @@
+---
+// One page per published category in the business directory. Every one of them
+// comes from `src/data/directory/<slug>.js` via `pagedCategories`, so adding a
+// category is a data file and a line in that folder's `pages` map — never a new
+// copy of this file.
+//
+// The temptation a route like this creates is twenty pages of the same shape
+// with nothing in them. `tests/directory.spec.js` is the thing standing in the
+// way: a category with fewer than five listings, or a filled-in intro, fails
+// the build.
+import Directory from '../../layouts/Directory.astro';
+import { BASE, isIndexable, pagedCategories, towns } from '../../data/directory/index.js';
+
+export function getStaticPaths() {
+  return pagedCategories.map((category) => ({
+    params: { category: category.slug },
+    props: { category },
+  }));
+}
+
+const { category } = Astro.props;
+
+const SITE = 'https://thetide.co.nz';
+const PATH = `${BASE}/${category.slug}`;
+const UPDATED = '25 August 2026';
+
+// Grouped in the towns file's order rather than the listings' — the page reads
+// down the Coast the way someone driving it would, and the order can't drift
+// when a listing is added in the middle.
+const byTown = towns
+  .map((town) => ({ town, listings: category.listings.filter((listing) => listing.town === town) }))
+  .filter((group) => group.listings.length > 0);
+
+const title = `${category.name} on the Hibiscus Coast | The Tide`;
+const description = `${category.count} ${category.name.toLowerCase()} based on the Hibiscus Coast — Orewa, Whangaparāoa, Silverdale, Red Beach and around — kept by hand by The Tide.`;
+
+// Lets /…/plumbers#grouse-plumbing link straight to one listing, for sending a
+// single recommendation to somebody.
+const slug = (name) =>
+  name
+    .toLowerCase()
+    // Strip the macron off Whangaparāoa and friends before slugifying.
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'The Tide', item: `${SITE}/` },
+    { '@type': 'ListItem', position: 2, name: 'Business directory', item: `${SITE}${BASE}` },
+    { '@type': 'ListItem', position: 3, name: category.name, item: `${SITE}${PATH}` },
+  ],
+};
+
+// `address` stays a plain string: we know each business's town, not always its
+// street number, and schema.org accepts Text for `address` as well as a full
+// PostalAddress. No `aggregateRating` anywhere — we don't collect ratings, and
+// inventing them is a lie with a manual action attached.
+const itemListJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: `${category.name} on the Hibiscus Coast`,
+  description,
+  itemListElement: category.listings.map((listing, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    item: {
+      '@type': category.schemaType,
+      name: listing.name,
+      address: `${listing.town}, Auckland, New Zealand`,
+      ...(listing.url ? { url: listing.url } : {}),
+      ...(listing.phone ? { telephone: listing.phone } : {}),
+    },
+  })),
+};
+---
+
+<Directory
+  title={title}
+  description={description}
+  path={PATH}
+  robots={isIndexable ? 'index, follow' : 'noindex, follow'}
+  socialImageAlt={`${category.name} on the Hibiscus Coast — The Tide`}
+  eyebrow="Local directory"
+  heading={`${category.name} on the Hibiscus Coast`}
+  lede={category.intro}
+  updated={`Last updated ${UPDATED} · ${category.count} listed · we'll keep adding to it`}
+  breadcrumb={[
+    { name: 'The Tide', href: '/' },
+    { name: 'Business directory', href: BASE },
+    { name: category.name },
+  ]}
+  jsonLd={[breadcrumbJsonLd, itemListJsonLd]}
+>
+  {byTown.map((group) => (
+    <section class="town">
+      <h2 class="town-name">{group.town}</h2>
+      <ul class="listings">
+        {group.listings.map((listing) => (
+          <li class="card" id={slug(listing.name)}>
+            <h3 class="card-name">
+              {listing.url ? (
+                <a href={listing.url} target="_blank" rel="noopener">
+                  {listing.name}
+                </a>
+              ) : (
+                listing.name
+              )}
+            </h3>
+            <p class="card-blurb">{listing.blurb}</p>
+            {listing.phone && (
+              <p class="card-phone">
+                <a href={`tel:${listing.phone.replace(/\s+/g, '')}`}>{listing.phone}</a>
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+
+  {category.seeAlso && (
+    <p class="see-also">
+      {category.seeAlso.note}{' '}
+      <a href={category.seeAlso.href}>{category.seeAlso.name}</a>
+    </p>
+  )}
+
+  <p class="footnote">
+    Something out of date, or a business missing? Email{' '}
+    <a href="mailto:hello@thetide.co.nz">hello@thetide.co.nz</a> — we'd rather
+    fix it than leave it wrong.
+  </p>
+  <p class="footnote">
+    <a href={BASE}>Back to the Hibiscus Coast business directory</a>
+  </p>
+</Directory>
+
+<style>
+  .town {
+    margin-top: 2rem;
+  }
+
+  .town-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: left;
+    color: #45758c;
+  }
+
+  .listings {
+    display: grid;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* The hand-off to a deeper page on the same subject — currently Orewa's
+     coffee roundup. Sits above the general footnotes because it's a route on,
+     not an afterthought. */
+  .see-also {
+    margin: 2rem auto 0;
+    max-width: 34rem;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #5a6672;
+    background: rgba(162, 197, 211, 0.18);
+    border-radius: 0.65rem;
+    text-wrap: pretty;
+  }
+
+  .see-also a {
+    font-weight: 600;
+    color: #35657d;
+    text-underline-offset: 0.15em;
+  }
+
+  .card-phone {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .card-phone a {
+    color: #35657d;
+    text-underline-offset: 0.15em;
+  }
+</style>
