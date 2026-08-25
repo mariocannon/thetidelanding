@@ -27,7 +27,6 @@
  */
 import { cafes } from './cafes.js';
 import { electricians } from './electricians.js';
-import { marine } from './marine.js';
 import { mechanics } from './mechanics.js';
 import { plumbers } from './plumbers.js';
 
@@ -66,7 +65,6 @@ const pages = {
   plumbers,
   electricians,
   mechanics,
-  marine,
 };
 
 const rawCategories = [
@@ -118,15 +116,6 @@ const rawCategories = [
     schemaType: 'HairSalon',
     wave: 1,
   },
-  {
-    slug: 'marine',
-    name: 'Marine & boat services',
-    tileBlurb:
-      'Haul-outs, engines, antifoul and riggers — the trades that keep the Gulf Harbour fleet on the water.',
-    schemaType: 'LocalBusiness',
-    wave: 1,
-  },
-
   // Wave two — sequenced after Search Console has had a look at wave one.
   {
     slug: 'restaurants',
