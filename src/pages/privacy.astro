@@ -83,6 +83,15 @@ const COLLECTION = [
     detail:
       'Same as an event listing: the contact details you give are printed with the classified so readers can respond, and a featured photo is published the same way, stored at a public web address so the newsletter can load it. Only send details and photos you are happy to see published.',
   },
+  {
+    form: 'Adding a business to the directory',
+    tables: ['DirectoryListing'],
+    where: '/submit-listing',
+    fields:
+      'The business name, category, town and description, the phone number and website you give for it, and your own name, email and phone.',
+    detail:
+      "This one is different: we read every submission before it goes live, so it isn't published straight away. The business phone number and website are printed with the listing once we do — only send details you are happy to see published. Your own name, email and phone are kept for us only, to confirm the listing or ask a question, and are never published.",
+  },
 ];
 ---
 
@@ -211,9 +220,10 @@ const COLLECTION = [
           </p>
         </div>
         <p class="detail">
-          Event listings go to a second Supabase database — the one behind our
-          advertising and what's-on system — because that's where the newsletter's
-          what's-on section is put together.
+          Event listings, classifieds and business directory submissions go to
+          a second Supabase database — the one behind our advertising,
+          what's-on and directory system — because that's where those parts
+          of the newsletter and the site are put together.
         </p>
       </section>
 
@@ -251,8 +261,13 @@ const COLLECTION = [
             long as we need them for our records.
           </li>
           <li>
-            <strong>Event listings</strong> — kept as part of the newsletter's
-            archive of what ran.
+            <strong>Event listings and classifieds</strong> — kept as part of
+            the newsletter's archive of what ran.
+          </li>
+          <li>
+            <strong>Business directory submissions</strong> — kept while
+            we're reviewing them, and afterwards as part of the live listing,
+            until you ask us to remove it or the business closes.
           </li>
           <li>
             <strong>Pickleball lesson signups</strong> — kept until the lesson

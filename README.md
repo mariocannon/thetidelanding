@@ -136,6 +136,25 @@ the fee lands `UNPAID` for the desk to invoice.
 See [`supabase/README.md`](supabase/README.md) for the flow, required secrets,
 and deploy steps.
 
+## Business directory
+
+`/hibiscus-coast-business-directory` and its category pages read businesses
+from the `DirectoryListing` table in the same **Newsletter ad management**
+project, fetched at build time — the category taxonomy (slugs, SEO copy, the
+towns list) is hand-kept in [`src/data/directory/index.js`](src/data/directory/index.js),
+the businesses inside each published category are not. Only `PUBLISHED` rows
+are fetched; a business can also carry `PENDING` while the operator reviews it,
+in which case it doesn't appear on the site yet.
+
+`/submit-listing` lets a business owner ask to be added — name, category,
+town, a description and a phone number or website, plus their own contact
+details so we can follow up. Unlike the What's On and Classifieds forms there
+is no fee and no photo: a submission simply lands `PENDING` and waits for the
+operator to publish it from the ad manager's `/directory` page.
+
+See [`supabase/README.md`](supabase/README.md) for the flow, the read/insert
+policies, and the manual deploy steps.
+
 ## Best coffee in Orewa
 
 `/orewa-best-coffee` is a hand-kept roundup of Orewa cafés worth a visit — name,

@@ -9,7 +9,7 @@ Two projects are in play, and only the first one is this project's own:
 | Directory | Project | Backs |
 | --- | --- | --- |
 | `migrations/` | **the-tide** (`jykpoupjvcmvoihujfkc`) | signups, polls, the reader survey |
-| `newsletter-ads/migrations/` | **Newsletter ad management** (`tlderdsxnonhemkdxqns`) | `/submit-event` → the what's-on noticeboard, `/submit-classified` → the classifieds queue |
+| `newsletter-ads/migrations/` | **Newsletter ad management** (`tlderdsxnonhemkdxqns`) | `/submit-event` → the what's-on noticeboard, `/submit-classified` → the classifieds queue, `/submit-listing` → the business directory's review queue, and the read-only fetch behind `/hibiscus-coast-business-directory` |
 
 ## One path into Beehiiv
 
@@ -250,14 +250,25 @@ this repo *reads* from the ad manager's project instead of writing to it. The
 category taxonomy (slugs, names, SEO copy, wave, the towns list) stays
 hand-kept in `src/data/directory/index.js`; the businesses inside each
 published category come from `public."DirectoryListing"` in the **Newsletter
-ad management** project (`tlderdsxnonhemkdxqns`) — the operator's own
-`/directory` page in the ad manager, not a public submission form. There is no
-draft/approval workflow on this table: everything the operator saves there is
-meant to be public immediately.
+ad management** project (`tlderdsxnonhemkdxqns`) — either typed in by the
+operator on the ad manager's own `/directory` page, or approved there from a
+submission through `/submit-listing` below.
+
+`DirectoryListing` gained a `status` column (`PENDING`/`PUBLISHED`,
+`PUBLISHED` by default) on 26 Aug — see bizdata-coder's handoff on
+`agent-comms/BOARD.md` — the day after the blanket read policy below was
+written. **The read query has to filter on it**: the policy itself stays
+`using (true)` (select isn't the layer that hides a pending row — see the
+comment in the migration), so it's the `&status=eq.PUBLISHED` in the fetch
+below, not RLS, that keeps a `PENDING` public submission off the live site
+before the operator reviews it.
+`tests/directory-status-filter.spec.js` proves the filter actually excludes a
+`PENDING` row rather than trusting the query string by eye.
 
 ```
-GET /rest/v1/DirectoryListing?category=eq.plumbers&order=featured.desc,createdAt.asc&select=*
-  → policy "Public directory listings"  (anon, select only)
+GET /rest/v1/DirectoryListing?category=eq.plumbers&status=eq.PUBLISHED&order=featured.desc,createdAt.asc&select=*
+  → policy "Public directory listings"  (anon, select only — status-blind by design)
+  → filtered to PUBLISHED by the query string, not the policy
   → folded into categories in src/data/directory/index.js at build time
 ```
 
@@ -283,21 +294,23 @@ GET /rest/v1/DirectoryListing?category=eq.plumbers&order=featured.desc,createdAt
 
 **Two manual steps this repo can't do for you:**
 
-1. **Push the new policy.** Like every other migration in this folder, nobody
-   here can run `supabase db push` against someone else's project.  Whoever
-   holds the `tlderdsxnonhemkdxqns` credential needs to apply
-   `20260826010000_directory_listings_public_read.sql` (and, if it hasn't
-   landed yet via the ad manager's own Netlify build, the table-creating
-   migration on the bizdata side) the same way as the existing cross-project
-   migrations documented above:
+1. **Push the new policies.** Like every other migration in this folder,
+   nobody here can run `supabase db push` against someone else's project.
+   Whoever holds the `tlderdsxnonhemkdxqns` credential needs to apply
+   `20260826010000_directory_listings_public_read.sql` and
+   `20260826020000_directory_listing_public_submissions.sql` (and, if it
+   hasn't landed yet via the ad manager's own Netlify build, the
+   table-creating and `status`/`source`/contact-columns migrations on the
+   bizdata side) the same way as the existing cross-project migrations
+   documented above:
 
    ```sh
    supabase link --project-ref tlderdsxnonhemkdxqns
    supabase db push --db-url "$AD_MANAGER_DB_URL"   # or paste it in the SQL editor
    ```
 
-2. **Wire up the rebuild hook.** For a listing saved or deleted in the ad
-   manager's `/directory` page to show up here without someone manually
+2. **Wire up the rebuild hook.** For a listing saved, approved or deleted in
+   the ad manager's `/directory` page to show up here without someone manually
    re-deploying, create a **Netlify Build Hook** on this site (thetidelanding's
    Netlify dashboard → Site configuration → Build & deploy → Build hooks) and
    set the resulting URL as `THETIDELANDING_BUILD_HOOK_URL` in the ad
@@ -305,3 +318,42 @@ GET /rest/v1/DirectoryListing?category=eq.plumbers&order=featured.desc,createdAt
    `saveDirectoryListing`/`deleteDirectoryListing` actions already POST to
    that env var, best-effort, on every save and delete — this is only the
    one-time Netlify dashboard setup that makes the env var mean something.
+
+## Business directory — public submissions
+
+`/submit-listing` lets a business owner ask to be added, the same pattern
+`/submit-event`/`/submit-classified` use: it writes straight to
+`public."DirectoryListing"` through PostgREST, no server in between. Unlike
+those two, there is no fee, no photo and no issue/newsletter lifecycle — a
+submission just waits at `status = 'PENDING'` until the operator approves it
+from `/directory` in the ad manager (`approveDirectoryListing`,
+bizdata-coder's 26 Aug handoff).
+
+```
+POST /rest/v1/DirectoryListing   { …, "status": "PENDING", "source": "PUBLIC", "featured": false }
+  → policy "Public directory listing submissions"  (anon, insert only)
+  → PENDING in the ad manager's /directory review queue
+```
+
+- `newsletter-ads/migrations/20260826020000_directory_listing_public_submissions.sql`
+  — the policy, plus database defaults for `id` and `updatedAt` (Prisma fills
+  both in application code; PostgREST cannot). Must be applied *after*
+  `20260826010000_directory_listings_public_read.sql` and after bizdata's own
+  `20260826010000_directory_listing_workflow` migration has added the
+  `status`/`source`/contact columns — the filenames are ordered for exactly
+  that.
+
+The policy is `directoryListingSchema` from the ad manager restated in SQL,
+plus the contact-name-plus-(email-or-phone) rule Event/Classified's public
+policies already enforce: name and blurb lengths (blurb has the same
+61-character floor `tests/directory.spec.js` checks on every rendered
+listing), a category from `DIRECTORY_CATEGORIES` (all 19, not just the four
+with a built page today), a town from `DIRECTORY_TOWNS`, a phone number
+shaped like one, and a URL starting `http://` or `https://`. A reader cannot
+publish themselves, feature themselves, tag a submission `STAFF`, or read,
+edit or delete anything — there is no select, update or delete policy here
+either (select is covered separately, by the blanket read policy above).
+
+Adding a category or a town to `src/pages/submit-listing.astro` means adding
+it to the latest migration checking that column first: a test reads the list
+straight out of the SQL and fails when the two drift apart.

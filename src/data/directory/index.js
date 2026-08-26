@@ -230,9 +230,20 @@ const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
 
 /**
  * One published category's rows, in DB order: the operator's featured pick
- * (if any) first, then the rest oldest-first. `select=*` is safe here — the
- * table has no column this repo shouldn't see, unlike Event/Classified, which
- * carry an operator-only `notes` field this project never reads.
+ * (if any) first, then the rest oldest-first. `select=*` is safe to render —
+ * the fields the pages actually print (name/town/blurb/phone/url/featured)
+ * are picked explicitly in `[category].astro`/`index.astro`, so the
+ * `contactName`/`contactEmail`/`contactPhone` a public submission carries
+ * never reaches the page, even though this fetch pulls them in.
+ *
+ * `&status=eq.PUBLISHED` is load-bearing, not decorative: the blanket anon
+ * SELECT policy on this table (`supabase/newsletter-ads/migrations/
+ * 20260826010000_directory_listings_public_read.sql`) has no status
+ * awareness, so without this filter a `PENDING` public submission
+ * (`/submit-listing`) would render on the live site the moment it's
+ * inserted, before the operator ever reviews it. See
+ * `tests/directory-status-filter.spec.js`, which proves this against a mock
+ * rather than trusting the query string by eye.
  *
  * Throws on anything other than a clean 200 with a JSON array, on purpose: a
  * silent empty directory (RLS denying `anon` with a 200, a typo'd category, a
@@ -241,7 +252,8 @@ const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
 async function fetchListings(slug) {
   const url =
     `${SUPABASE_URL}/rest/v1/DirectoryListing` +
-    `?category=eq.${encodeURIComponent(slug)}&order=featured.desc,createdAt.asc&select=*`;
+    `?category=eq.${encodeURIComponent(slug)}&status=eq.PUBLISHED` +
+    `&order=featured.desc,createdAt.asc&select=*`;
 
   let response;
   try {

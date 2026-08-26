@@ -1,0 +1,775 @@
+---
+const title = 'Add your business — The Tide';
+const description =
+  "Tell us about your business and we'll add it to The Tide's Hibiscus Coast business directory once we've had a look.";
+
+// The ad manager's /directory, given a public front door. Field for field and
+// rule for rule this mirrors submit-event.astro / submit-classified.astro —
+// the only difference is where it posts: this one writes to
+// public."DirectoryListing" through PostgREST instead of an operator typing a
+// row into the ad manager. Every submission files as an unassigned PENDING
+// row tagged source=PUBLIC, and the "Public directory listing submissions"
+// policy in supabase/newsletter-ads/migrations enforces the rules below at
+// the door. Unlike Event/Classified there is no fee, no photo and no issue
+// lifecycle — see bizdata-coder's 26 Aug handoff on agent-comms/BOARD.md.
+
+// DIRECTORY_CATEGORIES and their labels, from lib/enums.ts in the ad
+// manager — all 19, not just the four thetidelanding has published pages for
+// today. The operator can already add a staff listing to any of them from
+// /directory; this form offers the same full list.
+const CATEGORIES = [
+  { value: 'cafes', label: 'Cafés & coffee' },
+  { value: 'plumbers', label: 'Plumbers' },
+  { value: 'electricians', label: 'Electricians' },
+  { value: 'mechanics', label: 'Mechanics & auto repair' },
+  { value: 'hairdressers', label: 'Hairdressers & barbers' },
+  { value: 'restaurants', label: 'Restaurants & takeaways' },
+  { value: 'builders', label: 'Builders & renovations' },
+  { value: 'painters', label: 'Painters & decorators' },
+  { value: 'landscaping', label: 'Landscaping & lawn care' },
+  { value: 'real-estate', label: 'Real estate agents' },
+  { value: 'dentists', label: 'Dentists' },
+  { value: 'beauty', label: 'Beauty & day spas' },
+  { value: 'physio', label: 'Physio, chiro & massage' },
+  { value: 'vets', label: 'Vets & pet care' },
+  { value: 'gyms', label: 'Gyms & fitness' },
+  { value: 'childcare', label: 'Childcare & early learning' },
+  { value: 'cleaners', label: 'Cleaners' },
+  { value: 'movers', label: 'Movers & storage' },
+  { value: 'accountants', label: 'Accountants & bookkeepers' },
+];
+
+// DIRECTORY_TOWNS, from lib/enums.ts in the ad manager — the same list
+// src/data/directory/index.js exports as `towns`, not re-imported here: that
+// module does a live build-time fetch on import, which this page has no
+// reason to trigger.
+const TOWNS = [
+  'Orewa',
+  'Whangaparāoa',
+  'Silverdale',
+  'Red Beach',
+  'Millwater',
+  'Stanmore Bay',
+  'Manly',
+  'Gulf Harbour',
+  'Arkles Bay',
+  'Hatfields Beach',
+];
+
+// directoryListingSchema's floor and ceiling on `blurb` (lib/validation.ts in
+// the ad manager) — 61 characters because thetidelanding's own Playwright
+// suite rejects anything shorter as too thin to read as a recommendation, and
+// keeping the same floor here means a submission that clears this form can
+// never fail that build once it's approved.
+const BLURB_MIN = 61;
+const BLURB_MAX = 600;
+---
+
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Local directory</p>
+      <h1>Add your business to the directory</h1>
+      <p class="lede">
+        The Hibiscus Coast business directory is a hand-kept list of who to
+        call — plumbers, cafés, mechanics and more. Tell us about your
+        business below and we'll have a look before it goes live.
+      </p>
+
+      <form id="listing-form" class="card" novalidate>
+        <div class="field" data-field="name">
+          <label for="name">Business name <span class="required">*</span></label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            maxlength="160"
+            placeholder="Coast Plumbing &amp; Gas"
+            required
+          />
+          <p class="hint" data-hint>What readers see first.</p>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="category">
+            <label for="category">Category <span class="required">*</span></label>
+            <select id="category" name="category">
+              {
+                CATEGORIES.map((category, index) => (
+                  <option value={category.value} selected={index === 0}>
+                    {category.label}
+                  </option>
+                ))
+              }
+            </select>
+          </div>
+
+          <div class="field" data-field="town">
+            <label for="town">Town <span class="required">*</span></label>
+            <select id="town" name="town">
+              {
+                TOWNS.map((town, index) => (
+                  <option value={town} selected={index === 0}>
+                    {town}
+                  </option>
+                ))
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="field" data-field="blurb">
+          <label for="blurb">About the business <span class="required">*</span></label>
+          <textarea id="blurb" name="blurb" rows="7" aria-describedby="blurb-count" required></textarea>
+          <p id="blurb-count" class="counter empty" aria-live="polite">
+            No copy yet — write at least {BLURB_MIN} characters
+          </p>
+          <p class="hint" data-hint>
+            What they do, what makes them worth calling, and anything a
+            reader should know before they do.
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="phone">
+            <label for="phone">Business phone</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" />
+            <p class="hint" data-hint>Optional — the number readers can call.</p>
+          </div>
+
+          <div class="field" data-field="url">
+            <label for="url">Website</label>
+            <input
+              id="url"
+              name="url"
+              type="url"
+              inputmode="url"
+              spellcheck="false"
+              placeholder="https://example.co.nz"
+            />
+            <p class="hint" data-hint>Optional — a full link starting http:// or https://</p>
+          </div>
+        </div>
+
+        <div class="field" data-field="contactName">
+          <label for="contactName">Your name <span class="required">*</span></label>
+          <input id="contactName" name="contactName" type="text" maxlength="120" autocomplete="name" required />
+          <p class="hint" data-hint>Kept for us only, to confirm the listing.</p>
+        </div>
+
+        <div class="row">
+          <div class="field" data-field="contactEmail">
+            <label for="contactEmail">Your email</label>
+            <input
+              id="contactEmail"
+              name="contactEmail"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              spellcheck="false"
+            />
+            <p class="hint" data-hint>Email or phone — whichever you'd like us to use.</p>
+          </div>
+
+          <div class="field" data-field="contactPhone">
+            <label for="contactPhone">Your phone</label>
+            <input id="contactPhone" name="contactPhone" type="tel" autocomplete="tel" />
+          </div>
+        </div>
+
+        {/*
+          Honeypot: hidden from people, filled in by bots. Not display:none —
+          some bots skip those — and kept out of the tab order and the
+          accessibility tree so nobody real ever meets it. Named "website"
+          rather than "url" so it can't collide with the real website field
+          above.
+        */}
+        <div class="honeypot" aria-hidden="true">
+          <label for="website">Website</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <p class="message" id="form-message" role="alert" hidden></p>
+
+        <button type="submit">Add my business</button>
+      </form>
+
+      <section id="sent" class="card sent" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="m9 12 2 2 4-4"></path>
+        </svg>
+        <h2>Thanks — it's in.</h2>
+        <p>
+          We read every submission before it goes live. If we have a question
+          we'll get in touch using the details you gave us, and we'll publish
+          it once we've had a look.
+        </p>
+        <button type="button" id="send-another">Add another business</button>
+      </section>
+
+      <p class="footnote">
+        We publish the business phone number and website you give with the
+        listing — please only send details you're happy to have published.
+        Your own name, email and phone are kept for us only, to get in touch
+        about the listing.
+      </p>
+
+      <p class="cross-link">
+        <a href="/hibiscus-coast-business-directory">See who's already in the directory.</a>
+      </p>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      // The directory lives in the Newsletter ad management project, not the
+      // one the-tide's own signup forms write to.
+      const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows inserts.
+      const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
+      const MIN_SECONDS = 3;
+      // directoryListingSchema's bounds on `blurb` — see the frontmatter's
+      // BLURB_MIN/BLURB_MAX; the script gets its own copy of every constant on
+      // this page.
+      const BLURB_MIN = 61;
+      const BLURB_MAX = 600;
+
+      const form = document.getElementById('listing-form');
+      const sent = document.getElementById('sent');
+      const message = document.getElementById('form-message');
+      const counter = document.getElementById('blurb-count');
+      const blurbField = document.getElementById('blurb');
+      const nameField = document.getElementById('name');
+      const honeypot = document.getElementById('website');
+
+      // Stamped when the form renders; a submission returned faster than a
+      // person could type one is refused.
+      let startedAt = Date.now();
+
+      function charCountState(length) {
+        if (length === 0) return 'empty';
+        if (length < BLURB_MIN) return 'short';
+        if (length > BLURB_MAX) return 'long';
+        return 'ok';
+      }
+
+      /** `240 characters`, `40 characters — 21 more to go`, `640 characters — 40 over the 600-character maximum`. */
+      function charCountMessage(length) {
+        const chars = `${length} ${length === 1 ? 'character' : 'characters'}`;
+        switch (charCountState(length)) {
+          case 'empty':
+            return `No copy yet — write at least ${BLURB_MIN} characters`;
+          case 'short':
+            return `${chars} — ${BLURB_MIN - length} more to go`;
+          case 'long':
+            return `${chars} — ${length - BLURB_MAX} over the ${BLURB_MAX}-character maximum`;
+          default:
+            return chars;
+        }
+      }
+
+      function updateCounter() {
+        const length = blurbField.value.trim().length;
+        counter.textContent = charCountMessage(length);
+        counter.className = `counter ${charCountState(length)}`;
+      }
+
+      const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      // A phone number people can actually dial: digits, spaces and the
+      // punctuation NZ numbers are written with, at least 7 characters.
+      const isPhone = (value) => /^[\d\s+()-]{7,40}$/.test(value);
+
+      /** Turns '' into undefined so optional text fields clear cleanly. */
+      function text(name) {
+        const value = new FormData(form).get(name);
+        const trimmed = value === null ? '' : String(value).trim();
+        return trimmed === '' ? undefined : trimmed;
+      }
+
+      function showErrors(errors) {
+        for (const field of form.querySelectorAll('.field[data-field]')) {
+          const name = field.dataset.field;
+          const hint = field.querySelector('[data-hint]');
+          const previous = field.querySelector('.error');
+          if (previous) previous.remove();
+          field.querySelector('input, select, textarea')?.removeAttribute('aria-invalid');
+
+          if (errors[name]) {
+            // An error replaces the hint, the way the ad manager's Field does.
+            if (hint) hint.hidden = true;
+            const paragraph = document.createElement('p');
+            paragraph.className = 'error';
+            paragraph.textContent = errors[name];
+            field.append(paragraph);
+            field.querySelector('input, select, textarea')?.setAttribute('aria-invalid', 'true');
+          } else if (hint) {
+            hint.hidden = false;
+          }
+        }
+
+        const first = form.querySelector('.field .error');
+        first?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      function say(text) {
+        message.textContent = text;
+        message.hidden = text === null;
+      }
+
+      /** directoryListingSchema plus the contact rule Event/Classified's public
+       *  forms already use, checked in the browser before anything is posted. */
+      function validate() {
+        const errors = {};
+
+        const name = text('name');
+        if (!name) errors.name = 'Give the business a name';
+        else if (name.length > 160) errors.name = 'Keep the name to 160 characters or fewer';
+
+        const blurb = text('blurb');
+        if (!blurb) errors.blurb = 'Tell us about the business';
+        else if (blurb.length < BLURB_MIN) {
+          errors.blurb = `Write at least ${BLURB_MIN} characters — anything shorter reads as too thin to be a recommendation`;
+        } else if (blurb.length > BLURB_MAX) {
+          errors.blurb = `Keep this to ${BLURB_MAX} characters or fewer`;
+        }
+
+        const phone = text('phone');
+        if (phone && !isPhone(phone)) errors.phone = 'Enter a valid phone number';
+
+        const url = text('url');
+        if (url && !/^https?:\/\/.+/i.test(url)) {
+          errors.url = 'Enter a full URL starting with http:// or https://';
+        }
+
+        const contactName = text('contactName');
+        if (!contactName) errors.contactName = 'Tell us who to credit this to';
+        else if (contactName.length > 120) errors.contactName = 'That name is too long';
+
+        const contactEmail = text('contactEmail');
+        const contactPhone = text('contactPhone');
+        if (contactEmail && !isEmail(contactEmail)) {
+          errors.contactEmail = 'Enter a valid email address';
+        }
+        if (contactPhone && contactPhone.length > 40) {
+          errors.contactPhone = 'That phone number is too long';
+        }
+        if (!contactEmail && !contactPhone) {
+          errors.contactEmail = 'Add an email or a phone number so we can reach you';
+        }
+
+        return {
+          errors,
+          values: {
+            name,
+            category: text('category'),
+            town: text('town'),
+            blurb,
+            phone: phone ?? null,
+            url: url ?? null,
+            contactName,
+            contactEmail: contactEmail ?? null,
+            contactPhone: contactPhone ?? null,
+            // Not negotiable from outside: submissions are unpublished,
+            // unfeatured drafts waiting on the operator.
+            status: 'PENDING',
+            source: 'PUBLIC',
+            featured: false,
+          },
+        };
+      }
+
+      function finish() {
+        form.hidden = true;
+        sent.hidden = false;
+        say(null);
+        sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      blurbField.addEventListener('input', updateCounter);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        // Honeypot: hidden from people, irresistible to bots. Answer the way a
+        // success does, so a script learns nothing from being refused.
+        if (honeypot.value.trim() !== '') return finish();
+
+        if ((Date.now() - startedAt) / 1000 < MIN_SECONDS) {
+          return say('That was quick — give it another go.');
+        }
+
+        const { errors, values } = validate();
+        showErrors(errors);
+        if (Object.keys(errors).length > 0) return say('Check the highlighted fields.');
+        say(null);
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/DirectoryListing`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(values),
+          });
+
+          if (response.ok) return finish();
+          say('Something went wrong saving that. Please try again.');
+        } catch {
+          say('Could not reach us just now. Please check your connection and retry.');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Add my business';
+        }
+      });
+
+      document.getElementById('send-another').addEventListener('click', () => {
+        form.reset();
+        showErrors({});
+        updateCounter();
+        sent.hidden = true;
+        form.hidden = false;
+        startedAt = Date.now();
+        nameField.focus();
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .card {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.5rem 1.35rem;
+    text-align: left;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .required {
+    color: #b3372c;
+  }
+
+  .hint,
+  .error,
+  .counter {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .hint {
+    color: #8a8272;
+  }
+
+  .hint[hidden] {
+    display: none;
+  }
+
+  .error {
+    font-weight: 600;
+    color: #b3372c;
+  }
+
+  .counter {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .counter.empty,
+  .counter.short {
+    color: #8a8272;
+  }
+
+  .counter.ok {
+    color: #1e7a4d;
+  }
+
+  .counter.long {
+    color: #9a6210;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  [aria-invalid='true'] {
+    border-color: #b3372c;
+  }
+
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .message {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #b3372c;
+  }
+
+  .message[hidden] {
+    display: none;
+  }
+
+  button {
+    justify-self: start;
+    padding: 0.8rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition:
+      transform 0.12s,
+      box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .sent {
+    justify-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .sent svg {
+    width: 2rem;
+    height: 2rem;
+    color: #1e7a4d;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sent h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .sent p {
+    max-width: 30rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: #5a6672;
+  }
+
+  .sent button {
+    justify-self: center;
+    background: transparent;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+  }
+
+  .footnote {
+    margin-top: 1.5rem;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: #8a8272;
+  }
+
+  @media (min-width: 34rem) {
+    .row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+
+  .cross-link {
+    margin-top: 1.75rem;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .cross-link a,
+  .privacy-link a {
+    color: #8a8272;
+    text-underline-offset: 0.15em;
+  }
+
+  .cross-link a:hover,
+  .cross-link a:focus-visible,
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: #45758c;
+  }
+</style>
