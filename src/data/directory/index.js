@@ -345,9 +345,12 @@ export const categories = rawCategories.map((category) =>
 export const liveCategories = categories.filter((category) => category.href);
 
 /**
- * The categories that generate a page under the hub. Not the same set as
- * `liveCategories`: Cafés is live but points at the standalone Orewa roundup,
- * which is its own page and not built from a listings file.
+ * The categories that generate a page under the hub — the ones with fetched
+ * `listings`, i.e. `published: true`. Kept distinct from `liveCategories`
+ * (anything with an `href`) on purpose: a category can be given an explicit
+ * `href` to a hand-built page elsewhere — the way Cafés once pointed straight
+ * at `/orewa-best-coffee` before it earned its own category page — and that
+ * one belongs on the hub but has no `[category].astro` route to build.
  */
 export const pagedCategories = categories.filter((category) => category.listings);
 

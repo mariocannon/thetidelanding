@@ -1,0 +1,166 @@
+---
+// The Tide — Hibiscus Coast fish and chips roundup. The ranked list lives in
+// `src/data/fish-and-chips.js`, kept by hand the same way `coffee.js` is.
+// First page shipped from the Play D queue in `drafts/directory/PLAYBOOK.md`.
+//
+// Uses the shared `Directory.astro` layout (head, breadcrumb, subscribe, waves,
+// the white-on-sand `.card`) rather than the standalone shape `orewa-best-coffee`
+// still carries — that one predates the layout. Same rule as every page here:
+// nothing is fetched on load; the list is baked in at build time.
+import Directory from '../layouts/Directory.astro';
+import { fishAndChips } from '../data/fish-and-chips.js';
+
+const SITE = 'https://thetide.co.nz';
+const DIRECTORY = '/hibiscus-coast-business-directory';
+const PATH = '/hibiscus-coast-best-fish-and-chips';
+const UPDATED = '29 August 2026';
+
+const title = 'Best fish and chips on the Hibiscus Coast | The Tide';
+// Count comes from the data so the copy can't drift when a shop is added or cut.
+const description = `Where Coasties actually go for a scoop — ${fishAndChips.length} fish and chip shops from Orewa to Gulf Harbour, ranked and kept by hand by The Tide.`;
+
+const lede =
+  "Every beach town on the Coast has a chippy and most of them are fine. This is about the ones worth driving past your nearest for — the old faithfuls and the newer arrivals that have earned it. The order is ours. Snapper is the fish to ask for; kūmara chips are non-negotiable.";
+
+// Lets `/…-fish-and-chips#kippers-takeaways` link straight to one shop, for
+// sending a single recommendation. Macron-aware, like the category pages.
+const slug = (name) =>
+  name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'The Tide', item: `${SITE}/` },
+    { '@type': 'ListItem', position: 2, name: 'Business directory', item: `${SITE}${DIRECTORY}` },
+    { '@type': 'ListItem', position: 3, name: 'Best fish and chips on the Hibiscus Coast', item: `${SITE}${PATH}` },
+  ],
+};
+
+// `address` stays a plain string — schema.org accepts Text for it, and we know
+// each shop's street or landmark, not always a tidy postal address. No
+// `aggregateRating`: we don't collect ratings, and the order is editorial, not
+// a score. The list order is the ItemList order.
+const itemListJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Best fish and chips on the Hibiscus Coast',
+  description,
+  itemListElement: fishAndChips.map((shop, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    item: {
+      '@type': 'Restaurant',
+      name: shop.name,
+      address: `${shop.location}, Auckland, New Zealand`,
+      ...(shop.url ? { url: shop.url } : {}),
+      ...(shop.phone ? { telephone: shop.phone } : {}),
+    },
+  })),
+};
+---
+
+<Directory
+  title={title}
+  description={description}
+  path={PATH}
+  robots="index, follow"
+  socialImageAlt="Best fish and chips on the Hibiscus Coast — The Tide"
+  eyebrow="Local roundup"
+  heading="Best fish and chips on the Hibiscus Coast"
+  lede={lede}
+  updated={`Last updated ${UPDATED} · ${fishAndChips.length} shops, our order`}
+  breadcrumb={[
+    { name: 'The Tide', href: '/' },
+    { name: 'Business directory', href: DIRECTORY },
+    { name: 'Fish and chips' },
+  ]}
+  jsonLd={[breadcrumbJsonLd, itemListJsonLd]}
+>
+  <ol class="ranked">
+    {fishAndChips.map((shop, index) => (
+      <li class="card" id={slug(shop.name)}>
+        <p class="rank">#{index + 1}</p>
+        <h2 class="card-name">
+          {shop.url ? (
+            <a href={shop.url} target="_blank" rel="noopener">{shop.name}</a>
+          ) : (
+            shop.name
+          )}
+        </h2>
+        <p class="shop-where">{shop.location}</p>
+        <p class="card-blurb">{shop.blurb}</p>
+        {shop.phone && (
+          <p class="shop-phone">
+            <a href={`tel:${shop.phone.replace(/\s+/g, '')}`}>{shop.phone}</a>
+          </p>
+        )}
+      </li>
+    ))}
+  </ol>
+
+  <p class="footnote">
+    Think we've got the order wrong, or missed your local?{' '}
+    <a href="mailto:hello@thetide.co.nz">hello@thetide.co.nz</a> — we'll go get a
+    scoop and see.
+  </p>
+  <p class="footnote">
+    <a href={DIRECTORY}>Back to the Hibiscus Coast business directory</a>
+  </p>
+</Directory>
+
+<style>
+  /* The list order is the ranking, so it's a real <ol>. Cards reuse the
+     layout's white-on-sand `.card`; only the rank pill, the address line and
+     the phone line are page-specific. */
+  .ranked {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Same pill language as the directory's town jump-nav and Featured chip —
+     Sea Glass tint, Steel Blue label, no new tokens. */
+  .rank {
+    align-self: flex-start;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #45758c;
+    background: rgba(162, 197, 211, 0.18);
+    border-radius: 999px;
+  }
+
+  .card-name {
+    margin-top: 0.6rem;
+  }
+
+  .shop-where {
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8a8272;
+    text-wrap: pretty;
+  }
+
+  .shop-phone {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .shop-phone a {
+    color: #35657d;
+    text-underline-offset: 0.15em;
+  }
+</style>

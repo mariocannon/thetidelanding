@@ -106,6 +106,12 @@ const collectionJsonLd = {
     Covering {towns.slice(0, -1).join(', ')} and {towns.at(-1)}.
   </p>
 
+  <p class="roundups">
+    Going deeper on one thing:{' '}
+    <a href="/orewa-best-coffee">Best coffee in Orewa</a> ·{' '}
+    <a href="/hibiscus-coast-best-fish-and-chips">Best fish and chips on the Hibiscus Coast</a>.
+  </p>
+
   {
     !isIndexable && planned.length > 0 && (
       <p class="planned">
@@ -153,6 +159,22 @@ const collectionJsonLd = {
     line-height: 1.6;
     color: #5a6672;
     text-wrap: pretty;
+  }
+
+  /* Editorial "best of" lists that sit alongside the categories — the deeper,
+     ranked pages a category page hands off to. */
+  .roundups {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  .roundups a {
+    color: #35657d;
+    text-underline-offset: 0.15em;
   }
 
   /* Build-queue note. Only rendered while the page is unindexed, so it never

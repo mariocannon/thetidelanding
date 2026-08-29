@@ -10,6 +10,7 @@ import {
   pagedCategories,
   towns,
 } from '../src/data/directory/index.js';
+import { fishAndChips } from '../src/data/fish-and-chips.js';
 
 // Importing the module above runs its build-time fetch against the ad
 // manager's live `DirectoryListing` table (see the module's own doc comment)
@@ -260,6 +261,44 @@ for (const category of pagedCategories) {
     expect(headings).toEqual(expected);
   });
 
+  test(`/${category.slug} offers a town jump-nav matching its town sections`, async ({ page }) => {
+    await page.goto(category.href);
+
+    // The towns that actually render as sections — same computation as the
+    // grouping test above: a featured pick sits above the town groups and out
+    // of them, so a town holding only the featured listing isn't a section and
+    // doesn't belong in the nav.
+    const sections = towns.filter((town) =>
+      townGrouped(category).some((listing) => listing.town === town),
+    );
+
+    const nav = page.locator('.town-jump');
+
+    if (sections.length < 2) {
+      await expect(nav, 'one town (or none) does not earn a jump-nav').toHaveCount(0);
+      return;
+    }
+
+    await expect(nav).toHaveCount(1);
+
+    const labels = await nav
+      .locator('a')
+      .evaluateAll((links) => links.map((link) => link.textContent.trim()));
+    expect(labels, 'the nav lists the town sections, in coast order').toEqual(sections);
+
+    // Every link lands on a town section that's really on this page, and that
+    // section leads with the matching heading.
+    const hashes = await nav
+      .locator('a')
+      .evaluateAll((links) => links.map((link) => new URL(link.href).hash));
+    for (const [i, hash] of hashes.entries()) {
+      expect(hash, `jump link ${i} has a target`).toMatch(/^#.+/);
+      const section = page.locator(`section.town${hash}`);
+      await expect(section, `${hash} is a town section on /${category.slug}`).toHaveCount(1);
+      await expect(section.locator('.town-name')).toHaveText(sections[i]);
+    }
+  });
+
   test(`/${category.slug} puts a featured listing above the town groups, and out of them`, async ({
     page,
   }) => {
@@ -346,6 +385,22 @@ for (const category of pagedCategories) {
   });
 }
 
+test('no directory page renders one id twice — town anchors clear the listing anchors', async ({
+  page,
+}) => {
+  // The town jump-nav points at `#<town-slug>` sections; the listing cards
+  // already carry `#<business-slug>`. Both come off the same slugify, so a
+  // business named exactly after its town would collide and the jump would
+  // land on the wrong element. Cheapest guard: no id on the page repeats.
+  for (const category of pagedCategories) {
+    await page.goto(category.href);
+    const ids = await page.locator('[id]').evaluateAll((els) => els.map((el) => el.id));
+    const seen = new Set();
+    const dupes = [...new Set(ids.filter((id) => seen.has(id) || (seen.add(id), false)))];
+    expect(dupes, `duplicate id(s) on /${category.slug}: ${dupes.join(', ')}`).toEqual([]);
+  }
+});
+
 test('a category that hands off to a deeper page says so, and the link works', async ({ page }) => {
   const handoffs = pagedCategories.filter((category) => category.seeAlso);
   expect(handoffs.length, 'no category has a seeAlso to check').toBeGreaterThan(0);
@@ -390,6 +445,130 @@ test('every category page is reachable from the hub in one click', async ({ page
   for (const category of pagedCategories) {
     await expect(page.locator(`.categories a[href="${category.href}"]`)).toBeVisible();
   }
+});
+
+// --- The fish and chips roundup (Play D) ------------------------------------
+// A standalone editorial "best of" — no category behind it, so it breadcrumbs
+// straight under the directory hub, three deep, the same way `[category].astro`
+// does. The list order in `fish-and-chips.js` IS the ranking.
+
+const FC_PATH = '/hibiscus-coast-best-fish-and-chips';
+
+test('the fish and chips roundup data file holds a rankable list', () => {
+  // Play D's floor: fewer than this and it's a category page, not a roundup.
+  expect(fishAndChips.length).toBeGreaterThanOrEqual(8);
+
+  const names = fishAndChips.map((shop) => shop.name);
+  expect(names, 'a shop is listed twice').toHaveLength(new Set(names).size);
+
+  for (const shop of fishAndChips) {
+    const where = `fish-and-chips → ${shop.name}`;
+    expect(shop.name?.trim(), `name on ${where}`).toBeTruthy();
+    expect(shop.location?.trim(), `location on ${where}`).toBeTruthy();
+    // A one-liner isn't a recommendation — same bar the directory listings clear.
+    expect(shop.blurb?.trim().length ?? 0, `blurb on ${where}`).toBeGreaterThan(60);
+    if (shop.url) expect(shop.url, `url on ${where}`).toMatch(/^https?:\/\//);
+    if (shop.phone) expect(shop.phone, `phone on ${where}`).toMatch(/^[\d\s+()-]{7,}$/);
+  }
+});
+
+test('the roundup prints every shop, once, in data-file order and rank', async ({ page }) => {
+  const response = await page.goto(FC_PATH);
+  expect(response.status()).toBe(200);
+
+  await expect(page.locator('h1')).toContainText('fish and chips');
+  await expect(page.locator('.ranked .card')).toHaveCount(fishAndChips.length);
+
+  const names = await page
+    .locator('.ranked .card-name')
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
+  expect(names).toEqual(fishAndChips.map((shop) => shop.name));
+
+  const ranks = await page
+    .locator('.ranked .rank')
+    .evaluateAll((nodes) => nodes.map((node) => node.textContent.trim()));
+  expect(ranks).toEqual(fishAndChips.map((_, index) => `#${index + 1}`));
+});
+
+test('the roundup describes the same shops, in printed order, in its structured data', async ({
+  page,
+}) => {
+  await page.goto(FC_PATH);
+  const blocks = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluateAll((scripts) => scripts.map((script) => JSON.parse(script.textContent)));
+
+  const itemList = blocks.find((block) => block['@type'] === 'ItemList');
+  expect(itemList.itemListElement.map((entry) => entry.item.name)).toEqual(
+    fishAndChips.map((shop) => shop.name),
+  );
+  expect(itemList.itemListElement.map((entry) => entry.position)).toEqual(
+    fishAndChips.map((_, index) => index + 1),
+  );
+  for (const entry of itemList.itemListElement) {
+    expect(entry.item['@type']).toBe('Restaurant');
+  }
+
+  // No invented ratings — the order is editorial, not a score.
+  expect(JSON.stringify(blocks)).not.toContain('aggregateRating');
+
+  const crumbs = blocks.find((block) => block['@type'] === 'BreadcrumbList');
+  expect(crumbs.itemListElement.map((entry) => entry.name)).toEqual([
+    'The Tide',
+    'Business directory',
+    'Best fish and chips on the Hibiscus Coast',
+  ]);
+});
+
+test('the roundup links back to the directory and out to the shops that have a site', async ({
+  page,
+}) => {
+  await page.goto(FC_PATH);
+  await expect(page.locator(`.breadcrumb a[href="${PATH}"]`)).toBeVisible();
+  await expect(page.locator(`.footnote a[href="${PATH}"]`)).toBeVisible();
+
+  for (const shop of fishAndChips.filter((entry) => entry.url)) {
+    const link = page.locator(`.card-name a[href="${shop.url}"]`);
+    await expect(link).toHaveAttribute('target', '_blank');
+    await expect(link).toHaveAttribute('rel', /noopener/);
+  }
+});
+
+test('the roundup is indexable, canonical and in the sitemap', async ({ page, request }) => {
+  const response = await page.goto(FC_PATH);
+  expect(response.status()).toBe(200);
+
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow');
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    `https://thetide.co.nz${FC_PATH}`,
+  );
+
+  const sitemap = await request.get('/sitemap-0.xml');
+  expect(sitemap.ok()).toBeTruthy();
+  expect((await sitemap.text()).includes(FC_PATH)).toBe(true);
+});
+
+test('the roundup carries a share card that exists', async ({ page, request }) => {
+  await page.goto(FC_PATH);
+  const image = await page.locator('meta[property="og:image"]').getAttribute('content');
+  expect(image).toBeTruthy();
+  const asset = await request.get(new URL(image).pathname);
+  expect(asset.ok(), `${image} is missing from public/social`).toBeTruthy();
+});
+
+test('the roundup never scrolls sideways', async ({ page }) => {
+  await page.goto(FC_PATH);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+});
+
+test('the hub points at both roundups', async ({ page }) => {
+  await page.goto(PATH);
+  await expect(page.locator('.roundups a[href="/orewa-best-coffee"]')).toBeVisible();
+  await expect(page.locator(`.roundups a[href="${FC_PATH}"]`)).toBeVisible();
 });
 
 // --- The links in and out -----------------------------------------------------
