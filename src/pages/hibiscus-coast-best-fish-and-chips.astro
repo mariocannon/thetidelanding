@@ -15,12 +15,17 @@ const DIRECTORY = '/hibiscus-coast-business-directory';
 const PATH = '/hibiscus-coast-best-fish-and-chips';
 const UPDATED = '29 August 2026';
 
+// Title and description are meta, so they hold to BRANDING.md §7's impersonal
+// register, not the editor's voice (VOICE.md §10.2). "Hibiscus Coast" is the
+// search-facing place name; suburbs earn one mention, not a list.
 const title = 'Best fish and chips on the Hibiscus Coast | The Tide';
 // Count comes from the data so the copy can't drift when a shop is added or cut.
-const description = `Where Coasties actually go for a scoop — ${fishAndChips.length} fish and chip shops from Orewa to Gulf Harbour, ranked and kept by hand by The Tide.`;
+const description = `Where Coasties actually go for a scoop. ${fishAndChips.length} fish and chip shops from Ōrewa out to Gulf Harbour, ranked and kept current by The Tide.`;
 
+// The lede and every blurb are the editor's own voice (VOICE.md): first person,
+// "and"/"&" joins, no em dashes, one plain opinion then move on.
 const lede =
-  "Every beach town on the Coast has a chippy and most of them are fine. This is about the ones worth driving past your nearest for — the old faithfuls and the newer arrivals that have earned it. The order is ours. Snapper is the fish to ask for; kūmara chips are non-negotiable.";
+  "We've all got a Friday night fish and chip shop, the one that's been doing our scoop for years without us ever really checking if it's the best one going. So I checked. The order below is mine, built from a lot of Friday nights and a fair bit of asking around the Coast. Snapper is the fish to order and kūmara chips are not up for debate. The newer places had to earn their spot.";
 
 // Lets `/…-fish-and-chips#kippers-takeaways` link straight to one shop, for
 // sending a single recommendation. Macron-aware, like the category pages.
@@ -42,22 +47,33 @@ const breadcrumbJsonLd = {
   ],
 };
 
-// `address` stays a plain string — schema.org accepts Text for it, and we know
-// each shop's street or landmark, not always a tidy postal address. No
-// `aggregateRating`: we don't collect ratings, and the order is editorial, not
-// a score. The list order is the ItemList order.
+// A ranked ItemList: position 1 is the pick, ascending, and the print order
+// matches. Each entry is a real `Restaurant` with a machine-readable
+// `PostalAddress` (locality from the data file's `town`) — the local-search
+// signal a "best fish and chips <place>" page turns on. No `aggregateRating`
+// anywhere: we don't collect ratings, and the order is editorial, not a score.
 const itemListJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ItemList',
   name: 'Best fish and chips on the Hibiscus Coast',
   description,
+  url: `${SITE}${PATH}`,
+  numberOfItems: fishAndChips.length,
+  itemListOrder: 'https://schema.org/ItemListOrderAscending',
   itemListElement: fishAndChips.map((shop, index) => ({
     '@type': 'ListItem',
     position: index + 1,
     item: {
       '@type': 'Restaurant',
       name: shop.name,
-      address: `${shop.location}, Auckland, New Zealand`,
+      servesCuisine: 'Fish and chips',
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: shop.location,
+        addressLocality: shop.town,
+        addressRegion: 'Auckland',
+        addressCountry: 'NZ',
+      },
       ...(shop.url ? { url: shop.url } : {}),
       ...(shop.phone ? { telephone: shop.phone } : {}),
     },
@@ -70,11 +86,11 @@ const itemListJsonLd = {
   description={description}
   path={PATH}
   robots="index, follow"
-  socialImageAlt="Best fish and chips on the Hibiscus Coast — The Tide"
+  socialImageAlt="The Tide's ranked guide to fish and chips on the Hibiscus Coast"
   eyebrow="Local roundup"
   heading="Best fish and chips on the Hibiscus Coast"
   lede={lede}
-  updated={`Last updated ${UPDATED} · ${fishAndChips.length} shops, our order`}
+  updated={`Last updated ${UPDATED} · ${fishAndChips.length} shops, my order`}
   breadcrumb={[
     { name: 'The Tide', href: '/' },
     { name: 'Business directory', href: DIRECTORY },
@@ -105,9 +121,9 @@ const itemListJsonLd = {
   </ol>
 
   <p class="footnote">
-    Think we've got the order wrong, or missed your local?{' '}
-    <a href="mailto:hello@thetide.co.nz">hello@thetide.co.nz</a> — we'll go get a
-    scoop and see.
+    Reckon I've got the order wrong, or missed your local?{' '}
+    <a href="mailto:hello@thetide.co.nz">flick me a line</a> and I'll go get a
+    scoop and see for myself.
   </p>
   <p class="footnote">
     <a href={DIRECTORY}>Back to the Hibiscus Coast business directory</a>

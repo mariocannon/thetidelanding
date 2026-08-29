@@ -465,8 +465,14 @@ test('the fish and chips roundup data file holds a rankable list', () => {
     const where = `fish-and-chips → ${shop.name}`;
     expect(shop.name?.trim(), `name on ${where}`).toBeTruthy();
     expect(shop.location?.trim(), `location on ${where}`).toBeTruthy();
+    // `town` drives the PostalAddress in the page's schema — must be a real
+    // directory town so the two stay in step.
+    expect(towns, `town on ${where}`).toContain(shop.town);
     // A one-liner isn't a recommendation — same bar the directory listings clear.
     expect(shop.blurb?.trim().length ?? 0, `blurb on ${where}`).toBeGreaterThan(60);
+    // The blurbs are the editor's voice (VOICE.md): clauses join with "and",
+    // never an em/en dash. This is the clearest tell, so it's worth a guard.
+    expect(shop.blurb, `dash in ${where} blurb — VOICE.md joins with "and"`).not.toMatch(/[—–]/);
     if (shop.url) expect(shop.url, `url on ${where}`).toMatch(/^https?:\/\//);
     if (shop.phone) expect(shop.phone, `phone on ${where}`).toMatch(/^[\d\s+()-]{7,}$/);
   }
@@ -505,9 +511,18 @@ test('the roundup describes the same shops, in printed order, in its structured 
   expect(itemList.itemListElement.map((entry) => entry.position)).toEqual(
     fishAndChips.map((_, index) => index + 1),
   );
-  for (const entry of itemList.itemListElement) {
+  expect(itemList.numberOfItems).toBe(fishAndChips.length);
+  expect(itemList.itemListOrder).toMatch(/Ascending$/);
+
+  itemList.itemListElement.forEach((entry, index) => {
     expect(entry.item['@type']).toBe('Restaurant');
-  }
+    expect(entry.item.servesCuisine).toBeTruthy();
+    // A real PostalAddress with the locality from the data file's `town` — the
+    // local-search signal the page exists to carry.
+    expect(entry.item.address['@type']).toBe('PostalAddress');
+    expect(entry.item.address.addressLocality).toBe(fishAndChips[index].town);
+    expect(entry.item.address.addressCountry).toBe('NZ');
+  });
 
   // No invented ratings — the order is editorial, not a score.
   expect(JSON.stringify(blocks)).not.toContain('aggregateRating');
