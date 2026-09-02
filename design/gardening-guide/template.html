@@ -28,9 +28,10 @@
       }
 
       /* Palette lifted straight from bizdata/docs/BRANDING.md §1. No new
-         tokens added for the 2026-08 redesign — every accent below (icon
-         badges, card tints, the wave-rule divider) is built from these
-         eight values only. */
+         tokens added for the 2026-08 redesign or the 2026-09 polish — every
+         accent below (icon badges, card tints, the wave-rule divider, the
+         cover frame, the shoreline planting band, the sprig dividers) is
+         built from these eight values only. */
       :root {
         --foam: #faf5ea;
         --sand: #f0e7d6;
@@ -119,7 +120,7 @@
          headers, tip cards, calendar groups, the frost callout, the swap
          listing's fields and the cover's "what's inside" row. Every shape
          resolves its colour from the CSS `color` property on whichever
-         wrapper it sits in (`currentColor`), so the same 14 symbols serve
+         wrapper it sits in (`currentColor`), so the same 15 symbols serve
          every context without duplicating markup. This is the thread that
          ties the cover, the three section pages and design/banner/
          gardening-guide.html's own sprout tile into one family — see the
@@ -162,6 +163,28 @@
         height: 18px;
       }
 
+      /* A short horizontal vine — a stem with a few small leaves along it —
+         drawn from the same hand as the icon set. Used centred as a closing
+         divider at the foot of a section, and, smaller, once on the cover
+         under the H1. The 2026-08 redesign added the .wave-rule under each
+         H2 as an opening motif; this is its bookend, so a section reads as
+         top-and-tailed rather than trailing off into white space (the
+         2026-09 "too sparse" note). Sea Glass, decorative only. Centred so
+         it doesn't hang off the left margin in the trailing white space. */
+      .sprig-rule {
+        display: block;
+        width: 190px;
+        height: 26px;
+        color: var(--seaglass);
+        margin: 26px auto 0;
+      }
+
+      .sprig-rule.sm {
+        width: 150px;
+        height: 22px;
+        margin: 10px auto 2px;
+      }
+
       /* ---------- Cover page ---------- */
 
       .cover {
@@ -172,17 +195,41 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        /* Reserves room for the wave band + colophon at the foot of the
-           page and centers the logo/kicker/h1/intro/badge/features block in
-           the space above it, rather than in the full 240mm box — centering
-           on the full height (now that the wash is a continuous, seamless
-           background rather than cutting out partway down) left an
-           oversized, unbalanced gap between the badge and the footer. */
-        padding-bottom: 78mm;
+        /* Reserves room for the wave band + shoreline planting at the foot
+           of the page and centers the framed .cover-inner block in the
+           space above it. Trimmed from 78mm in the 2026-09 polish: with the
+           colophon pulled inside .cover-inner (it used to be absolutely
+           positioned at the page foot) and the new .garden-band filling the
+           lower third, the old reserve left the block floating high with a
+           dead band beneath it. 44mm drops it far enough to close the gap
+           to the planting without .cover-inner crowding it. */
+        padding-bottom: 58mm;
         text-align: center;
         break-after: page;
         page-break-after: always;
         overflow: hidden;
+      }
+
+      /* The rounded Steel-Blue keyline is a real container, not an absolutely
+         positioned overlay — it wraps the masthead block (logo … colophon)
+         so it always hugs the content exactly, whatever the copy length,
+         instead of a fixed inset that has to be re-guessed every time the
+         block's height changes. The shape (2px / ~0.28 alpha / 20px radius)
+         is lifted from design/banner/gardening-club.html's .frame so the
+         club banner and the guide's cover carry the same containing device.
+         The .wash, .garden-band and .waves stay as their own absolute layers
+         behind and below it. Added 2026-09 — the cover had no edge treatment
+         and read as copy adrift on a plain wash. */
+      .cover .cover-inner {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        border: 2px solid rgba(69, 117, 140, 0.28);
+        border-radius: 20px;
+        /* Kept fairly shallow: the box has to clear the shoreline planting
+           below it on an A4 page, so every internal margin here and in the
+           children is set to leave that gap rather than for its own sake. */
+        padding: 34px 34px 22px;
       }
 
       /* Both decorative layers used to bleed past .cover via negative
@@ -193,12 +240,32 @@
          mid-page, and the waves lost their intended off-page anchor
          entirely. Both now stay fully inside .cover's own box (which
          .cover already clips with overflow: hidden), so there's nothing
-         left relying on margin bleed. Untouched by the 2026-08 redesign —
-         this fix stays exactly as it was. */
+         left relying on margin bleed. */
       .cover .wash {
         position: absolute;
         inset: 0;
         background: radial-gradient(120% 70% at 50% 0%, var(--foam) 0%, var(--sand) 100%);
+        z-index: -1;
+      }
+
+      /* A low strip of Sea Glass planting — grass blades and leafy sprigs —
+         rising from behind the front wave crest and running the width of
+         the page. This is the main fix for the 2026-09 "cover is too
+         sparse" note: it bridges the gap between the centred content block
+         and the shoreline instead of leaving ~40mm of flat wash there, and
+         it says "garden" and "coast" in one device. preserveAspectRatio is
+         left at the default (uniform scale) and height follows width, so
+         the sprigs never distort however wide the page renders. Behind the
+         content and behind the waves; the overlap where stems meet the
+         shoreline is hidden by the front wave, so the planting appears to
+         grow out of it. */
+      .cover .garden-band {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 40mm;
+        width: 100%;
+        height: auto;
         z-index: -1;
       }
 
@@ -214,9 +281,9 @@
       }
 
       .cover img.logo {
-        width: 92px;
+        width: 78px;
         height: auto;
-        margin-bottom: 22px;
+        margin-bottom: 12px;
       }
 
       .cover .badge {
@@ -240,11 +307,16 @@
         letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--steel);
-        margin: 0 0 14px;
+        margin: 0 0 10px;
       }
 
       .cover h1 {
-        font-size: 40pt;
+        /* 34pt, down from 40pt: the title now sits inside .cover-inner's
+           padding rather than running the full page measure, and at 40pt
+           "Local Gardening Guide" wrapped to a second line with just
+           "Guide" orphaned on it. 34pt keeps it one line with air to
+           spare on both sides of the keyline. */
+        font-size: 34pt;
         line-height: 1.05;
         letter-spacing: -0.01em;
       }
@@ -256,7 +328,7 @@
 
       .cover .intro {
         max-width: 30em;
-        margin: 22px auto 0;
+        margin: 14px auto 0;
         font-size: 13.5pt;
         line-height: 1.55;
         color: var(--slate);
@@ -273,8 +345,11 @@
          content.json field. */
       .cover-features {
         display: flex;
+        justify-content: center;
         gap: 44px;
-        margin-top: 34px;
+        /* Kept tight (was 34px) so the feature row + colophon don't push
+           .cover-inner's lower edge down into the shoreline planting. */
+        margin-top: 16px;
       }
 
       .cover-features .feature {
@@ -292,14 +367,13 @@
         color: var(--steel);
       }
 
+      /* Was absolutely positioned at bottom: 40mm, which floated it across
+         the top of the wave graphic where it lost contrast. Pulled into the
+         normal flow at the foot of the centred content block in the 2026-09
+         polish — it now sits on plain wash with the planting band and waves
+         owning the space below it. */
       .cover .colophon {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 40mm; /* clears the waves' topmost crest (see .waves) with
-                          room to spare, so the line sits on the plain wash,
-                          not across the wave graphic where it loses
-                          contrast */
+        margin: 12px 0 0;
         font-size: 9.5pt;
         letter-spacing: 0.04em;
         color: var(--driftwood);
@@ -344,18 +418,37 @@
         margin: 8px 0 12px;
       }
 
+      /* One sentence under the wave-rule, before the cards — sets up what
+         the section is for so the page opens with a line of plain prose
+         rather than jumping straight into a tinted card. Added 2026-09 as
+         part of the "too sparse" fix; it's an optional per-issue field
+         (tipsIntro / see render.mjs), so a month can leave it out and the
+         section just starts at the first card. Slate, not a heading. */
+      .section-standfirst {
+        max-width: 40em;
+        margin: 0 0 16px;
+        color: var(--slate);
+      }
+
       /* ---------- Gardening tips ---------- */
 
       .tip-card {
         display: flex;
         align-items: flex-start;
-        gap: 16px;
+        gap: 18px;
         break-inside: avoid;
         page-break-inside: avoid;
         background: var(--sand);
         border-radius: 14px;
-        padding: 13px 20px;
-        margin-bottom: 11px;
+        /* Padding and inter-card margin opened up in the 2026-09 polish
+           (were 13px 20px / 11px). The Tips page ran out at ~62% of its
+           height; giving each card more room and more air between cards
+           spends that space on the "calmer, more generous" read §7.2 asks
+           for rather than leaving it blank at the foot. The Planting
+           Calendar page is the tight one (see the README budget note) and
+           is deliberately NOT loosened to match. */
+        padding: 18px 24px;
+        margin-bottom: 16px;
         box-shadow: 0 2px 10px rgba(35, 49, 60, 0.07);
       }
 
@@ -365,8 +458,8 @@
          though both are now "icon + card" in shape. */
       .tip-icon {
         flex: 0 0 auto;
-        width: 40px;
-        height: 40px;
+        width: 46px;
+        height: 46px;
         margin-top: 2px;
         border-radius: 50%;
         background: var(--seaglass);
@@ -376,8 +469,8 @@
       }
 
       .tip-icon .icon {
-        width: 20px;
-        height: 20px;
+        width: 22px;
+        height: 22px;
         color: var(--steel);
       }
 
@@ -484,13 +577,64 @@
         color: var(--harbor);
       }
 
+      /* A three-item strip explaining how a swap works in the abstract —
+         bring / take / no cash. Evergreen boilerplate about the idea, not
+         this month's event details (those stay in .swap-listing), so it's
+         safe on a placeholder issue and carries over month to month. Built
+         on the cover's "what's inside" tile device so it reads as the same
+         product. Optional per-issue field (produceSwaps.how / see
+         render.mjs). Added 2026-09: the Swaps page had only an intro line
+         and one listing box and ran out at ~half height. */
+      .swap-how {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        margin: 18px 0 22px;
+      }
+
+      .swap-how .how {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .swap-how .how .tile-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
+      }
+
+      .swap-how .how .tile-icon .icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .swap-how .how .how-lead {
+        font-weight: 700;
+        font-size: 10.5pt;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--steel);
+        margin: 2px 0 0;
+      }
+
+      .swap-how .how p {
+        margin: 0;
+        font-size: 11pt;
+        line-height: 1.5;
+        color: var(--slate);
+      }
+
       .swap-listing {
         break-inside: avoid;
         page-break-inside: avoid;
         background: var(--sand);
         border: 1.5px dashed var(--steel);
         border-radius: 14px;
-        padding: 16px 22px;
+        /* Opened up from 16px 22px in the 2026-09 polish, along with the
+           row-gap below — the box was small on a mostly empty page. */
+        padding: 22px 28px;
         margin-top: 6px;
         box-shadow: 0 2px 10px rgba(35, 49, 60, 0.07);
       }
@@ -503,11 +647,30 @@
         margin-bottom: 12px;
       }
 
+      /* The "Coming soon" card body (placeholder state) — a short heading and
+         one paragraph telling readers the swap is being set up, in place of
+         the old [confirm venue] field list. Not italicised: it's real copy
+         addressed to the reader, not a stand-in for a missing value. */
+      .swap-listing .cs-heading {
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        font-size: 15pt;
+        line-height: 1.2;
+        color: var(--harbor);
+        margin: 0 0 8px;
+      }
+
+      .swap-listing .cs-body {
+        margin: 0;
+        max-width: 40em;
+        color: var(--slate);
+      }
+
       .swap-listing dl {
         margin: 0;
         display: grid;
         grid-template-columns: 9.5em 1fr;
-        row-gap: 10px;
+        row-gap: 15px;
         column-gap: 14px;
       }
 
@@ -539,7 +702,7 @@
     </style>
   </head>
   <body>
-    <!-- Icon library: 14 hand-drawn symbols, defined once and reused via
+    <!-- Icon library: 15 hand-drawn symbols, defined once and reused via
          <use> throughout the document. Every shape resolves colour from
          `currentColor`, i.e. whatever `color` the wrapping element sets —
          see the ".icon" comment in <style> above and the README's icon-key
@@ -612,33 +775,176 @@
           <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/>
           <path d="M5 20c1-4.5 4-6.5 7-6.5s6 2 7 6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
         </symbol>
+        <!-- New 2026-09: a stem with three leaves, for the .sprig-rule
+             closing divider. Not a content.json icon key — structural,
+             like trowel/calendar/swap on the section headers. -->
+        <symbol id="icon-sprig" viewBox="0 0 24 24">
+          <path d="M12 21c0-5 0-9 0-13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+          <path d="M12 12c-1-3-3.5-4-6-4 0 3 2 5.5 6 4Z" fill="currentColor" stroke="none"/>
+          <path d="M12 8c1-3 3.5-4 6-4 0 3-2 5.5-6 4Z" fill="currentColor" stroke="none"/>
+          <path d="M12 5c0-2 1.4-3.4 3-4 .4 2-.6 4-3 4Z" fill="currentColor" stroke="none"/>
+        </symbol>
       </defs>
     </svg>
 
     <div class="cover">
       <div class="wash"></div>
-      <img class="logo" src="../../public/logo.webp" alt="The Tide" />
-      <p class="kicker">{{ISSUE_KICKER}}</p>
-      <h1>Local Gardening <em>Guide</em></h1>
-      <p class="intro">{{ISSUE_INTRO}}</p>
-      <p class="badge">Issue {{ISSUE_NUMBER}} · {{ISSUE_LABEL}}</p>
 
-      <div class="cover-features">
-        <div class="feature">
-          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-trowel"></use></svg></div>
-          <span>Tips</span>
+      <div class="cover-inner">
+        <img class="logo" src="../../public/logo.webp" alt="The Tide" />
+        <p class="kicker">{{ISSUE_KICKER}}</p>
+        <h1>Local Gardening <em>Guide</em></h1>
+        <svg class="sprig-rule sm" viewBox="0 0 190 26" aria-hidden="true">
+          <path d="M8 16C40 8 66 22 95 15 124 8 150 22 182 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M40 14c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+          <path d="M62 17c2 8-3 13-11 15-1-8 4-14 11-15Z" fill="currentColor"/>
+          <path d="M95 13c-1-9 4-14 12-16 1 9-4 15-12 16Z" fill="currentColor"/>
+          <path d="M128 13c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+          <path d="M150 17c2 7-3 12-10 14-1-7 3-13 10-14Z" fill="currentColor"/>
+          <path d="M182 14c0-5 3-8 8-9 0 6-3 9-8 9Z" fill="currentColor"/>
+        </svg>
+        <p class="intro">{{ISSUE_INTRO}}</p>
+        <p class="badge">{{ISSUE_LABEL}}</p>
+
+        <div class="cover-features">
+          <div class="feature">
+            <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-trowel"></use></svg></div>
+            <span>Tips</span>
+          </div>
+          <div class="feature">
+            <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg></div>
+            <span>Calendar</span>
+          </div>
+          <div class="feature">
+            <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-swap"></use></svg></div>
+            <span>Swaps</span>
+          </div>
         </div>
-        <div class="feature">
-          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-calendar"></use></svg></div>
-          <span>Calendar</span>
-        </div>
-        <div class="feature">
-          <div class="tile-icon sm"><svg class="icon" viewBox="0 0 24 24"><use href="#icon-swap"></use></svg></div>
-          <span>Swaps</span>
-        </div>
+
+        <p class="colophon">Every month at thetide.co.nz/gardening-guide</p>
       </div>
 
-      <p class="colophon">thetide.co.nz — a Beehiiv extra for Coasties, not a web page</p>
+      <!-- Shoreline planting: a two-layer row of seedlings, sprigs and grass
+           tufts in Sea Glass, rising from behind the front wave. The back
+           layer (many small evenly-spaced sprouts at 0.45 opacity) and the
+           front layer (taller, spaced, varied) echo the two-wave motif —
+           depth from the same shape twice. Default preserveAspectRatio, so
+           it scales uniformly and the strokes never distort; the tall
+           viewBox (1000×240) gives it real height at the page width. The
+           paths are generated (see the README's "Shoreline planting band"
+           note) rather than hand-placed — regenerate, don't nudge nodes. -->
+      <svg class="garden-band" viewBox="0 0 1000 240" aria-hidden="true">
+        <g stroke="#a2c5d3" stroke-linecap="round" stroke-linejoin="round">
+          <g opacity="0.45" fill="#a2c5d3" stroke-width="2.6">
+            <path d="M24.4 240C24.4 221.2 21.5 210 21.5 202.5" fill="none"/>
+            <path d="M21.5 215.2c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M21.5 209.2c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M21.5 208.5c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M86.1 240C86.1 215.8 84.4 201.3 84.4 191.6" fill="none"/>
+            <path d="M84.4 208.1c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M84.4 200.3c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M84.4 197.6c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M140.6 240C140.6 224.8 143.4 215.7 143.4 209.7" fill="none"/>
+            <path d="M143.4 220c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M143.4 215.1c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M143.4 215.7c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M206.1 240C206.1 218.1 209.1 204.9 209.1 196.1" fill="none"/>
+            <path d="M209.1 211.1c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M209.1 204c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M209.1 202.1c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M256.7 240C256.7 220.4 256.6 208.7 256.6 200.8" fill="none"/>
+            <path d="M256.6 214.1c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M256.6 207.9c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M256.6 206.8c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M310.8 240C310.8 223.1 309.8 212.9 309.8 206.1" fill="none"/>
+            <path d="M309.8 217.6c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M309.8 212.2c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M309.8 212.1c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M379.7 240C379.7 224.3 377.9 214.9 377.9 208.6" fill="none"/>
+            <path d="M377.9 219.3c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M377.9 214.3c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M377.9 214.6c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M431.3 240C431.3 222.1 432.6 211.3 432.6 204.2" fill="none"/>
+            <path d="M432.6 216.4c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M432.6 210.6c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M432.6 210.2c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M493.8 240C493.8 221 493.8 209.6 493.8 202" fill="none"/>
+            <path d="M493.8 214.9c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M493.8 208.9c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M493.8 208c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M549.8 240C549.8 221.4 547.3 210.2 547.3 202.8" fill="none"/>
+            <path d="M547.3 215.5c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M547.3 209.5c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M547.3 208.8c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M607.9 240C607.9 215.5 610.4 200.9 610.4 191.1" fill="none"/>
+            <path d="M610.4 207.7c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M610.4 199.9c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M610.4 197.1c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M663 240C663 222.6 663.7 212.1 663.7 205.2" fill="none"/>
+            <path d="M663.7 217c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M663.7 211.4c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M663.7 211.2c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M718.7 240C718.7 223 718 212.8 718 206" fill="none"/>
+            <path d="M718 217.5c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M718 212.1c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M718 212c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M780.2 240C780.2 222.3 777.5 211.7 777.5 204.7" fill="none"/>
+            <path d="M777.5 216.7c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M777.5 211c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M777.5 210.7c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M835.4 240C835.4 217.2 833.7 203.5 833.7 194.4" fill="none"/>
+            <path d="M833.7 209.9c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M833.7 202.6c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M833.7 200.4c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M895.6 240C895.6 217.2 895.6 200.8 895.6 191" fill="none"/>
+            <path d="M895.6 207.7c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M895.6 199.9c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M895.6 197c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M957.2 240C957.2 215.4 959.1 200.7 959.1 190.8" fill="none"/>
+            <path d="M959.1 207.5c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M959.1 199.7c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M959.1 196.8c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+          </g>
+          <g fill="#a2c5d3" stroke-width="4.5">
+            <path d="M72.9 240C63.1 196.6 46.8 162.9 40.3 143.6" fill="none"/>
+            <path d="M72.9 240C67.9 201.5 59.6 171.5 56.3 154.4" fill="none"/>
+            <path d="M72.9 240C70.9 185.5 67.4 143 66 118.8" fill="none"/>
+            <path d="M72.9 240C75 188.5 78.6 148.5 80 125.7" fill="none"/>
+            <path d="M72.9 240C78.8 193.3 88.7 156.9 92.6 136.2" fill="none"/>
+            <path d="M72.9 240C80.6 197.9 93.4 165.1 98.5 146.3" fill="none"/>
+            <path d="M196.7 240C194.7 174 198.7 134.5 196.7 108.1" fill="none"/>
+            <path d="M196.7 134.5c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+            <path d="M196.7 166.1c13 -3 20 -10 21 -21 -13 1 -20 8 -21 21z"/>
+            <path d="M196.7 197.8c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+            <path d="M311.1 240C311.1 197.5 308.2 172 308.2 155.1" fill="none"/>
+            <path d="M308.2 183.9c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M308.2 170.3c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M308.2 161.1c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M448.6 240C439.3 178.9 423.8 131.4 417.6 104.2" fill="none"/>
+            <path d="M448.6 240C445.3 184.2 439.8 140.8 437.6 116" fill="none"/>
+            <path d="M448.6 240C448.6 179.8 448.6 133 448.6 106.2" fill="none"/>
+            <path d="M448.6 240C452.2 196.4 458.3 162.4 460.7 143" fill="none"/>
+            <path d="M448.6 240C455.1 188.9 466 149.2 470.3 126.5" fill="none"/>
+            <path d="M562.2 240C560.2 168.8 564.2 126.1 562.2 97.6" fill="none"/>
+            <path d="M562.2 126.1c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+            <path d="M562.2 160.2c13 -3 20 -10 21 -21 -13 1 -20 8 -21 21z"/>
+            <path d="M562.2 194.4c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+            <path d="M690.9 240C690.9 189.8 689.9 159.7 689.9 139.6" fill="none"/>
+            <path d="M689.9 173.8c-11 -2 -18 -10 -19 -22 12 1 20 9 19 22z"/>
+            <path d="M689.9 157.7c11 -2 18 -10 19 -22 -12 1 -20 9 -19 22z"/>
+            <path d="M689.9 145.6c-1 -6 2 -11 0 -18 -2 7 -6 12 0 18z"/>
+            <path d="M813.5 240C806.6 184.4 795 141.2 790.4 116.5" fill="none"/>
+            <path d="M813.5 240C809.8 191 803.7 152.9 801.2 131.1" fill="none"/>
+            <path d="M813.5 240C813.5 198 813.5 165.3 813.5 146.6" fill="none"/>
+            <path d="M813.5 240C817.1 192.5 823 155.5 825.4 134.4" fill="none"/>
+            <path d="M813.5 240C821.9 195 835.8 160 841.4 140" fill="none"/>
+            <path d="M929 240C927 168.3 931 125.3 929 96.6" fill="none"/>
+            <path d="M929 125.3c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+            <path d="M929 159.7c13 -3 20 -10 21 -21 -13 1 -20 8 -21 21z"/>
+            <path d="M929 194.1c-13 -3 -20 -10 -21 -21 13 1 20 8 21 21z"/>
+          </g>
+        </g>
+      </svg>
 
       <svg class="waves" viewBox="0 0 1408 176" preserveAspectRatio="none" aria-hidden="true">
         <path
@@ -664,7 +970,17 @@
       <svg class="wave-rule" viewBox="0 0 120 14" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0,9 C10,2 20,2 30,9 C40,16 50,16 60,9 C70,2 80,2 90,9 C100,16 110,16 120,9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
       </svg>
+      <!--TIPS_INTRO-->
       <!--TIPS_ITEMS-->
+      <svg class="sprig-rule" viewBox="0 0 190 26" aria-hidden="true">
+        <path d="M8 16C40 8 66 22 95 15 124 8 150 22 182 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M40 14c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+        <path d="M62 17c2 8-3 13-11 15-1-8 4-14 11-15Z" fill="currentColor"/>
+        <path d="M95 13c-1-9 4-14 12-16 1 9-4 15-12 16Z" fill="currentColor"/>
+        <path d="M128 13c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+        <path d="M150 17c2 7-3 12-10 14-1-7 3-13 10-14Z" fill="currentColor"/>
+        <path d="M182 14c0-5 3-8 8-9 0 6-3 9-8 9Z" fill="currentColor"/>
+      </svg>
     </section>
 
     <section class="section" id="calendar">
@@ -700,7 +1016,17 @@
         <path d="M0,9 C10,2 20,2 30,9 C40,16 50,16 60,9 C70,2 80,2 90,9 C100,16 110,16 120,9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
       </svg>
       <p class="swap-intro">{{SWAP_INTRO}}</p>
+      <!--SWAP_HOW-->
       <!--SWAP_LISTING-->
+      <svg class="sprig-rule" viewBox="0 0 190 26" aria-hidden="true">
+        <path d="M8 16C40 8 66 22 95 15 124 8 150 22 182 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M40 14c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+        <path d="M62 17c2 8-3 13-11 15-1-8 4-14 11-15Z" fill="currentColor"/>
+        <path d="M95 13c-1-9 4-14 12-16 1 9-4 15-12 16Z" fill="currentColor"/>
+        <path d="M128 13c-2-8 3-13 11-15 1 8-4 14-11 15Z" fill="currentColor"/>
+        <path d="M150 17c2 7-3 12-10 14-1-7 3-13 10-14Z" fill="currentColor"/>
+        <path d="M182 14c0-5 3-8 8-9 0 6-3 9-8 9Z" fill="currentColor"/>
+      </svg>
     </section>
   </body>
 </html>

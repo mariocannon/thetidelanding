@@ -1,12 +1,12 @@
 {
   "issue": {
-    "number": 1,
     "month": "September",
     "label": "September 2026",
     "slug": "2026-09",
     "kicker": "The Tide — Local Gardening Guide",
     "intro": "Spring's here, Coasties, and there's plenty for the garden to be getting on with."
   },
+  "tipsIntro": "A few jobs worth getting on with this month, while the soil warms up and the garden wakes properly.",
   "tips": [
     {
       "lead": "Feed the soil before you feed the garden.",
@@ -50,14 +50,35 @@
     "frostNote": "Our stretch of coast is close to frost-free, but every gardening guide we checked still counsels a little caution in September — cold nights can catch young seedlings out before the soil's truly warmed. If you're gardening inland or somewhere low-lying, it's worth being a touch more patient than your coastal neighbours."
   },
   "produceSwaps": {
-    "intro": "Got a glut of silverbeet, or more lemons than you know what to do with? Bring your extras along and swap with fellow Coasties.",
+    "intro": "Got a glut of silverbeet, or more lemons than you know what to do with? A produce swap is the easiest fix — bring what you've got spare, take home something you haven't grown, and meet a few green-fingered neighbours while you're at it. No cost, no catch.",
+    "how": [
+      {
+        "icon": "basket",
+        "lead": "Bring a bag",
+        "body": "Whatever you've got going spare — lemons, a punnet of seedlings, cuttings from a plant that's thriving."
+      },
+      {
+        "icon": "swap",
+        "lead": "Take a bag",
+        "body": "Swap for something you haven't grown yet. No need to bring the same amount you take home."
+      },
+      {
+        "icon": "person",
+        "lead": "Meet the neighbours",
+        "body": "Half the fun is the chat — compare notes with other Coasties on what's thriving and what's not."
+      }
+    ],
     "listing": {
       "placeholder": true,
-      "location": "confirm venue",
-      "date": "confirm date",
-      "time": "confirm time",
+      "comingSoon": {
+        "heading": "The Coast's first produce swap — in the works",
+        "body": "We're lining up a regular community produce swap for the Hibiscus Coast. The where, when and who's running it aren't locked in yet — the moment they are, the details will be right here in the guide. Keen to help get one going in your neighbourhood? Just reply to this email and we'll be in touch."
+      },
+      "location": "",
+      "date": "",
+      "time": "",
       "bring": "any home-grown produce, seedlings, seeds or cuttings you'd like to swap — take home whatever catches your eye, no cash needed.",
-      "organiser": "confirm organiser/contact"
+      "organiser": ""
     }
   }
 }

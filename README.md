@@ -26,7 +26,10 @@ Open Graph and Twitter Card tags with a 1200×630 image, and JSON-LD. The home
 page's is a `NewsMediaOrganization` with `areaServed` covering the suburbs, plus
 a `WebSite` entry that points back at it — enough for a search engine to read
 who The Tide is and where it covers off the front page alone. The other pages
-still carry only title, description and the three basic `og:` tags.
+still carry only title, description and the three basic `og:` tags — including
+`/gardening-guide` and `/gardening-guide/<slug>`, the monthly Local Gardening
+Guide (laid out in `design/gardening-guide/`, published to the site by that
+folder's `publish.mjs`); they're due a proper `<head>` pass.
 
 Reader-facing copy uses the macronised spellings — Ōrewa, Whangaparāoa. Slugs
 stay ASCII, which is why the route is `/orewa-best-coffee`.

@@ -1,0 +1,549 @@
+---
+// The Tide — the Local Gardening Guide, read on the site. The guide is laid
+// out as an A4 PDF in design/gardening-guide/; `publish.mjs` screenshots each
+// section into public/gardening-guide/<slug>/ and copies the PDF alongside.
+// This page shows the newest month inline (one image a section, so it reads
+// on a phone with no PDF plugin) with the PDF as a download, and lists the
+// earlier months underneath. Same rule as every page here: nothing is
+// fetched from anywhere else on load.
+import { guides } from '../data/gardening-guides.js';
+import { pages as guidePages } from '../data/gardening-guides.generated.js';
+
+const title = 'The Tide — Local Gardening Guide';
+const description =
+  "The Tide's monthly gardening guide for the Hibiscus Coast: what to sow now, a planting calendar, and community produce swaps. Read it here or download the print version.";
+
+const ordered = [...guides].sort((a, b) => b.date.localeCompare(a.date));
+const [featured, ...earlier] = ordered;
+const featuredPages = featured ? guidePages[featured.slug] ?? [] : [];
+
+const formatter = new Intl.DateTimeFormat('en-NZ', { month: 'long', year: 'numeric' });
+const earlierEntries = earlier.map((guide) => ({
+  ...guide,
+  monthLabel: guide.label || formatter.format(new Date(`${guide.date}T00:00:00`)),
+}));
+---
+
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <a class="home" href="/">
+        <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+      </a>
+      <p class="eyebrow">Local Gardening Guide</p>
+      <h1>The Tide's Local Gardening Guide</h1>
+
+      {
+        featured ? (
+          <p class="lede">
+            A fresh one every month for Coasties — what to sow now, the
+            month's planting calendar, and community produce swaps. Here's{' '}
+            {featured.label}.
+          </p>
+        ) : (
+          <p class="lede empty">
+            The first guide lands with an issue soon. Sign up below and it'll
+            be in your inbox.
+          </p>
+        )
+      }
+
+      {
+        featured && (
+          <article class="guide">
+            <div class="guide-head">
+              <h2>{featured.label}</h2>
+              <a class="pdf" href={`/gardening-guide/${featured.slug}.pdf`}>
+                Download the print PDF
+              </a>
+            </div>
+            {featured.intro && <p class="guide-intro">{featured.intro}</p>}
+            {featuredPages.length > 0 ? (
+              <div class="guide-pages">
+                {featuredPages.map((p, i) => (
+                  <img
+                    src={`/gardening-guide/${featured.slug}/${p.src}`}
+                    width={p.w}
+                    height={p.h}
+                    alt={p.alt}
+                    loading={i === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p class="guide-pending">
+                This month's guide is being prepared — the print PDF above
+                has it in the meantime.
+              </p>
+            )}
+            <a class="pdf pdf-foot" href={`/gardening-guide/${featured.slug}.pdf`}>
+              Download the print PDF
+            </a>
+          </article>
+        )
+      }
+
+      {
+        earlierEntries.length > 0 && (
+          <section class="earlier">
+            <h2>Earlier months</h2>
+            <ul>
+              {earlierEntries.map((guide) => (
+                <li>
+                  <a href={`/gardening-guide/${guide.slug}`}>{guide.monthLabel}</a>
+                  {guide.intro && <span class="earlier-intro">{guide.intro}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+
+      <section id="subscribe">
+        <p class="subscribe-pitch">
+          Get the guide with your weekly issue of The Tide.
+        </p>
+        <form id="subscribe-form" method="post" action="#" novalidate>
+          <label class="visually-hidden" for="email">Email address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            spellcheck="false"
+            placeholder="you@example.com"
+            required
+          />
+          <button type="submit">Subscribe</button>
+        </form>
+        <p class="note" id="subscribe-note" role="status" aria-live="polite">
+          Free forever. Unsubscribe any time.
+        </p>
+      </section>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      // Same insert as the home page's form: the `subscribers` table, with the
+      // publishable key. Row-level security only allows inserts.
+      const SUPABASE_URL = 'https://jykpoupjvcmvoihujfkc.supabase.co';
+      const SUPABASE_KEY = 'sb_publishable_aMYowr2D3KMWyiw7IpMeXw_GzXRrIxM';
+
+      const subscribeForm = document.getElementById('subscribe-form');
+      const subscribeEmail = subscribeForm.querySelector('#email');
+      const subscribeNote = document.getElementById('subscribe-note');
+
+      subscribeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!subscribeEmail.checkValidity()) {
+          subscribeNote.textContent = 'Please enter a valid email address.';
+          subscribeNote.className = 'note error';
+          subscribeEmail.focus();
+          return;
+        }
+
+        const subscribeButton = subscribeForm.querySelector('button');
+        subscribeButton.disabled = true;
+        subscribeButton.textContent = 'Subscribing…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/subscribers`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify({ email: subscribeEmail.value.trim().toLowerCase() }),
+          });
+
+          // 409 = duplicate email: already subscribed, treat as success.
+          if (response.ok || response.status === 409) {
+            subscribeForm.hidden = true;
+            subscribeNote.textContent =
+              "You're in! Check your inbox for your welcome email, then keep an eye out for your weekly issue of The Tide.";
+            subscribeNote.className = 'note success';
+            return;
+          }
+          throw new Error(`Signup failed with status ${response.status}`);
+        } catch {
+          subscribeNote.textContent = 'Something went wrong — please try again in a moment.';
+          subscribeNote.className = 'note error';
+          subscribeButton.disabled = false;
+          subscribeButton.textContent = 'Subscribe';
+        }
+      });
+
+      subscribeEmail.addEventListener('input', () => {
+        if (subscribeNote.classList.contains('error')) {
+          subscribeNote.textContent = 'Free forever. Unsubscribe any time.';
+          subscribeNote.className = 'note';
+        }
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 60% at 50% 0%, #faf5ea 0%, #f0e7d6 60%) no-repeat,
+      #f0e7d6;
+    color: #23313c;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(46rem, 100% - 2.5rem);
+    margin-inline: auto;
+    padding-block: 2.5rem 9rem;
+    text-align: center;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .eyebrow {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #45758c;
+  }
+
+  h1 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.7rem, 1.5vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 1rem auto 0;
+    max-width: 34rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  /* The guide itself: a heading, a download link, then one image per section
+     stacked down the page. */
+  .guide {
+    margin-top: 2.25rem;
+    text-align: left;
+  }
+
+  .guide-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+  }
+
+  .guide-head h2,
+  .earlier h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .guide-intro {
+    margin-top: 0.5rem;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  /* The link is styled as a quiet pill rather than the Sea Glass button —
+     the page's one loud control stays the Subscribe button (BRANDING §7.4). */
+  .pdf {
+    flex: none;
+    align-self: center;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #23313c;
+    text-decoration: none;
+    background: #fffdf8;
+    border: 1px solid rgba(69, 117, 140, 0.4);
+    border-radius: 0.65rem;
+    white-space: nowrap;
+  }
+
+  .pdf:hover,
+  .pdf:focus-visible {
+    color: #45758c;
+    border-color: #45758c;
+  }
+
+  .pdf-foot {
+    display: inline-block;
+    margin-top: 1.25rem;
+  }
+
+  .guide-pages {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .guide-pages img {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+    box-shadow: 0 2px 14px rgba(35, 49, 60, 0.08);
+  }
+
+  .guide-pending {
+    margin-top: 1.25rem;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: #8a8272;
+  }
+
+  .earlier {
+    margin-top: 3rem;
+    text-align: left;
+  }
+
+  .earlier ul {
+    margin-top: 1rem;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .earlier li {
+    padding: 1rem 1.25rem;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.12);
+    border-radius: 1rem;
+  }
+
+  .earlier li:hover,
+  .earlier li:focus-within {
+    border-color: rgba(69, 117, 140, 0.4);
+  }
+
+  .earlier a {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #23313c;
+    text-decoration-color: rgba(69, 117, 140, 0.45);
+    text-underline-offset: 0.15em;
+  }
+
+  .earlier a:hover,
+  .earlier a:focus-visible {
+    color: #45758c;
+  }
+
+  .earlier-intro {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  #subscribe {
+    margin-top: 3.5rem;
+  }
+
+  .subscribe-pitch {
+    margin-inline: auto;
+    max-width: 30rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #5a6672;
+    text-wrap: pretty;
+  }
+
+  form[hidden] {
+    display: none;
+  }
+
+  form {
+    display: flex;
+    gap: 0.6rem;
+    margin: 1.25rem auto 0;
+    max-width: 28rem;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.9rem 1.1rem;
+    font: inherit;
+    color: inherit;
+    background: #fffdf8;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: 0.65rem;
+    transition: border-color 0.15s;
+  }
+
+  input::placeholder {
+    color: #9aa4ac;
+  }
+
+  input:focus-visible {
+    outline: none;
+    border-color: #45758c;
+    box-shadow: 0 0 0 3px rgba(162, 197, 211, 0.55);
+  }
+
+  button {
+    padding: 0.9rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: #23313c;
+    background: #a2c5d3;
+    border: 0;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button:hover,
+  button:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(69, 117, 140, 0.35);
+  }
+
+  button:active {
+    transform: translateY(0);
+  }
+
+  button:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .note {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #8a8272;
+  }
+
+  .note.error {
+    color: #b3372c;
+  }
+
+  .note.success {
+    margin-inline: auto;
+    max-width: 30rem;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #1e7a4d;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .privacy-link {
+    margin-top: 1.75rem;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: #8a8272;
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: #45758c;
+  }
+
+  .waves {
+    position: fixed;
+    inset: auto 0 0;
+    width: 100%;
+    height: clamp(90px, 18vh, 220px);
+    pointer-events: none;
+  }
+
+  @media (max-width: 30rem) {
+    form {
+      flex-direction: column;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
+  }
+</style>
