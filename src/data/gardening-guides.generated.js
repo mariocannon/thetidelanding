@@ -12,19 +12,19 @@ export const pages = {
     {
       "src": "tips.png",
       "w": 1520,
-      "h": 1656,
+      "h": 1820,
       "alt": "September 2026 — gardening tips for the month"
     },
     {
       "src": "calendar.png",
       "w": 1520,
-      "h": 1648,
+      "h": 1810,
       "alt": "September 2026 — what to plant this month"
     },
     {
       "src": "swaps.png",
       "w": 1520,
-      "h": 1324,
+      "h": 1434,
       "alt": "September 2026 — community produce swaps"
     }
   ]

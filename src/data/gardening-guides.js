@@ -24,6 +24,6 @@ export const guides = [
     date: '2026-09-03',
     label: 'September 2026',
     intro:
-      "Spring's here, Coasties — what to sow now, September's planting calendar, and the Coast's first produce swap in the works.",
+      "Spring's here, Coasties — what to sow now, September's planting calendar, and the community produce swap we're getting off the ground.",
   },
 ];
