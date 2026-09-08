@@ -92,6 +92,15 @@ const COLLECTION = [
     detail:
       "This one is different: we read every submission before it goes live, so it isn't published straight away. The business phone number and website are printed with the listing once we do — only send details you are happy to see published. Your own name, email and phone are kept for us only, to confirm the listing or ask a question, and are never published.",
   },
+  {
+    form: 'Posting a job',
+    tables: ['Job'],
+    where: '/hibiscus-coast-jobs/post',
+    fields:
+      'The role title, employer name, description, category, job type, town and pay, an apply link if you give one, the tier you pick, and the contact name, email and phone applicants should use.',
+    detail:
+      "We read every listing before it runs, so it isn't published straight away. The role, the employer and the contact details you give are printed with the listing — in the newsletter and on the jobs page — so applicants can reply, so only send details you are happy to see published. Payment is taken on Stripe's own pages; card details never reach this site or us. We don't screen applicants and we don't take a cut of anyone's pay.",
+  },
 ];
 ---
 
@@ -220,10 +229,10 @@ const COLLECTION = [
           </p>
         </div>
         <p class="detail">
-          Event listings, classifieds and business directory submissions go to
-          a second Supabase database — the one behind our advertising,
-          what's-on and directory system — because that's where those parts
-          of the newsletter and the site are put together.
+          Event listings, classifieds, business directory submissions and job
+          listings go to a second Supabase database — the one behind our
+          advertising, what's-on, directory and jobs system — because that's
+          where those parts of the newsletter and the site are put together.
         </p>
       </section>
 
@@ -261,8 +270,8 @@ const COLLECTION = [
             long as we need them for our records.
           </li>
           <li>
-            <strong>Event listings and classifieds</strong> — kept as part of
-            the newsletter's archive of what ran.
+            <strong>Event listings, classifieds and job listings</strong> — kept
+            as part of the newsletter's archive of what ran.
           </li>
           <li>
             <strong>Business directory submissions</strong> — kept while

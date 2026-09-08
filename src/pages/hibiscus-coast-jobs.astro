@@ -1,0 +1,740 @@
+---
+const title = 'Hibiscus Coast Jobs — local roles from The Tide';
+const description =
+  'Casual, part-time and full-time roles on the Hibiscus Coast, refreshed every Thursday in The Tide. Reply straight to the employer — no account to set up.';
+const canonical = 'https://thetide.co.nz/hibiscus-coast-jobs';
+
+// The seeker-facing listings page. Ported from drafts/jobs/hibiscus-coast-jobs-listings.html.
+// Listings come from `Job` in the Newsletter ad management project
+// (tlderdsxnonhemkdxqns) — the same project /submit-classified and the business
+// directory read — fetched over PostgREST at build time. See
+// supabase/newsletter-ads/migrations/20260908100000_jobs_public_read.sql for the
+// read policy, and .../20260908110000_job_public_submissions.sql for the insert
+// policy the /hibiscus-coast-jobs/post form writes through.
+
+const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+// Publishable key: safe to expose; row-level security only allows anon SELECT
+// and a tightly-checked INSERT.
+const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
+// Coast order — matches DIRECTORY_TOWNS in the ad manager's lib/enums.ts and
+// src/data/directory/index.js's `towns`. Ōrewa is stored ASCII ("Orewa") and
+// macronised on the way out, per BRANDING.md's place-names rule.
+const TOWN_ORDER = [
+  'Orewa',
+  'Whangaparāoa',
+  'Silverdale',
+  'Red Beach',
+  'Millwater',
+  'Stanmore Bay',
+  'Manly',
+  'Gulf Harbour',
+  'Arkles Bay',
+  'Hatfields Beach',
+];
+
+const TYPE_LABELS = {
+  CASUAL: 'Casual',
+  PART_TIME: 'Part-time',
+  FULL_TIME: 'Full-time',
+  FIXED_TERM: 'Fixed-term',
+  CONTRACT: 'Contract',
+};
+
+// schema.org employmentType is a fixed vocabulary; map our JOB_TYPES onto it.
+const SCHEMA_EMPLOYMENT = {
+  CASUAL: 'PART_TIME',
+  PART_TIME: 'PART_TIME',
+  FULL_TIME: 'FULL_TIME',
+  FIXED_TERM: 'TEMPORARY',
+  CONTRACT: 'CONTRACTOR',
+};
+
+const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
+
+/**
+ * Published, still-open job listings. The query does the status and close-date
+ * filtering — the anon SELECT policy is deliberately status-blind
+ * (20260908100000_jobs_public_read.sql), so these two filters are load-bearing.
+ *
+ * Unlike the directory fetch this one does NOT throw on a bad response: an
+ * empty board is a normal state (no roles this week), and at launch the table
+ * and its policies may not be deployed yet. A transport or HTTP failure logs a
+ * warning and renders the empty state; a 200 that isn't a JSON array still
+ * throws, because that means the shape changed under us.
+ */
+async function fetchJobs() {
+  const nowIso = new Date().toISOString();
+  const url =
+    `${SUPABASE_URL}/rest/v1/Job` +
+    `?status=eq.PUBLISHED&closesAt=gt.${encodeURIComponent(nowIso)}` +
+    `&select=*&order=closesAt.asc`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+  } catch (cause) {
+    console.warn(`Jobs: could not reach Supabase — rendering an empty board. ${cause}`);
+    return [];
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.warn(
+      `Jobs: fetch failed with ${response.status} ${response.statusText} — rendering an empty board. ${body}`.trim(),
+    );
+    return [];
+  }
+
+  const rows = await response.json();
+  if (!Array.isArray(rows)) {
+    throw new Error('Jobs: unexpected response (not an array).');
+  }
+  return rows;
+}
+
+const rows = await fetchJobs();
+
+// Featured first (the $89 tier leads the block), then by closing date — the
+// same order the newsletter Jobs block uses.
+const jobs = rows
+  .slice()
+  .sort((a, b) => {
+    const fa = a.tier === 'FEATURED' ? 0 : 1;
+    const fb = b.tier === 'FEATURED' ? 0 : 1;
+    if (fa !== fb) return fa - fb;
+    return new Date(a.closesAt) - new Date(b.closesAt);
+  })
+  .map((job) => {
+    const initials = (job.employer || '?')
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+    let apply = null;
+    if (job.applyUrl) apply = { href: job.applyUrl, label: 'Apply online', external: true };
+    else if (job.contactEmail) apply = { href: `mailto:${job.contactEmail}`, label: 'Apply by email' };
+    else if (job.contactPhone)
+      apply = { href: `tel:${String(job.contactPhone).replace(/\s+/g, '')}`, label: 'Call to apply' };
+
+    return {
+      ...job,
+      initials,
+      apply,
+      townDisplay: displayTown(job.town),
+      typeLabel: TYPE_LABELS[job.jobType] ?? job.jobType,
+      closesLabel: new Date(job.closesAt).toLocaleDateString('en-NZ', {
+        day: 'numeric',
+        month: 'short',
+      }),
+    };
+  });
+
+// Only the towns that actually have an open role get a filter chip, in coast order.
+const townsPresent = TOWN_ORDER.filter((town) => jobs.some((job) => job.town === town));
+
+const jobPostingLd = jobs.map((job) => ({
+  '@context': 'https://schema.org',
+  '@type': 'JobPosting',
+  title: job.title,
+  description: job.body,
+  datePosted: new Date(job.createdAt).toISOString().slice(0, 10),
+  validThrough: new Date(job.closesAt).toISOString(),
+  employmentType: SCHEMA_EMPLOYMENT[job.jobType] ?? 'OTHER',
+  hiringOrganization: { '@type': 'Organization', name: job.employer },
+  jobLocation: {
+    '@type': 'Place',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: job.townDisplay,
+      addressRegion: 'Auckland',
+      addressCountry: 'NZ',
+    },
+  },
+  ...(job.pay ? { baseSalary: { '@type': 'MonetaryAmount', currency: 'NZD', value: job.pay } } : {}),
+  directApply: Boolean(job.applyUrl),
+  url: canonical,
+}));
+
+const count = jobs.length;
+---
+
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+    {
+      jobPostingLd.map((ld) => (
+        <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+      ))
+    }
+  </head>
+  <body>
+    <main>
+      <header class="head">
+        <a class="home" href="/">
+          <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+        </a>
+        <p class="eyebrow">Hibiscus Coast Jobs &middot; from The Tide</p>
+        <h1>Jobs on the Coast</h1>
+        <p>
+          Local roles, refreshed every Thursday. Reply straight to the employer
+          &mdash; there's no account to set up.
+        </p>
+      </header>
+
+      {
+        count > 0 && (
+          <div class="controls">
+            {townsPresent.length > 1 && (
+              <div class="filters" role="group" aria-label="Filter by town">
+                <button class="chip" type="button" data-town="all" aria-pressed="true">
+                  All
+                </button>
+                {townsPresent.map((town) => (
+                  <button class="chip" type="button" data-town={town} aria-pressed="false">
+                    {displayTown(town)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p class="count" id="count">
+              {count} {count === 1 ? 'role' : 'roles'} open
+            </p>
+          </div>
+        )
+      }
+
+      {
+        count > 0 ? (
+          <ul class="listings" id="listings">
+            {jobs.map((job) => (
+              <li
+                class={job.tier === 'FEATURED' ? 'job is-featured' : 'job'}
+                data-town={job.town}
+              >
+                <div class="job-top">
+                  {job.logoUrl ? (
+                    <img class="logo logo-img" src={job.logoUrl} alt={`${job.employer} logo`} />
+                  ) : (
+                    <div class="logo" aria-hidden="true">
+                      {job.initials}
+                    </div>
+                  )}
+                  <div>
+                    <h2>
+                      {job.title}
+                      {job.tier === 'FEATURED' && <span class="tag">Featured</span>}
+                    </h2>
+                    <p class="meta">
+                      {job.employer}
+                      <span class="sep">&middot;</span>
+                      {job.townDisplay}
+                      <span class="sep">&middot;</span>
+                      {job.typeLabel}
+                      {job.pay && (
+                        <>
+                          <span class="sep">&middot;</span>
+                          <span class="pay">{job.pay}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <p class="job-body">{job.body}</p>
+                <div class="job-foot">
+                  {job.apply ? (
+                    <a
+                      class="btn"
+                      href={job.apply.href}
+                      {...(job.apply.external
+                        ? { target: '_blank', rel: 'noopener noreferrer' }
+                        : {})}
+                    >
+                      {job.apply.label}
+                    </a>
+                  ) : (
+                    <span class="closes">Contact details in Thursday's issue</span>
+                  )}
+                  <span class="closes">Closes {job.closesLabel}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="empty">
+            No roles are open right now. New jobs go up every Thursday &mdash;
+            <a href="/">get The Tide</a> and you won't miss them.
+          </p>
+        )
+      }
+
+      <p class="empty" id="empty" hidden>
+        No roles in that town right now. New jobs go up every Thursday &mdash;
+        <a href="/">get The Tide</a> and you won't miss them.
+      </p>
+
+      <div class="foot">
+        <p class="post">Hiring? <a href="/hibiscus-coast-jobs/post">Post a role &rarr;</a></p>
+        <div class="links">
+          <a href="/">The Tide</a>
+          <span aria-hidden="true">&middot;</span>
+          <a href="/issues">Past issues</a>
+        </div>
+      </div>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      (function () {
+        var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+        var jobs = Array.prototype.slice.call(document.querySelectorAll('.job'));
+        var count = document.getElementById('count');
+        var empty = document.getElementById('empty');
+        if (chips.length === 0) return;
+
+        function apply(town) {
+          var shown = 0;
+          jobs.forEach(function (job) {
+            var match = town === 'all' || job.getAttribute('data-town') === town;
+            job.hidden = !match;
+            if (match) shown++;
+          });
+          count.textContent = shown + (shown === 1 ? ' role open' : ' roles open');
+          empty.hidden = shown !== 0;
+        }
+
+        chips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            chips.forEach(function (c) {
+              c.setAttribute('aria-pressed', String(c === chip));
+            });
+            apply(chip.getAttribute('data-town'));
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+
+    --foam: #faf5ea;
+    --sand: #f0e7d6;
+    --paper: #fffdf8;
+    --harbor: #23313c;
+    --slate: #5a6672;
+    --driftwood: #8a8272;
+    --mist: #9aa4ac;
+    --navy: #23415a;
+    --seaglass: #a2c5d3;
+    --steel: #45758c;
+    --kelp: #1e7a4d;
+
+    --seaglass-tint: rgba(162, 197, 211, 0.22);
+    --seaglass-glow: rgba(162, 197, 211, 0.55);
+    --navy-line: rgba(35, 65, 90, 0.22);
+    --hairline: rgba(35, 65, 90, 0.12);
+    --btn-shadow: rgba(69, 117, 140, 0.35);
+
+    --radius: 0.65rem;
+    --wave-height: clamp(90px, 18vh, 220px);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    position: relative;
+    background-color: var(--sand);
+    background-image: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 60%);
+    background-repeat: no-repeat;
+    color: var(--harbor);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 3rem);
+    margin-inline: auto;
+    padding-block: 3.5rem calc(var(--wave-height) + 2rem);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+
+  .head {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .home {
+    text-decoration: none;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .head h1 {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .head p {
+    margin: 0;
+    max-width: 32rem;
+    color: var(--slate);
+    text-wrap: pretty;
+  }
+
+  .controls {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .chip {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--steel);
+    background: transparent;
+    border: 1px solid rgba(69, 117, 140, 0.35);
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .chip:hover,
+  .chip:focus-visible {
+    border-color: var(--steel);
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--seaglass);
+    color: var(--harbor);
+    border-color: var(--seaglass);
+  }
+
+  .chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  .count {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--driftwood);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .listings {
+    margin-top: 1.5rem;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .job {
+    padding: 1.75rem 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .listings > .job:last-child {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .job[hidden] {
+    display: none;
+  }
+
+  .job.is-featured {
+    border-top: 0;
+    margin-bottom: 0.5rem;
+    padding: 1.5rem;
+    background: var(--seaglass-tint);
+    border-radius: var(--radius);
+  }
+
+  .job.is-featured + .job {
+    border-top: 0;
+  }
+
+  .job-top {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .logo {
+    flex: none;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius);
+    background: var(--paper);
+    border: 1px solid var(--navy-line);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: var(--steel);
+    font-size: 1.1rem;
+  }
+
+  .logo-img {
+    object-fit: contain;
+    padding: 0.25rem;
+  }
+
+  .job h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .tag {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--navy);
+    background: rgba(162, 197, 211, 0.4);
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    vertical-align: 0.15em;
+    white-space: nowrap;
+  }
+
+  .meta {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+    color: var(--slate);
+  }
+
+  .meta .pay {
+    font-variant-numeric: tabular-nums;
+    color: var(--harbor);
+  }
+
+  .meta .sep {
+    margin: 0 0.45em;
+    color: var(--mist);
+  }
+
+  .job-body {
+    margin: 0.85rem 0 0;
+    color: var(--harbor);
+    white-space: pre-line;
+  }
+
+  .job-foot {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--harbor);
+    background: var(--seaglass);
+    border: 0;
+    border-radius: var(--radius);
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .btn:hover,
+  .btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--btn-shadow);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  .closes {
+    font-size: 0.82rem;
+    color: var(--driftwood);
+  }
+
+  .empty {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--slate);
+  }
+
+  .empty[hidden] {
+    display: none;
+  }
+
+  .empty a {
+    color: var(--steel);
+    text-underline-offset: 0.15em;
+    margin-left: 0.25rem;
+  }
+
+  .foot {
+    margin-top: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .foot .post {
+    font-size: 0.95rem;
+  }
+
+  .foot .post a {
+    font-weight: 700;
+    color: var(--steel);
+    text-underline-offset: 0.15em;
+  }
+
+  .foot .links {
+    font-size: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 0.9rem;
+  }
+
+  .foot .links a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .foot .links a:hover,
+  .foot .links a:focus-visible {
+    color: var(--steel);
+  }
+
+  .foot .links span[aria-hidden] {
+    color: var(--mist);
+  }
+
+  .privacy-link {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: var(--steel);
+  }
+
+  .waves {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: var(--wave-height);
+    pointer-events: none;
+  }
+
+  @media (max-width: 30rem) {
+    .job-top {
+      gap: 0.75rem;
+    }
+    .logo {
+      width: 2.5rem;
+      height: 2.5rem;
+      font-size: 1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .chip {
+      transition: none;
+    }
+  }
+</style>
