@@ -41,3 +41,7 @@ PY
 render coffee-catchup 1080 150
 render facebook 1080 400
 render gardening-guide 750 300
+render gardening-club 1080 400
+render group-inbox 1640 856
+render group-follow 1640 856
+render group-proof 1640 856

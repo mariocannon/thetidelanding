@@ -8,6 +8,15 @@ logo and type as `src/pages/index.astro`, laid out for a wide, short slot.
 | `thetide-coffee-catchup-1080x150.png` | 1080 × 150 | `coffee-catchup.html` |
 | `thetide-facebook-1080x400.png` | 1080 × 400 | `facebook.html` |
 | `thetide-gardening-guide-750x300.png` | 750 × 300 | `gardening-guide.html` |
+| `thetide-gardening-club-1080x400.png` | 1080 × 400 | `gardening-club.html` |
+| `thetide-group-inbox-1640x856.png` | 1640 × 856 | `group-inbox.html` |
+| `thetide-group-follow-1640x856.png` | 1640 × 856 | `group-follow.html` |
+| `thetide-group-proof-1640x856.png` | 1640 × 856 | `group-proof.html` |
+
+`thetide-gardening-club-1080x400.png` is also copied to
+`public/social/` so it can be served from the site (embedded on a page, or
+reused as an `og:image` source) without anything reaching into `design/`.
+Re-copy it after re-rendering — `render.sh` only writes into this folder.
 
 Rebuild after editing a page:
 
@@ -89,6 +98,85 @@ Glass — no off-palette colour needed here, unlike Facebook's blue, since Sea
 Glass and Steel Blue are both already brand fills. It stacks above the logo
 the same way the Facebook tile does, sized off the logo's rendered height so
 neither is cropped by the banner edge.
+
+### `gardening-club.html`, The Tide Gardening Club
+
+The club's own banner, at 1080 × 400 — the same size as `facebook.html`, since
+a title plus three featured items needs the height the 150px strip and the
+750 × 300 promo don't have.
+
+Deliberately built as a set with `design/gardening-guide/`: the Foam-to-Sand
+cover wash, the Baloo 2 headline with its last word in Steel Blue as an `<em>`,
+the sprout tile from `gardening-guide.html` unchanged, and — the main tie — the
+three featured items use the guide's own "what's inside" device, a Steel Blue
+rounded-square tile with a Foam line-icon and an uppercase Steel Blue label. The
+three icons (swap arrows, calendar, map pin) are lifted verbatim from
+`gardening-guide/template.html`'s symbol library, so a reader who has the PDF
+recognises them.
+
+Palette tokens here are named after `bizdata/docs/BRANDING.md` §1 (`--foam`,
+`--sand`, `--harbor`, `--slate`, `--steel`, `--seaglass`) rather than the
+`--sand`/`--sea`/`--ink` shorthand the three older pages use, matching the guide
+template. No off-palette exception is needed and no hex appears outside `:root`
+— the wave and tile fills are set from CSS classes rather than `fill="..."`
+attributes.
+
+Copy: the eyebrow, the title, the line under it and the three feature labels are
+the whole banner, same "these lines are it" rule as the other pages. The title
+and sub are `white-space: nowrap` at a fixed size; the copy column is about
+828px (1080 minus padding, the gap and the 100px flank), and the title currently
+runs to roughly 490px of it, so there is room but not unlimited room. The three
+feature labels break only where their `<br>` is and their columns are sized to
+their own content (`repeat(3, auto)`), which lands the band at about the
+headline's width — a much longer label pushes that band out to the right and
+eventually into the flank's clear space. Re-render and look at the PNG after any
+copy change.
+
+**This banner has no CTA and nowhere to link to**, on purpose. It announces the
+club and names what it is; it does not add a second call to action to whatever
+it is placed beside (BRANDING §7, "one clear action"). If a use needs a button,
+that's a decision for whoever places it, along with a destination that exists.
+
+Vertical budget: `main`'s `padding-bottom` reserves the full 104px wave height
+plus clearance, so nothing lands on the waves (BRANDING §2). That leaves 240px
+of content box, which is also what sizes the flank stack — tile (92) + gap (16)
++ the logo's rendered height has to stay inside it or the logo is cropped by the
+banner edge. The logo's 92px width also keeps it above BRANDING §4's 4rem
+minimum.
+
+### `group-inbox.html`, `group-follow.html`, `group-proof.html` — Facebook group covers
+
+Three variants of the same ad, sized 1640 × 856 (Facebook's group cover size),
+for pinning to a Facebook **group** to push members to the newsletter signup
+page. They're the mirror image of `facebook.html`: that one sends readers *to*
+the Facebook page, these send group members *to* `thetide.co.nz`.
+
+A group cover image **can't be hyperlinked**, so unlike `facebook.html`'s "click
+here to follow us" each of these names the address in the pill (`thetide.co.nz`).
+The signup page is the site home page — there's no separate `/signup` route.
+
+| File | Angle |
+| --- | --- |
+| `group-inbox.html` | Plain and direct — "Get The Tide in your inbox", the reasons in the sub |
+| `group-follow.html` | Voice-led — "You follow the group. Now get the newsletter.", the editor's "assume the shared experience" opener |
+| `group-proof.html` | Social proof — "Worth waiting for" (the home page's own title line) over a three-tile band: how many readers, when it lands, what it costs |
+
+All three reuse `gardening-club.html`'s parts unchanged: the BRANDING §1 palette
+tokens, the Foam-to-Sand glow, the two-path shoreline, the frame, and the
+portrait logo in a right-hand flank column. `group-proof.html` also reuses that
+page's three-feature device (Steel Blue tile, Foam line-icon, uppercase label).
+No off-palette colour — nothing here has to read as Facebook.
+
+Same nowrap rule as the other pages: the headline is fixed-size and breaks only
+at its `<br>`, so keep each line about its current width or it runs into the
+flank column. Copy sits well inside the paddings on purpose — Facebook crops the
+sides and bottom of a group cover on mobile, so the headline, sub and pill stay
+within the centre.
+
+To serve one from the site (embed, or an `og:image` source) copy it into
+`public/social/` after rendering, the same as `thetide-gardening-club`.
+
+### Fonts
 
 Fonts come from `../billboard/` so there's one checked-in copy of each: Baloo 2
 (headline), Archivo Black (URL tag) and Inter (everything else), all SIL Open

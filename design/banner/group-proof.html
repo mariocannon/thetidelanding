@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Tide Facebook group banner — proof 1640×856</title>
+    <style>
+      @font-face {
+        font-family: 'Baloo 2';
+        font-weight: 800;
+        src: url('../billboard/baloo2-800.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('../billboard/archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('../billboard/inter-600.woff2') format('woff2');
+      }
+
+      :root {
+        --foam: #faf5ea;
+        --sand: #f0e7d6;
+        --harbor: #23313c;
+        --slate: #5a6672;
+        --steel: #45758c;
+        --seaglass: #a2c5d3;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: #d8cdb8;
+      }
+
+      /* 1640×856, Facebook's group cover size. Built on gardening-club.html's
+         three-feature band — here the three tiles carry the reasons to sign up
+         (how many readers, when it lands, what it costs) rather than a link. */
+      .banner {
+        position: relative;
+        width: 1640px;
+        height: 856px;
+        overflow: hidden;
+        background: var(--sand);
+        font-family: 'Inter', sans-serif;
+        color: var(--harbor);
+      }
+
+      .glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 62%);
+      }
+
+      .waves {
+        position: absolute;
+        inset: auto 0 0;
+        width: 100%;
+        height: 190px;
+        display: block;
+      }
+
+      .waves path {
+        fill: var(--seaglass);
+      }
+
+      .waves .wave-back {
+        opacity: 0.45;
+      }
+
+      .frame {
+        position: absolute;
+        inset: 30px;
+        border: 4px solid rgba(69, 117, 140, 0.3);
+        border-radius: 38px;
+      }
+
+      main {
+        position: relative;
+        height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        align-items: center;
+        gap: 64px;
+        padding: 84px 110px 220px;
+      }
+
+      .copy {
+        display: grid;
+        justify-items: start;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 20px;
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--steel);
+      }
+
+      .eyebrow::before {
+        content: '';
+        width: 54px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--steel);
+      }
+
+      h1 {
+        margin-top: 20px;
+        font-family: 'Baloo 2', sans-serif;
+        font-weight: 800;
+        font-size: 80px;
+        line-height: 1.04;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        color: var(--harbor);
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--steel);
+      }
+
+      .sub {
+        margin-top: 22px;
+        max-width: 800px;
+        font-size: 29px;
+        font-weight: 600;
+        line-height: 1.35;
+        color: var(--slate);
+      }
+
+      /* The three reasons, on the guide's "what's inside" device: a Steel Blue
+         rounded-square tile with a Foam line-icon and an uppercase label. */
+      .features {
+        margin-top: 34px;
+        display: grid;
+        grid-template-columns: repeat(3, auto);
+        justify-content: start;
+        gap: 72px;
+      }
+
+      .feature {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .feature .tile-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        background: var(--steel);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .feature .tile-icon svg {
+        width: 32px;
+        height: 32px;
+        display: block;
+        color: var(--foam);
+      }
+
+      .feature span {
+        font-size: 19px;
+        font-weight: 700;
+        line-height: 1.35;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--steel);
+      }
+
+      .cta {
+        margin-top: 40px;
+      }
+
+      .url {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px 34px 21px;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 32px;
+        color: var(--foam);
+        background: var(--harbor);
+        border-radius: 18px;
+        box-shadow: 0 16px 34px rgba(35, 49, 60, 0.24);
+      }
+
+      .url svg {
+        width: 32px;
+        height: 32px;
+        display: block;
+      }
+
+      .flank {
+        display: grid;
+        justify-items: center;
+        gap: 28px;
+      }
+
+      .tile {
+        width: 168px;
+        height: 168px;
+        display: block;
+        filter: drop-shadow(0 18px 34px rgba(35, 49, 60, 0.22));
+      }
+
+      .tile .tile-bg {
+        fill: var(--steel);
+      }
+
+      .tile .tile-stroke {
+        stroke: var(--foam);
+      }
+
+      .logo {
+        width: 168px;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="banner">
+      <div class="glow"></div>
+
+      <svg class="waves" viewBox="0 0 1080 104" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          class="wave-back"
+          d="M0,42 C182,73 365,12 545,28 C727,42 902,90 1080,59 L1080,104 L0,104 Z"
+        ></path>
+        <path
+          d="M0,73 C211,42 391,95 571,80 C751,66 931,42 1080,80 L1080,104 L0,104 Z"
+        ></path>
+      </svg>
+
+      <div class="frame"></div>
+
+      <main>
+        <div class="copy">
+          <!-- EDIT ME: eyebrow, headline, the line under it, the three feature
+               labels and the URL pill are the whole banner. Headline is fixed
+               size and nowrap; feature labels break only where the <br> is. -->
+          <p class="eyebrow">The Coast's newsletter</p>
+          <h1>Worth <em>waiting</em> for</h1>
+          <p class="sub">
+            Join hundreds of Coasties who start Thursday with The Tide &mdash;
+            local news, stories and what's on.
+          </p>
+
+          <div class="features">
+            <div class="feature">
+              <div class="tile-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9" />
+                  <path d="M3.5 19c0-3.3 2.5-5.4 5.5-5.4S14.5 15.7 14.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                  <path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 19c0-2.6-1-4.5-2.7-5.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                </svg>
+              </div>
+              <span>Hundreds of<br />Coasties</span>
+            </div>
+
+            <div class="feature">
+              <div class="tile-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.9" />
+                  <path d="M12 7.2V12l3.4 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <span>Every Thursday<br />at 8am</span>
+            </div>
+
+            <div class="feature">
+              <div class="tile-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 13.2 10.8 20l9.2-9.2V4h-6.8L4 13.2Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" />
+                  <circle cx="15.4" cy="8.6" r="1.6" fill="currentColor" />
+                </svg>
+              </div>
+              <span>Free,<br />always</span>
+            </div>
+          </div>
+
+          <div class="cta">
+            <div class="url">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9.2" stroke="#faf5ea" stroke-width="1.9" />
+                <path
+                  d="M3 12h18M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9Z"
+                  stroke="#faf5ea"
+                  stroke-width="1.9"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Sign up at thetide.co.nz
+            </div>
+          </div>
+        </div>
+
+        <div class="flank">
+          <svg class="tile" viewBox="0 0 100 100" aria-hidden="true">
+            <rect class="tile-bg" width="100" height="100" rx="24" />
+            <rect
+              class="tile-stroke"
+              x="20"
+              y="30"
+              width="60"
+              height="42"
+              rx="6"
+              fill="none"
+              stroke-width="5"
+            />
+            <path
+              class="tile-stroke"
+              d="M22 34l28 22 28-22"
+              fill="none"
+              stroke-width="5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <img class="logo" src="../../public/logo.webp" alt="The Tide" />
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
