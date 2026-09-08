@@ -1,0 +1,1216 @@
+---
+const title = 'Post a job on the Hibiscus Coast — The Tide';
+const description =
+  'List a role with The Tide: it runs in Thursday’s issue and on the site for 30 days, in front of Coasties whose commute would be a short one. From $19.99, GST included.';
+const canonical = 'https://thetide.co.nz/hibiscus-coast-jobs/post';
+
+// The employer / "post a role" page. Ported from drafts/jobs/hibiscus-coast-jobs.html.
+// The submit form at the bottom writes straight into `Job` in the Newsletter ad
+// management project (tlderdsxnonhemkdxqns) over PostgREST, landing an unpaid
+// DRAFT tagged source=PUBLIC — the "Public job submissions" policy in
+// supabase/newsletter-ads/migrations/20260908110000_job_public_submissions.sql
+// restates publicJobSchema in SQL and enforces it at the door.
+//
+// STRIPE PAYMENT LINKS — the operator is building three fixed-amount links and
+// pasting the URLs into lib/jobs.ts (STRIPE_LINK_STANDARD / _FEATURED /
+// _COMMUNITY) in the ad manager. Paste the SAME three URLs into the three
+// href="STRIPE_LINK_*" placeholders on the .rate buttons below. Point the
+// Standard link at the $19.99 launch price until 28 Jan 2027, then swap it to
+// the $49 link. Set each link's post-payment redirect to this page with the
+// tier in the query string, e.g. /hibiscus-coast-jobs/post?tier=featured, so
+// the form below preselects it. Pay-first means a rejected listing needs a
+// refund (one click in Stripe) — to avoid that, point the buttons straight at
+// #post-form and email the payment link after moderation instead.
+
+const CATEGORIES = [
+  { value: 'HOSPITALITY', label: 'Hospitality' },
+  { value: 'RETAIL', label: 'Retail' },
+  { value: 'TRADES', label: 'Trades' },
+  { value: 'CONSTRUCTION', label: 'Construction' },
+  { value: 'OFFICE_ADMIN', label: 'Office & admin' },
+  { value: 'HEALTH', label: 'Health' },
+  { value: 'EDUCATION', label: 'Education' },
+  { value: 'DRIVING_LOGISTICS', label: 'Driving & logistics' },
+  { value: 'PROFESSIONAL', label: 'Professional & technical' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const JOB_TYPES = [
+  { value: 'CASUAL', label: 'Casual' },
+  { value: 'PART_TIME', label: 'Part-time' },
+  { value: 'FULL_TIME', label: 'Full-time' },
+  { value: 'FIXED_TERM', label: 'Fixed-term' },
+  { value: 'CONTRACT', label: 'Contract' },
+];
+
+// DIRECTORY_TOWNS from the ad manager's lib/enums.ts. Ōrewa is stored ASCII and
+// shown macronised (BRANDING.md place-names).
+const TOWNS = [
+  'Orewa',
+  'Whangaparāoa',
+  'Silverdale',
+  'Red Beach',
+  'Millwater',
+  'Stanmore Bay',
+  'Manly',
+  'Gulf Harbour',
+  'Arkles Bay',
+  'Hatfields Beach',
+];
+
+const TIERS = [
+  { value: 'STANDARD', label: 'Standard' },
+  { value: 'FEATURED', label: 'Featured' },
+  { value: 'COMMUNITY', label: 'Community' },
+];
+
+const WORD_MAX = 70;
+
+const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
+---
+
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <a class="home" href="/">
+          <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+        </a>
+        <p class="eyebrow">Hibiscus Coast Jobs &middot; from The Tide</p>
+        <h1>Hire someone who already lives here.</h1>
+        <p class="lede">
+          List your role with The Tide and it runs in Thursday's issue and on the
+          site &mdash; in front of Coasties whose commute would be a short one.
+          From $19.99, live for 30 days.
+        </p>
+        <a class="btn" href="#rates">Post a role</a>
+      </header>
+
+      <section class="how" aria-labelledby="how-h">
+        <h2 id="how-h">How it works</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="num">Step 1</span>
+            <h3>Send us the role</h3>
+            <p>A two-minute form &mdash; the job, the hours, and how people apply.</p>
+          </div>
+          <div class="step">
+            <span class="num">Step 2</span>
+            <h3>We put it up</h3>
+            <p>Live on the site and in the next Thursday issue, once we've had a quick look.</p>
+          </div>
+          <div class="step">
+            <span class="num">Step 3</span>
+            <h3>Applicants come to you</h3>
+            <p>They reply on the details you gave. No logins, nothing to check back on.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="sample-wrap" aria-label="How a listing appears">
+        <div class="sample">
+          <p class="kicker">In Thursday's issue</p>
+          <h3>Weekend barista &mdash; Coastline Coffee</h3>
+          <p class="m">
+            Ōrewa<span aria-hidden="true"> &middot; </span>Casual<span aria-hidden="true">
+              &middot;
+            </span><span class="pay">$24&ndash;$27/hr</span>
+          </p>
+          <p class="desc">
+            Our beachfront café wants a friendly barista for Saturday and Sunday
+            mornings through summer. Training on our blend provided.
+          </p>
+          <span class="apply">Apply &rarr;</span>
+        </div>
+        <p class="caption">
+          Every listing runs like this &mdash; in the issue, and on the jobs page
+          at thetide.co.nz.
+        </p>
+      </section>
+
+      <section class="rates-wrap" id="rates" aria-labelledby="rates-h">
+        <h2 id="rates-h">What a listing costs</h2>
+
+        {/* Replace the three href="STRIPE_LINK_*" placeholders — see the comment
+            at the top of this file. */}
+        <div class="rates">
+          <div class="rate">
+            <h3>Standard</h3>
+            <p class="price">$19.99<span class="was">then $49 from 28 Jan</span></p>
+            <p class="desc">
+              On the site and in every Thursday issue while it runs &mdash; about
+              four issues.
+            </p>
+            <a class="btn" href="STRIPE_LINK_STANDARD" data-tier="standard">Choose</a>
+          </div>
+
+          <div class="rate feat">
+            <h3>Featured</h3>
+            <p class="price">$89</p>
+            <p class="desc">
+              Everything in Standard, plus your logo, the top of the Jobs section,
+              and bold type in the issue.
+            </p>
+            <a class="btn" href="STRIPE_LINK_FEATURED" data-tier="featured">Choose</a>
+          </div>
+
+          <div class="rate">
+            <h3>Community</h3>
+            <p class="price">$14.99</p>
+            <p class="desc">For Coast schools, clubs and not-for-profits hiring locally.</p>
+            <a class="btn" href="STRIPE_LINK_COMMUNITY" data-tier="community">Choose</a>
+          </div>
+        </div>
+        <p class="rates-note">All prices include GST. One role per listing.</p>
+      </section>
+
+      <section class="form-wrap" id="post-form" aria-labelledby="form-h">
+        <h2 id="form-h">Send us the role</h2>
+        <p class="form-lede">
+          Paid already? Fill this in and we'll match it to your payment. Not yet?
+          Send it anyway &mdash; we'll email you the payment link once we've had a
+          look.
+        </p>
+
+        <form id="job-form" class="card" novalidate>
+          <div class="row">
+            <div class="field" data-field="title">
+              <label for="title">Role title <span class="required">*</span></label>
+              <input id="title" name="title" type="text" maxlength="120" placeholder="Weekend barista" required />
+            </div>
+
+            <div class="field" data-field="employer">
+              <label for="employer">Employer <span class="required">*</span></label>
+              <input id="employer" name="employer" type="text" maxlength="120" placeholder="Coastline Coffee" required />
+            </div>
+          </div>
+
+          <div class="field" data-field="body">
+            <label for="body">The role <span class="required">*</span></label>
+            <textarea id="body" name="body" rows="7" aria-describedby="body-count" required></textarea>
+            <p id="body-count" class="counter empty" aria-live="polite">
+              No copy yet — up to {WORD_MAX} words
+            </p>
+            <p class="hint" data-hint>
+              Up to {WORD_MAX} words — the hours, what the work involves, and who it
+              would suit.
+            </p>
+          </div>
+
+          <div class="row">
+            <div class="field" data-field="category">
+              <label for="category">Category <span class="required">*</span></label>
+              <select id="category" name="category">
+                {CATEGORIES.map((c) => (
+                  <option value={c.value} selected={c.value === 'HOSPITALITY'}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div class="field" data-field="jobType">
+              <label for="jobType">Job type <span class="required">*</span></label>
+              <select id="jobType" name="jobType">
+                {JOB_TYPES.map((t) => (
+                  <option value={t.value} selected={t.value === 'CASUAL'}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field" data-field="town">
+              <label for="town">Town <span class="required">*</span></label>
+              <select id="town" name="town">
+                {TOWNS.map((town) => (
+                  <option value={town} selected={town === 'Orewa'}>
+                    {displayTown(town)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div class="field" data-field="pay">
+              <label for="pay">Pay</label>
+              <input id="pay" name="pay" type="text" maxlength="60" placeholder="$24–$27/hr" />
+              <p class="hint" data-hint>Optional — shown with the listing.</p>
+            </div>
+          </div>
+
+          <div class="field" data-field="applyUrl">
+            <label for="applyUrl">Apply online</label>
+            <input id="applyUrl" name="applyUrl" type="url" inputmode="url" placeholder="https://example.co.nz/careers" spellcheck="false" />
+            <p class="hint" data-hint>Optional — a link applicants go to. Leave blank to take replies by email or phone.</p>
+          </div>
+
+          <div class="field" data-field="tier">
+            <label for="tier">Listing tier <span class="required">*</span></label>
+            <select id="tier" name="tier">
+              {TIERS.map((t) => (
+                <option value={t.value} selected={t.value === 'STANDARD'}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <p class="hint" data-hint>
+              Standard $19.99 (then $49 from 28 Jan) · Featured $89 · Community
+              $14.99. GST included.
+            </p>
+          </div>
+
+          <div class="field" data-field="contactName">
+            <label for="contactName">Your name <span class="required">*</span></label>
+            <input id="contactName" name="contactName" type="text" maxlength="120" autocomplete="name" required />
+          </div>
+
+          <div class="row">
+            <div class="field" data-field="contactEmail">
+              <label for="contactEmail">Email</label>
+              <input id="contactEmail" name="contactEmail" type="email" inputmode="email" autocomplete="email" spellcheck="false" />
+              <p class="hint" data-hint>Email or phone — how applicants reach you if there's no apply link.</p>
+            </div>
+
+            <div class="field" data-field="contactPhone">
+              <label for="contactPhone">Phone</label>
+              <input id="contactPhone" name="contactPhone" type="tel" autocomplete="tel" />
+            </div>
+          </div>
+
+          {/* Honeypot: hidden from people, filled in by bots. */}
+          <div class="honeypot" aria-hidden="true">
+            <label for="website">Website</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <p class="message" id="form-message" role="alert" hidden></p>
+
+          <button type="submit">Send the role</button>
+        </form>
+
+        <section id="sent" class="card sent" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="m9 12 2 2 4-4"></path>
+          </svg>
+          <h2>Thanks — the role is in.</h2>
+          <p>
+            We read every listing before it runs. If it needs a trim or we have a
+            question we'll get in touch, and we'll confirm which issue it starts in
+            and, if you haven't paid yet, send the payment link.
+          </p>
+          <button type="button" id="send-another">Send another role</button>
+        </section>
+      </section>
+
+      <section class="noticeboard">
+        <p>
+          The Tide is a noticeboard, not a recruiter &mdash; we don't screen
+          applicants or run background checks, we don't take a cut of anyone's
+          pay, and we don't list childcare, babysitting or in-home care roles.
+        </p>
+      </section>
+
+      <footer>
+        <a href="/">The Tide</a>
+        <span aria-hidden="true">&middot;</span>
+        <a href="/hibiscus-coast-jobs">Browse jobs</a>
+      </footer>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      // Jobs live in the Newsletter ad management project, not the one the
+      // signup forms write to.
+      const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+      // Publishable key: safe to expose; row-level security only allows a
+      // tightly-checked insert.
+      const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
+      const WORD_MAX = 70;
+      const MIN_SECONDS = 3;
+      const RUN_DAYS = 30;
+      // LAUNCH_ENDS from lib/jobs.ts — Standard is the $19.99 launch price until
+      // this instant, $49 after. Featured and Community are never discounted.
+      const LAUNCH_ENDS = Date.parse('2027-01-28T00:00:00+13:00');
+
+      const TIER_OPTIONS = ['STANDARD', 'FEATURED', 'COMMUNITY'];
+      const CATEGORY_OPTIONS = [
+        'HOSPITALITY', 'RETAIL', 'TRADES', 'CONSTRUCTION', 'OFFICE_ADMIN',
+        'HEALTH', 'EDUCATION', 'DRIVING_LOGISTICS', 'PROFESSIONAL', 'OTHER',
+      ];
+      const TYPE_OPTIONS = ['CASUAL', 'PART_TIME', 'FULL_TIME', 'FIXED_TERM', 'CONTRACT'];
+      const TOWN_OPTIONS = [
+        'Orewa', 'Whangaparāoa', 'Silverdale', 'Red Beach', 'Millwater',
+        'Stanmore Bay', 'Manly', 'Gulf Harbour', 'Arkles Bay', 'Hatfields Beach',
+      ];
+
+      // priceForTier() from lib/jobs.ts, restated. The insert policy pins the
+      // price to the tier, so this has to agree with it.
+      function priceForTier(tier) {
+        if (tier === 'FEATURED') return 89;
+        if (tier === 'COMMUNITY') return 14.99;
+        return Date.now() < LAUNCH_ENDS ? 19.99 : 49;
+      }
+
+      const form = document.getElementById('job-form');
+      const sent = document.getElementById('sent');
+      const message = document.getElementById('form-message');
+      const counter = document.getElementById('body-count');
+      const bodyField = document.getElementById('body');
+      const titleField = document.getElementById('title');
+      const honeypot = document.getElementById('website');
+      const tierField = document.getElementById('tier');
+
+      let startedAt = Date.now();
+
+      // A tier in the query string (e.g. after a Stripe redirect) preselects it.
+      const tierParam = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
+      if (TIER_OPTIONS.includes(tierParam)) tierField.value = tierParam;
+
+      function countWords(text) {
+        const trimmed = (text ?? '').trim();
+        if (trimmed === '') return 0;
+        return trimmed.split(/\s+/).filter((token) => /[\p{L}\p{N}]/u.test(token)).length;
+      }
+      function wordCountState(count) {
+        if (count === 0) return 'empty';
+        if (count > WORD_MAX) return 'long';
+        return 'ok';
+      }
+      function wordCountMessage(count) {
+        const words = `${count} ${count === 1 ? 'word' : 'words'}`;
+        switch (wordCountState(count)) {
+          case 'empty':
+            return `No copy yet — up to ${WORD_MAX} words`;
+          case 'long':
+            return `${words} — ${count - WORD_MAX} over the ${WORD_MAX}-word maximum`;
+          default:
+            return words;
+        }
+      }
+      function updateCounter() {
+        const count = countWords(bodyField.value);
+        counter.textContent = wordCountMessage(count);
+        counter.className = `counter ${wordCountState(count)}`;
+      }
+
+      const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      const isUrl = (value) => /^https?:\/\/.+/i.test(value);
+
+      function text(name) {
+        const value = new FormData(form).get(name);
+        const trimmed = value === null ? '' : String(value).trim();
+        return trimmed === '' ? undefined : trimmed;
+      }
+
+      function showErrors(errors) {
+        for (const field of form.querySelectorAll('.field[data-field]')) {
+          const name = field.dataset.field;
+          const hint = field.querySelector('[data-hint]');
+          const previous = field.querySelector('.error');
+          if (previous) previous.remove();
+          field.querySelector('input, select, textarea')?.removeAttribute('aria-invalid');
+
+          if (errors[name]) {
+            if (hint) hint.hidden = true;
+            const paragraph = document.createElement('p');
+            paragraph.className = 'error';
+            paragraph.textContent = errors[name];
+            field.append(paragraph);
+            field.querySelector('input, select, textarea')?.setAttribute('aria-invalid', 'true');
+          } else if (hint) {
+            hint.hidden = false;
+          }
+        }
+        form.querySelector('.field .error')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      function say(value) {
+        message.textContent = value ?? '';
+        message.hidden = value == null;
+      }
+
+      /** publicJobSchema, checked in the browser before anything is posted. */
+      function validate() {
+        const errors = {};
+
+        const title = text('title');
+        if (!title) errors.title = 'Give the role a title';
+        else if (title.length > 120) errors.title = 'Keep the title to 120 characters or fewer';
+
+        const employer = text('employer');
+        if (!employer) errors.employer = "Tell us who's hiring";
+        else if (employer.length > 120) errors.employer = 'That employer name is too long';
+
+        const body = text('body');
+        if (!body) errors.body = 'Describe the role';
+        else if (body.length > 2000) errors.body = 'That is longer than a listing can be';
+        else if (wordCountState(countWords(body)) !== 'ok') {
+          errors.body = `Listings run to ${WORD_MAX} words at most. ${wordCountMessage(countWords(body))}.`;
+        }
+
+        const category = text('category');
+        if (!CATEGORY_OPTIONS.includes(category)) errors.category = 'Pick a category';
+
+        const jobType = text('jobType');
+        if (!TYPE_OPTIONS.includes(jobType)) errors.jobType = 'Pick a job type';
+
+        const town = text('town');
+        if (!TOWN_OPTIONS.includes(town)) errors.town = 'Pick a town';
+
+        const pay = text('pay');
+        if (pay && pay.length > 60) errors.pay = 'Keep the pay line short';
+
+        const applyUrl = text('applyUrl');
+        if (applyUrl && (!isUrl(applyUrl) || applyUrl.length > 500)) {
+          errors.applyUrl = 'Enter a full link starting http:// or https://';
+        }
+
+        const tier = text('tier');
+        if (!TIER_OPTIONS.includes(tier)) errors.tier = 'Pick a tier';
+
+        const contactName = text('contactName');
+        if (!contactName) errors.contactName = 'Tell us who applicants should contact';
+        else if (contactName.length > 120) errors.contactName = 'That name is too long';
+
+        const contactEmail = text('contactEmail');
+        const contactPhone = text('contactPhone');
+        if (contactEmail && !isEmail(contactEmail)) {
+          errors.contactEmail = 'Enter a valid email address';
+        }
+        if (contactPhone && contactPhone.length > 40) {
+          errors.contactPhone = 'That phone number is too long';
+        }
+        if (!contactEmail && !contactPhone) {
+          errors.contactEmail = 'Add an email or a phone number so applicants can reply';
+        }
+
+        const closesAt = new Date(Date.now() + RUN_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+        return {
+          errors,
+          values: {
+            // Known before the insert so a Stripe payment could name the row;
+            // the policy is insert-only so it can never be read back.
+            id: crypto.randomUUID(),
+            title,
+            employer,
+            body,
+            category,
+            jobType,
+            town,
+            pay: pay ?? null,
+            applyUrl: applyUrl ?? null,
+            contactName,
+            contactEmail: contactEmail ?? null,
+            contactPhone: contactPhone ?? null,
+            tier,
+            // Pinned to the tier by the insert policy; the operator reconciles
+            // it against the Stripe payment.
+            price: priceForTier(tier),
+            // Not negotiable from outside: an unpaid, unplaced draft with no
+            // operator-only fields set.
+            status: 'DRAFT',
+            source: 'PUBLIC',
+            paid: 'UNPAID',
+            issueId: null,
+            notes: null,
+            logoUrl: null,
+            closesAt,
+          },
+        };
+      }
+
+      function finish() {
+        form.hidden = true;
+        sent.hidden = false;
+        say(null);
+        sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+
+      bodyField.addEventListener('input', updateCounter);
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (honeypot.value.trim() !== '') return finish();
+        if ((Date.now() - startedAt) / 1000 < MIN_SECONDS) {
+          return say('That was quick — give it another go.');
+        }
+
+        const { errors, values } = validate();
+        showErrors(errors);
+        if (Object.keys(errors).length > 0) return say('Check the highlighted fields.');
+        say(null);
+
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Sending…';
+
+        try {
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/Job`, {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            },
+            body: JSON.stringify(values),
+          });
+
+          if (response.ok) return finish();
+          say('Something went wrong saving that. Please try again.');
+        } catch {
+          say('Could not reach us just now. Please check your connection and retry.');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Send the role';
+        }
+      });
+
+      document.getElementById('send-another').addEventListener('click', () => {
+        form.reset();
+        showErrors({});
+        updateCounter();
+        if (TIER_OPTIONS.includes(tierParam)) tierField.value = tierParam;
+        sent.hidden = true;
+        form.hidden = false;
+        startedAt = Date.now();
+        titleField.focus();
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+
+    --foam: #faf5ea;
+    --sand: #f0e7d6;
+    --paper: #fffdf8;
+    --harbor: #23313c;
+    --slate: #5a6672;
+    --driftwood: #8a8272;
+    --mist: #9aa4ac;
+    --navy: #23415a;
+    --seaglass: #a2c5d3;
+    --steel: #45758c;
+    --kelp: #1e7a4d;
+    --coral: #b3372c;
+
+    --seaglass-tint: rgba(162, 197, 211, 0.18);
+    --seaglass-glow: rgba(162, 197, 211, 0.55);
+    --navy-line: rgba(35, 65, 90, 0.22);
+    --hairline: rgba(35, 65, 90, 0.1);
+    --btn-shadow: rgba(69, 117, 140, 0.35);
+
+    --radius: 0.65rem;
+    --col: min(43rem, 100% - 2.75rem);
+    --wave-height: clamp(90px, 18vh, 220px);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    position: relative;
+    background-color: var(--sand);
+    background-image: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 60%);
+    background-repeat: no-repeat;
+    color: var(--harbor);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: var(--col);
+    margin-inline: auto;
+    padding-block: 3.25rem calc(var(--wave-height) + 2rem);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.85rem 1.5rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--harbor);
+    background: var(--seaglass);
+    border: 0;
+    border-radius: var(--radius);
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .btn:hover,
+  .btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--btn-shadow);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn:focus-visible,
+  a:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  .hero {
+    text-align: center;
+    max-width: 33rem;
+    margin-inline: auto;
+  }
+
+  .home {
+    text-decoration: none;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .hero h1 {
+    margin: 0.45rem 0 0;
+    font-size: clamp(2.05rem, 5.5vw, 2.85rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .hero .lede {
+    margin: 1rem 0 0;
+    font-size: clamp(1.05rem, 2.4vw, 1.18rem);
+    color: var(--slate);
+    text-wrap: pretty;
+  }
+
+  .hero .btn {
+    margin-top: 1.75rem;
+  }
+
+  .how {
+    margin-top: 3.5rem;
+  }
+
+  .how h2,
+  .rates-wrap h2,
+  .form-wrap h2 {
+    margin: 0 0 1.5rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    text-align: center;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+
+  .step .num {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--steel);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .step h3 {
+    margin: 0.4rem 0 0.3rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .step p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--slate);
+  }
+
+  @media (max-width: 34rem) {
+    .steps {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+  }
+
+  .sample-wrap {
+    margin-top: 3.75rem;
+  }
+
+  .sample {
+    background: var(--paper);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--radius);
+    padding: 1.5rem 1.6rem;
+  }
+
+  .sample .kicker {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+
+  .sample h3 {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+  }
+
+  .sample .m {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--slate);
+  }
+
+  .sample .m .pay {
+    font-variant-numeric: tabular-nums;
+    color: var(--harbor);
+  }
+
+  .sample .desc {
+    margin: 0.7rem 0 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .sample .apply {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--steel);
+  }
+
+  .caption {
+    margin: 0.85rem 0 0;
+    font-size: 0.83rem;
+    color: var(--driftwood);
+    text-align: center;
+  }
+
+  .rates-wrap {
+    margin-top: 3.75rem;
+  }
+
+  .rates {
+    background: var(--paper);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .rate {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 1.25rem;
+    row-gap: 0.6rem;
+    align-items: center;
+    padding: 1.25rem 1.4rem;
+  }
+
+  .rate + .rate {
+    border-top: 1px solid var(--hairline);
+  }
+
+  .rate.feat {
+    background: var(--seaglass-tint);
+  }
+
+  .rate h3 {
+    margin: 0;
+    font-size: 1.02rem;
+    font-weight: 800;
+  }
+
+  .rate .price {
+    text-align: right;
+    font-size: 1.35rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .rate .price .was {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--driftwood);
+  }
+
+  .rate .desc {
+    margin: 0;
+    grid-column: 1;
+    max-width: 27rem;
+    font-size: 0.92rem;
+    color: var(--slate);
+  }
+
+  .rate .btn {
+    grid-column: 2;
+    justify-self: end;
+    padding: 0.6rem 1.15rem;
+    font-size: 0.9rem;
+  }
+
+  .rates-note {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: 0.83rem;
+    color: var(--driftwood);
+  }
+
+  @media (max-width: 30rem) {
+    .rate {
+      grid-template-columns: 1fr;
+    }
+    .rate .price {
+      text-align: left;
+    }
+    .rate .btn {
+      grid-column: 1;
+      justify-self: start;
+    }
+  }
+
+  /* ---- The form ---------------------------------------------------------- */
+
+  .form-wrap {
+    margin-top: 3.75rem;
+  }
+
+  .form-lede {
+    margin: -0.75rem auto 1.5rem;
+    max-width: 34rem;
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--slate);
+  }
+
+  .card {
+    display: grid;
+    gap: 1rem;
+    padding: 1.5rem 1.35rem;
+    background: var(--paper);
+    border: 1px solid var(--hairline);
+    border-radius: 1rem;
+  }
+
+  .card[hidden] {
+    display: none;
+  }
+
+  .row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .required {
+    color: var(--coral);
+  }
+
+  .hint,
+  .error,
+  .counter {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .hint {
+    color: var(--driftwood);
+  }
+
+  .hint[hidden] {
+    display: none;
+  }
+
+  .error {
+    font-weight: 600;
+    color: var(--coral);
+  }
+
+  .counter {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .counter.empty {
+    color: var(--driftwood);
+  }
+
+  .counter.ok {
+    color: var(--kelp);
+  }
+
+  .counter.long {
+    color: #9a6210;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 0.9rem;
+    font: inherit;
+    color: inherit;
+    background: var(--paper);
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: var(--radius);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--mist);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: none;
+    border-color: var(--steel);
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  [aria-invalid='true'] {
+    border-color: var(--coral);
+  }
+
+  .honeypot {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+  }
+
+  .message {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--coral);
+  }
+
+  .message[hidden] {
+    display: none;
+  }
+
+  button[type='submit'] {
+    justify-self: start;
+    padding: 0.8rem 1.6rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--harbor);
+    background: var(--seaglass);
+    border: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  button[type='submit']:hover,
+  button[type='submit']:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--btn-shadow);
+  }
+
+  button[type='submit']:disabled {
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.7;
+  }
+
+  .sent {
+    justify-items: center;
+    gap: 0.75rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .sent svg {
+    width: 2rem;
+    height: 2rem;
+    color: var(--kelp);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .sent h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .sent p {
+    max-width: 30rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--slate);
+  }
+
+  .sent button {
+    justify-self: center;
+    padding: 0.7rem 1.4rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--harbor);
+    background: transparent;
+    border: 1px solid rgba(35, 65, 90, 0.25);
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  @media (min-width: 34rem) {
+    .row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .noticeboard {
+    margin-top: 3.25rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--hairline);
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--driftwood);
+  }
+
+  .noticeboard p {
+    margin: 0 auto;
+    max-width: 38rem;
+  }
+
+  footer {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  footer a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  footer a:hover,
+  footer a:focus-visible {
+    color: var(--steel);
+  }
+
+  footer span[aria-hidden] {
+    color: var(--mist);
+  }
+
+  .privacy-link {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: var(--steel);
+  }
+
+  .waves {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: var(--wave-height);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    button[type='submit'] {
+      transition: none;
+    }
+  }
+</style>
