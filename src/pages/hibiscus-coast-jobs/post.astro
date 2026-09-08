@@ -1,7 +1,7 @@
 ---
 const title = 'Post a job on the Hibiscus Coast — The Tide';
 const description =
-  'List a role with The Tide: it runs in Thursday’s issue and on the site for 30 days, in front of Coasties whose commute would be a short one. From $19.99, GST included.';
+  'List a role with The Tide: it runs in Thursday’s issue and on the site for 90 days, in front of Coasties whose commute would be a short one. From $19.99, GST included.';
 const canonical = 'https://thetide.co.nz/hibiscus-coast-jobs/post';
 
 // The employer / "post a role" page. Ported from drafts/jobs/hibiscus-coast-jobs.html.
@@ -101,7 +101,7 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
         <p class="lede">
           List your role with The Tide and it runs in Thursday's issue and on the
           site &mdash; in front of Coasties whose commute would be a short one.
-          From $19.99, live for 30 days.
+          From $19.99, live for 90 days.
         </p>
         <a class="btn" href="#rates">Post a role</a>
       </header>
@@ -159,7 +159,7 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
             <p class="price">$19.99<span class="was">then $49 from 28 Jan</span></p>
             <p class="desc">
               On the site and in every Thursday issue while it runs &mdash; about
-              four issues.
+              twelve issues.
             </p>
             <a class="btn" href="STRIPE_LINK_STANDARD" data-tier="standard">Choose</a>
           </div>
@@ -281,6 +281,21 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
             </p>
           </div>
 
+          <div class="field" data-field="logo" hidden>
+            <label for="logo">Employer logo</label>
+            <input
+              id="logo"
+              name="logo"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+            />
+            <p class="hint" data-hint>
+              Featured listings run with your logo, in the issue and on the site.
+              PNG, JPG or WEBP, 5MB or smaller. Optional — you can send it to us
+              later instead.
+            </p>
+          </div>
+
           <div class="field" data-field="contactName">
             <label for="contactName">Your name <span class="required">*</span></label>
             <input id="contactName" name="contactName" type="text" maxlength="120" autocomplete="name" required />
@@ -364,7 +379,23 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
 
       const WORD_MAX = 70;
       const MIN_SECONDS = 3;
-      const RUN_DAYS = 30;
+      const RUN_DAYS = 90;
+
+      // The employer logo, Featured tier only. Same door /submit-classified and
+      // /submit-event use for a featured photo — the `creative` bucket, a
+      // prefix of its own, a generated name — widened by
+      // 20260908110000_job_public_submissions.sql to take `public-jobs`.
+      const LOGO_BUCKET = 'creative';
+      const LOGO_PREFIX = 'public-jobs';
+      const LOGO_MAX_BYTES = 5 * 1024 * 1024;
+      // lib/upload.ts's list less SVG — a document that can carry script, not
+      // something to accept from a stranger on a public bucket.
+      const LOGO_TYPES = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+      };
       // LAUNCH_ENDS from lib/jobs.ts — Standard is the $19.99 launch price until
       // this instant, $49 after. Featured and Community are never discounted.
       const LAUNCH_ENDS = Date.parse('2027-01-28T00:00:00+13:00');
@@ -396,12 +427,25 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
       const titleField = document.getElementById('title');
       const honeypot = document.getElementById('website');
       const tierField = document.getElementById('tier');
+      const logoField = document.getElementById('logo');
+      const logoRow = form.querySelector('.field[data-field="logo"]');
 
       let startedAt = Date.now();
 
       // A tier in the query string (e.g. after a Stripe redirect) preselects it.
       const tierParam = (new URLSearchParams(location.search).get('tier') || '').toUpperCase();
       if (TIER_OPTIONS.includes(tierParam)) tierField.value = tierParam;
+
+      // The logo field only applies to Featured. Hiding it also clears any
+      // picked file, so a listing that switched away from Featured uploads
+      // nothing.
+      function toggleLogo() {
+        const featured = tierField.value === 'FEATURED';
+        logoRow.hidden = !featured;
+        if (!featured) logoField.value = '';
+      }
+      tierField.addEventListener('change', toggleLogo);
+      toggleLogo();
 
       function countWords(text) {
         const trimmed = (text ?? '').trim();
@@ -505,6 +549,17 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
         const tier = text('tier');
         if (!TIER_OPTIONS.includes(tier)) errors.tier = 'Pick a tier';
 
+        // The logo is Featured-only and optional. Validate it only when one was
+        // actually picked; the operator can still add it later.
+        const logo = tier === 'FEATURED' ? (logoField.files?.[0] ?? null) : null;
+        if (logo) {
+          if (!LOGO_TYPES[logo.type]) {
+            errors.logo = 'That logo must be a PNG, JPG, WEBP or GIF.';
+          } else if (logo.size > LOGO_MAX_BYTES) {
+            errors.logo = 'That logo must be 5MB or smaller.';
+          }
+        }
+
         const contactName = text('contactName');
         if (!contactName) errors.contactName = 'Tell us who applicants should contact';
         else if (contactName.length > 120) errors.contactName = 'That name is too long';
@@ -525,6 +580,7 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
 
         return {
           errors,
+          logo,
           values: {
             // Known before the insert so a Stripe payment could name the row;
             // the policy is insert-only so it can never be read back.
@@ -564,6 +620,30 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
         sent.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
 
+      /**
+       * Puts the logo in the `creative` bucket under public-jobs/ and returns
+       * its public URL. A generated name keeps the employer's filename out of
+       * the URL and is the exact shape the storage policy insists on, so
+       * nothing here can overwrite another object or point outside the prefix.
+       */
+      async function uploadLogo(file) {
+        const name = `${LOGO_PREFIX}/${crypto.randomUUID()}.${LOGO_TYPES[file.type]}`;
+        const response = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/${LOGO_BUCKET}/${name}`,
+          {
+            method: 'POST',
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': file.type,
+            },
+            body: file,
+          }
+        );
+        if (!response.ok) throw new Error(`logo upload failed: ${response.status}`);
+        return `${SUPABASE_URL}/storage/v1/object/public/${LOGO_BUCKET}/${name}`;
+      }
+
       bodyField.addEventListener('input', updateCounter);
 
       form.addEventListener('submit', async (event) => {
@@ -574,7 +654,7 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
           return say('That was quick — give it another go.');
         }
 
-        const { errors, values } = validate();
+        const { errors, logo, values } = validate();
         showErrors(errors);
         if (Object.keys(errors).length > 0) return say('Check the highlighted fields.');
         say(null);
@@ -584,6 +664,21 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
         button.textContent = 'Sending…';
 
         try {
+          // Upload the logo first, if there is one — the listing carries its
+          // URL, and a listing that named a logo it never sent would be
+          // refused by the insert policy anyway.
+          if (logo) {
+            button.textContent = 'Uploading logo…';
+            try {
+              values.logoUrl = await uploadLogo(logo);
+            } catch {
+              button.disabled = false;
+              button.textContent = 'Send the role';
+              return say('Could not upload the logo. Try a smaller file, or leave it off and send it to us later.');
+            }
+            button.textContent = 'Sending…';
+          }
+
           const response = await fetch(`${SUPABASE_URL}/rest/v1/Job`, {
             method: 'POST',
             headers: {
@@ -609,6 +704,7 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
         showErrors({});
         updateCounter();
         if (TIER_OPTIONS.includes(tierParam)) tierField.value = tierParam;
+        toggleLogo();
         sent.hidden = true;
         form.hidden = false;
         startedAt = Date.now();
@@ -969,6 +1065,10 @@ const displayTown = (town) => (town === 'Orewa' ? 'Ōrewa' : town);
     display: grid;
     gap: 0.4rem;
     min-width: 0;
+  }
+
+  .field[hidden] {
+    display: none;
   }
 
   label {

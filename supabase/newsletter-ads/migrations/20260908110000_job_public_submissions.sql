@@ -6,7 +6,8 @@
 -- (tlderdsxnonhemkdxqns), not in the-tide project that supabase/migrations
 -- belongs to. Prisma owns the table shape
 -- (bizdata/prisma/migrations/20260908000000_add_jobs); this migration adds only
--- what a browser needs to insert a row, and nothing Prisma would want to drop.
+-- what a browser needs to insert a row and (for a Featured listing) upload the
+-- employer logo, and nothing Prisma would want to drop.
 --
 -- A submission just waits at status='DRAFT', source='PUBLIC', paid='UNPAID'
 -- until the operator approves it from the ad manager's /jobs page and settles
@@ -55,9 +56,19 @@ create policy "Public job submissions"
     and paid = 'UNPAID'
     and "issueId" is null
     and notes is null
-    -- No public logo upload in v1 — the operator adds a Featured listing's
-    -- logo when moderating.
-    and "logoUrl" is null
+    -- A Featured listing may carry an employer logo the form just uploaded,
+    -- and only that: a URL for an object this migration's storage half let in,
+    -- under the public-jobs/ prefix, named as a generated UUID. Null is always
+    -- fine — Standard/Community never have one, and a Featured listing whose
+    -- employer skips the upload gets its logo added by the operator later.
+    and (
+      "logoUrl" is null
+      or (
+        tier = 'FEATURED'
+        and "logoUrl" ~ ('^https://[a-z0-9]+\.supabase\.co/storage/v1/object/public/creative/public-jobs/'
+                         || '[0-9a-f-]{36}\.(png|jpg|jpeg|webp|gif)$')
+      )
+    )
 
     and length(btrim(title)) between 1 and 120
     and length(btrim(employer)) between 1 and 120
@@ -130,11 +141,11 @@ create policy "Public job submissions"
       or (tier = 'COMMUNITY' and price = 14.99)
     )
 
-    -- A 30-day run (lib/jobs.ts defaultClosesAt), with a little slack either
+    -- A 90-day run (lib/jobs.ts defaultClosesAt), with a little slack either
     -- side for clock skew: the listing must close in the future and inside
-    -- roughly a month.
+    -- roughly three months.
     and "closesAt" > now()
-    and "closesAt" < now() + interval '32 days'
+    and "closesAt" < now() + interval '92 days'
 
     -- A listing nobody can reply to is not worth printing.
     and "contactName" is not null
@@ -145,4 +156,29 @@ create policy "Public job submissions"
       or ("contactEmail" like '%_@_%._%' and length("contactEmail") <= 200)
     )
     and ("contactPhone" is null or length(btrim("contactPhone")) between 1 and 40)
+  );
+
+-- ---------------------------------------------------------------------------
+-- The logo
+-- ---------------------------------------------------------------------------
+
+-- A Featured job listing's employer logo, uploaded by the browser with the
+-- publishable key — the same door /submit-classified and /submit-event already
+-- open for a featured photo, widened here to take a third prefix. Restated
+-- whole rather than amended: 20260817130000_featured_classified_submissions.sql
+-- created "Public listing photos" for public-(events|classifieds), and those
+-- shapes still hold word for word. What is new is `jobs`.
+--
+-- Insert-only, a generated UUID for a name, a raster extension, no SVG from a
+-- stranger on a public bucket. The operator's own uploads still may — they
+-- come through the ad manager, not through here.
+drop policy if exists "Public listing photos" on storage.objects;
+
+create policy "Public listing photos"
+  on storage.objects
+  for insert
+  to anon
+  with check (
+    bucket_id = 'creative'
+    and name ~ '^public-(events|classifieds|jobs)/[0-9a-f-]{36}\.(png|jpg|jpeg|webp|gif)$'
   );

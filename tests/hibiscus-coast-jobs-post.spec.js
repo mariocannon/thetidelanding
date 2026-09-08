@@ -87,10 +87,10 @@ test('files the role as an unpaid, unplaced draft from the public form', async (
   });
   // Standard price is one of the two the policy pins to that tier.
   expect([19.99, 49]).toContain(body.price);
-  // A 30-day run, within the policy's ~month window.
+  // A 90-day run, within the policy's ~three-month window.
   const days = (new Date(body.closesAt) - Date.now()) / 86_400_000;
-  expect(days).toBeGreaterThan(28);
-  expect(days).toBeLessThan(32);
+  expect(days).toBeGreaterThan(88);
+  expect(days).toBeLessThan(92);
 
   await expect(page.locator('#job-form')).toBeHidden();
   await expect(page.locator('#sent h2')).toHaveText('Thanks — the role is in.');
@@ -102,6 +102,54 @@ test('prices the Featured tier at $89', async ({ page }) => {
   const body = await submit(page);
   expect(body.tier).toBe('FEATURED');
   expect(body.price).toBe(89);
+});
+
+test('offers the logo field only for Featured, and uploads it', async ({ page }) => {
+  await expect(field(page, 'logo')).toBeHidden();
+
+  await page.selectOption('#tier', 'FEATURED');
+  await expect(field(page, 'logo')).toBeVisible();
+
+  // Switching away hides it again and drops any picked file.
+  await page.selectOption('#tier', 'STANDARD');
+  await expect(field(page, 'logo')).toBeHidden();
+
+  await page.selectOption('#tier', 'FEATURED');
+  await fillRequired(page);
+  await page.setInputFiles('#logo', {
+    name: 'logo.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('89504e470d0a1a0a', 'hex'),
+  });
+
+  let uploadPath = null;
+  await page.route('**/storage/v1/object/creative/public-jobs/*', async (route) => {
+    uploadPath = new URL(route.request().url()).pathname;
+    await route.fulfill({ status: 200, body: '' });
+  });
+
+  const body = await submit(page);
+
+  expect(uploadPath).toMatch(
+    /\/storage\/v1\/object\/creative\/public-jobs\/[0-9a-f-]{36}\.png$/
+  );
+  expect(body.logoUrl).toMatch(
+    /^https:\/\/[a-z0-9]+\.supabase\.co\/storage\/v1\/object\/public\/creative\/public-jobs\/[0-9a-f-]{36}\.png$/
+  );
+});
+
+test('rejects a logo that is not an image the bucket takes', async ({ page }) => {
+  await page.selectOption('#tier', 'FEATURED');
+  await fillRequired(page);
+  await page.setInputFiles('#logo', {
+    name: 'logo.svg',
+    mimeType: 'image/svg+xml',
+    buffer: Buffer.from('<svg/>'),
+  });
+
+  await page.waitForTimeout(MIN_SECONDS * 1000 + 200);
+  await page.click('button[type="submit"]');
+  await expect(error(page, 'logo')).toHaveText('That logo must be a PNG, JPG, WEBP or GIF.');
 });
 
 test('preselects the tier from the query string, e.g. after a Stripe redirect', async ({ page }) => {
