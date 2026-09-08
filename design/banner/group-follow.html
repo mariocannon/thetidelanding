@@ -24,6 +24,7 @@
         --foam: #faf5ea;
         --sand: #f0e7d6;
         --harbor: #23313c;
+        --harbor-lift: #2b3b47;
         --slate: #5a6672;
         --steel: #45758c;
         --seaglass: #a2c5d3;
@@ -35,59 +36,58 @@
       }
 
       body {
-        background: #d8cdb8;
+        background: #1a242c;
       }
 
-      /* 1640×856, Facebook's group cover size. This one leads with the reader's
-         own situation ("you follow the group") the way the editor's voice does
-         — assume the shared experience, then land the ask. */
+      /* 1640×856, Facebook's group cover size. Dark Harbor treatment, same as
+         the other two group covers. This one leads with the reader's own
+         situation the way the editor's voice does — assume the shared
+         experience, then land the ask. */
       .banner {
         position: relative;
         width: 1640px;
         height: 856px;
         overflow: hidden;
-        background: var(--sand);
+        background: var(--harbor);
         font-family: 'Inter', sans-serif;
-        color: var(--harbor);
+        color: var(--foam);
       }
 
-      .glow {
+      .aura {
         position: absolute;
         inset: 0;
-        background: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 62%);
+        background:
+          radial-gradient(50% 62% at 82% 6%, rgba(162, 197, 211, 0.22) 0%, transparent 62%),
+          radial-gradient(34% 46% at 90% 74%, rgba(162, 197, 211, 0.12) 0%, transparent 66%);
       }
 
-      .waves {
+      .tideline {
         position: absolute;
         inset: auto 0 0;
         width: 100%;
-        height: 190px;
+        height: 150px;
         display: block;
       }
 
-      .waves path {
-        fill: var(--seaglass);
+      .tideline .fill {
+        fill: var(--harbor-lift);
       }
 
-      .waves .wave-back {
-        opacity: 0.45;
-      }
-
-      .frame {
-        position: absolute;
-        inset: 30px;
-        border: 4px solid rgba(69, 117, 140, 0.3);
-        border-radius: 38px;
+      .tideline .crest {
+        fill: none;
+        stroke: rgba(162, 197, 211, 0.34);
+        stroke-width: 2.5;
       }
 
       main {
         position: relative;
+        z-index: 1;
         height: 100%;
         display: grid;
-        grid-template-columns: 1fr 300px;
+        grid-template-columns: 1fr 240px;
         align-items: center;
-        gap: 64px;
-        padding: 96px 110px 236px;
+        gap: 56px;
+        padding: 104px 96px 176px;
       }
 
       .copy {
@@ -95,164 +95,117 @@
         justify-items: start;
       }
 
-      .eyebrow {
+      .chip {
         display: inline-flex;
         align-items: center;
-        gap: 20px;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: 0.2em;
+        padding: 11px 22px 12px;
+        border: 1.5px solid rgba(162, 197, 211, 0.5);
+        border-radius: 999px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--steel);
-      }
-
-      .eyebrow::before {
-        content: '';
-        width: 54px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--steel);
+        color: var(--seaglass);
       }
 
       h1 {
-        margin-top: 22px;
+        margin-top: 28px;
         font-family: 'Baloo 2', sans-serif;
         font-weight: 800;
-        font-size: 82px;
-        line-height: 1.05;
-        letter-spacing: -0.02em;
+        font-size: 80px;
+        line-height: 1;
+        letter-spacing: -0.03em;
         white-space: nowrap;
-        color: var(--harbor);
+        color: var(--foam);
       }
 
       h1 em {
         font-style: normal;
-        color: var(--steel);
+        color: var(--seaglass);
       }
 
       .sub {
-        margin-top: 26px;
-        max-width: 780px;
-        font-size: 30px;
-        font-weight: 600;
-        line-height: 1.35;
-        color: var(--slate);
+        margin-top: 28px;
+        max-width: 860px;
+        font-size: 31px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: rgba(250, 245, 234, 0.68);
       }
 
       .cta {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-top: 40px;
+        margin-top: 44px;
       }
 
       .url {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 16px;
-        padding: 18px 34px 21px;
+        padding: 20px 36px 22px;
         font-family: 'Archivo Black', sans-serif;
-        font-size: 32px;
-        color: var(--foam);
-        background: var(--harbor);
-        border-radius: 18px;
-        box-shadow: 0 16px 34px rgba(35, 49, 60, 0.24);
+        font-size: 30px;
+        color: var(--harbor);
+        background: var(--foam);
+        border-radius: 14px;
+        box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.55);
       }
 
       .url svg {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         display: block;
       }
 
       .flank {
         display: grid;
         justify-items: center;
-        gap: 28px;
-      }
-
-      .tile {
-        width: 168px;
-        height: 168px;
-        display: block;
-        filter: drop-shadow(0 18px 34px rgba(35, 49, 60, 0.22));
-      }
-
-      .tile .tile-bg {
-        fill: var(--steel);
-      }
-
-      .tile .tile-foam {
-        fill: var(--foam);
-      }
-
-      .tile .tile-seaglass {
-        fill: var(--seaglass);
+        align-self: end;
+        margin-bottom: 34px;
       }
 
       .logo {
-        width: 168px;
+        width: 248px;
         height: auto;
       }
     </style>
   </head>
   <body>
     <div class="banner">
-      <div class="glow"></div>
+      <div class="aura"></div>
 
-      <svg class="waves" viewBox="0 0 1080 104" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          class="wave-back"
-          d="M0,42 C182,73 365,12 545,28 C727,42 902,90 1080,59 L1080,104 L0,104 Z"
-        ></path>
-        <path
-          d="M0,73 C211,42 391,95 571,80 C751,66 931,42 1080,80 L1080,104 L0,104 Z"
-        ></path>
+      <svg class="tideline" viewBox="0 0 1640 150" preserveAspectRatio="none" aria-hidden="true">
+        <path class="fill" d="M0,66 C300,4 560,6 820,52 C1080,98 1360,112 1640,58 L1640,150 L0,150 Z" />
+        <path class="crest" d="M0,66 C300,4 560,6 820,52 C1080,98 1360,112 1640,58" />
       </svg>
-
-      <div class="frame"></div>
 
       <main>
         <div class="copy">
-          <!-- EDIT ME: eyebrow, two headline lines, the line under them and the
-               URL pill are the whole banner. Fixed size, nowrap headline — keep
+          <!-- EDIT ME: chip, two headline lines, the line under them and the URL
+               button are the whole banner. Fixed-size, nowrap headline — keep
                each line about this long or it runs into the flank column. -->
-          <p class="eyebrow">Morning, Coasties</p>
+          <p class="chip">Morning, Coasties</p>
           <h1>You follow the group.<br />Now get the <em>newsletter</em>.</h1>
           <p class="sub">
             Everything the Coast is talking about, in your inbox before your
             Thursday coffee. Free, always.
           </p>
           <div class="cta">
-            <div class="url">
+            <span class="url">
+              Sign up &mdash; thetide.co.nz
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="9.2" stroke="#faf5ea" stroke-width="1.9" />
                 <path
-                  d="M3 12h18M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9Z"
-                  stroke="#faf5ea"
-                  stroke-width="1.9"
+                  d="M5 12h13M13 6l6 6-6 6"
+                  stroke="#23313c"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
-              Sign up free &mdash; thetide.co.nz
-            </div>
+            </span>
           </div>
         </div>
 
         <div class="flank">
-          <!-- A rolled-up newsletter tile: the wave motif read as a page. -->
-          <svg class="tile" viewBox="0 0 100 100" aria-hidden="true">
-            <rect class="tile-bg" width="100" height="100" rx="24" />
-            <rect class="tile-foam" x="24" y="20" width="46" height="60" rx="4" />
-            <rect class="tile-seaglass" x="32" y="30" width="30" height="5" rx="2.5" />
-            <rect class="tile-seaglass" x="32" y="42" width="30" height="5" rx="2.5" />
-            <rect class="tile-seaglass" x="32" y="54" width="20" height="5" rx="2.5" />
-            <path
-              class="tile-foam"
-              d="M70 62c6 0 10 4 10 9s-4 9-10 9H40c6 0 10-4 10-9V62Z"
-            />
-          </svg>
-
           <img class="logo" src="../../public/logo.webp" alt="The Tide" />
         </div>
       </main>

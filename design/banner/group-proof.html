@@ -24,6 +24,7 @@
         --foam: #faf5ea;
         --sand: #f0e7d6;
         --harbor: #23313c;
+        --harbor-lift: #2b3b47;
         --slate: #5a6672;
         --steel: #45758c;
         --seaglass: #a2c5d3;
@@ -35,59 +36,57 @@
       }
 
       body {
-        background: #d8cdb8;
+        background: #1a242c;
       }
 
-      /* 1640×856, Facebook's group cover size. Built on gardening-club.html's
-         three-feature band — here the three tiles carry the reasons to sign up
-         (how many readers, when it lands, what it costs) rather than a link. */
+      /* 1640×856, Facebook's group cover size. Dark Harbor treatment, same as
+         the other two. The three chips carry the reasons to sign up — how many
+         readers, when it lands, what it costs. */
       .banner {
         position: relative;
         width: 1640px;
         height: 856px;
         overflow: hidden;
-        background: var(--sand);
+        background: var(--harbor);
         font-family: 'Inter', sans-serif;
-        color: var(--harbor);
+        color: var(--foam);
       }
 
-      .glow {
+      .aura {
         position: absolute;
         inset: 0;
-        background: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 62%);
+        background:
+          radial-gradient(50% 62% at 82% 6%, rgba(162, 197, 211, 0.22) 0%, transparent 62%),
+          radial-gradient(34% 46% at 90% 74%, rgba(162, 197, 211, 0.12) 0%, transparent 66%);
       }
 
-      .waves {
+      .tideline {
         position: absolute;
         inset: auto 0 0;
         width: 100%;
-        height: 190px;
+        height: 150px;
         display: block;
       }
 
-      .waves path {
-        fill: var(--seaglass);
+      .tideline .fill {
+        fill: var(--harbor-lift);
       }
 
-      .waves .wave-back {
-        opacity: 0.45;
-      }
-
-      .frame {
-        position: absolute;
-        inset: 30px;
-        border: 4px solid rgba(69, 117, 140, 0.3);
-        border-radius: 38px;
+      .tideline .crest {
+        fill: none;
+        stroke: rgba(162, 197, 211, 0.34);
+        stroke-width: 2.5;
       }
 
       main {
         position: relative;
+        z-index: 1;
         height: 100%;
         display: grid;
-        grid-template-columns: 1fr 300px;
+        grid-template-columns: 1fr 240px;
         align-items: center;
         gap: 64px;
-        padding: 84px 110px 220px;
+        padding: 92px 100px 168px;
       }
 
       .copy {
@@ -95,91 +94,76 @@
         justify-items: start;
       }
 
-      .eyebrow {
+      .chip {
         display: inline-flex;
         align-items: center;
-        gap: 20px;
-        font-size: 24px;
-        font-weight: 800;
-        letter-spacing: 0.2em;
+        padding: 11px 22px 12px;
+        border: 1.5px solid rgba(162, 197, 211, 0.5);
+        border-radius: 999px;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: var(--steel);
-      }
-
-      .eyebrow::before {
-        content: '';
-        width: 54px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--steel);
+        color: var(--seaglass);
       }
 
       h1 {
-        margin-top: 20px;
+        margin-top: 26px;
         font-family: 'Baloo 2', sans-serif;
         font-weight: 800;
-        font-size: 80px;
-        line-height: 1.04;
-        letter-spacing: -0.02em;
+        font-size: 94px;
+        line-height: 0.98;
+        letter-spacing: -0.03em;
         white-space: nowrap;
-        color: var(--harbor);
+        color: var(--foam);
       }
 
       h1 em {
         font-style: normal;
-        color: var(--steel);
+        color: var(--seaglass);
       }
 
       .sub {
-        margin-top: 22px;
-        max-width: 800px;
+        margin-top: 24px;
+        max-width: 900px;
         font-size: 29px;
-        font-weight: 600;
-        line-height: 1.35;
-        color: var(--slate);
+        font-weight: 500;
+        line-height: 1.4;
+        color: rgba(250, 245, 234, 0.68);
       }
 
-      /* The three reasons, on the guide's "what's inside" device: a Steel Blue
-         rounded-square tile with a Foam line-icon and an uppercase label. */
-      .features {
+      /* The three reasons as hairline chips — same language as the eyebrow, no
+         filled tiles. A small Sea Glass icon, an uppercase Foam label. */
+      .stats {
         margin-top: 34px;
-        display: grid;
-        grid-template-columns: repeat(3, auto);
-        justify-content: start;
-        gap: 72px;
-      }
-
-      .feature {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
+        gap: 24px;
       }
 
-      .feature .tile-icon {
-        width: 58px;
-        height: 58px;
-        border-radius: 16px;
-        background: var(--steel);
+      .stat {
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 14px;
+        padding: 14px 22px;
+        border: 1.5px solid rgba(162, 197, 211, 0.28);
+        border-radius: 16px;
       }
 
-      .feature .tile-icon svg {
-        width: 32px;
-        height: 32px;
+      .stat svg {
+        width: 26px;
+        height: 26px;
         display: block;
-        color: var(--foam);
+        color: var(--seaglass);
+        flex: none;
       }
 
-      .feature span {
-        font-size: 19px;
+      .stat span {
+        font-size: 17px;
         font-weight: 700;
-        line-height: 1.35;
-        letter-spacing: 0.11em;
+        line-height: 1.3;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: var(--steel);
+        color: rgba(250, 245, 234, 0.86);
       }
 
       .cta {
@@ -187,151 +171,102 @@
       }
 
       .url {
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 16px;
-        padding: 18px 34px 21px;
+        padding: 20px 36px 22px;
         font-family: 'Archivo Black', sans-serif;
-        font-size: 32px;
-        color: var(--foam);
-        background: var(--harbor);
-        border-radius: 18px;
-        box-shadow: 0 16px 34px rgba(35, 49, 60, 0.24);
+        font-size: 30px;
+        color: var(--harbor);
+        background: var(--foam);
+        border-radius: 14px;
+        box-shadow: 0 22px 44px -14px rgba(0, 0, 0, 0.55);
       }
 
       .url svg {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         display: block;
       }
 
       .flank {
         display: grid;
         justify-items: center;
-        gap: 28px;
-      }
-
-      .tile {
-        width: 168px;
-        height: 168px;
-        display: block;
-        filter: drop-shadow(0 18px 34px rgba(35, 49, 60, 0.22));
-      }
-
-      .tile .tile-bg {
-        fill: var(--steel);
-      }
-
-      .tile .tile-stroke {
-        stroke: var(--foam);
+        align-self: end;
+        margin-bottom: 34px;
       }
 
       .logo {
-        width: 168px;
+        width: 248px;
         height: auto;
       }
     </style>
   </head>
   <body>
     <div class="banner">
-      <div class="glow"></div>
+      <div class="aura"></div>
 
-      <svg class="waves" viewBox="0 0 1080 104" preserveAspectRatio="none" aria-hidden="true">
-        <path
-          class="wave-back"
-          d="M0,42 C182,73 365,12 545,28 C727,42 902,90 1080,59 L1080,104 L0,104 Z"
-        ></path>
-        <path
-          d="M0,73 C211,42 391,95 571,80 C751,66 931,42 1080,80 L1080,104 L0,104 Z"
-        ></path>
+      <svg class="tideline" viewBox="0 0 1640 150" preserveAspectRatio="none" aria-hidden="true">
+        <path class="fill" d="M0,66 C300,4 560,6 820,52 C1080,98 1360,112 1640,58 L1640,150 L0,150 Z" />
+        <path class="crest" d="M0,66 C300,4 560,6 820,52 C1080,98 1360,112 1640,58" />
       </svg>
-
-      <div class="frame"></div>
 
       <main>
         <div class="copy">
-          <!-- EDIT ME: eyebrow, headline, the line under it, the three feature
-               labels and the URL pill are the whole banner. Headline is fixed
-               size and nowrap; feature labels break only where the <br> is. -->
-          <p class="eyebrow">The Coast's newsletter</p>
+          <!-- EDIT ME: chip, headline, the line under it, the three stat chips
+               and the URL button are the whole banner. Headline is fixed-size
+               and nowrap; the stat labels break only where the <br> is. -->
+          <p class="chip">The Coast's newsletter</p>
           <h1>Worth <em>waiting</em> for</h1>
           <p class="sub">
             Join hundreds of Coasties who start Thursday with The Tide &mdash;
             local news, stories and what's on.
           </p>
 
-          <div class="features">
-            <div class="feature">
-              <div class="tile-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9" />
-                  <path d="M3.5 19c0-3.3 2.5-5.4 5.5-5.4S14.5 15.7 14.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
-                  <path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 19c0-2.6-1-4.5-2.7-5.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
-                </svg>
-              </div>
+          <div class="stats">
+            <div class="stat">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9" />
+                <path d="M3.5 19c0-3.3 2.5-5.4 5.5-5.4S14.5 15.7 14.5 19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+                <path d="M16 6.2a3 3 0 0 1 0 5.6M17.5 19c0-2.6-1-4.5-2.7-5.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+              </svg>
               <span>Hundreds of<br />Coasties</span>
             </div>
 
-            <div class="feature">
-              <div class="tile-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.9" />
-                  <path d="M12 7.2V12l3.4 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
+            <div class="stat">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.9" />
+                <path d="M12 7.2V12l3.4 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
               <span>Every Thursday<br />at 8am</span>
             </div>
 
-            <div class="feature">
-              <div class="tile-icon">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 13.2 10.8 20l9.2-9.2V4h-6.8L4 13.2Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" />
-                  <circle cx="15.4" cy="8.6" r="1.6" fill="currentColor" />
-                </svg>
-              </div>
+            <div class="stat">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 13.2 10.8 20l9.2-9.2V4h-6.8L4 13.2Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" />
+                <circle cx="15.4" cy="8.6" r="1.6" fill="currentColor" />
+              </svg>
               <span>Free,<br />always</span>
             </div>
           </div>
 
           <div class="cta">
-            <div class="url">
+            <span class="url">
+              Sign up at thetide.co.nz
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="9.2" stroke="#faf5ea" stroke-width="1.9" />
                 <path
-                  d="M3 12h18M12 3c2.6 2.6 4 5.7 4 9s-1.4 6.4-4 9c-2.6-2.6-4-5.7-4-9s1.4-6.4 4-9Z"
-                  stroke="#faf5ea"
-                  stroke-width="1.9"
+                  d="M5 12h13M13 6l6 6-6 6"
+                  stroke="#23313c"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
                   stroke-linejoin="round"
                 />
               </svg>
-              Sign up at thetide.co.nz
-            </div>
+            </span>
           </div>
         </div>
 
         <div class="flank">
-          <svg class="tile" viewBox="0 0 100 100" aria-hidden="true">
-            <rect class="tile-bg" width="100" height="100" rx="24" />
-            <rect
-              class="tile-stroke"
-              x="20"
-              y="30"
-              width="60"
-              height="42"
-              rx="6"
-              fill="none"
-              stroke-width="5"
-            />
-            <path
-              class="tile-stroke"
-              d="M22 34l28 22 28-22"
-              fill="none"
-              stroke-width="5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-
           <img class="logo" src="../../public/logo.webp" alt="The Tide" />
         </div>
       </main>

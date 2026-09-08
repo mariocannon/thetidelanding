@@ -159,19 +159,28 @@ The signup page is the site home page — there's no separate `/signup` route.
 | --- | --- |
 | `group-inbox.html` | Plain and direct — "Get The Tide in your inbox", the reasons in the sub |
 | `group-follow.html` | Voice-led — "You follow the group. Now get the newsletter.", the editor's "assume the shared experience" opener |
-| `group-proof.html` | Social proof — "Worth waiting for" (the home page's own title line) over a three-tile band: how many readers, when it lands, what it costs |
+| `group-proof.html` | Social proof — "Worth waiting for" (the home page's own title line) over three stat chips: how many readers, when it lands, what it costs |
 
-All three reuse `gardening-club.html`'s parts unchanged: the BRANDING §1 palette
-tokens, the Foam-to-Sand glow, the two-path shoreline, the frame, and the
-portrait logo in a right-hand flank column. `group-proof.html` also reuses that
-page's three-feature device (Steel Blue tile, Foam line-icon, uppercase label).
-No off-palette colour — nothing here has to read as Facebook.
+These are the **dark** treatment, and the one set on the site that is: a
+full-bleed Harbor field, Foam type, a single Sea Glass accent word in the
+headline, so they read as their own thing next to the light `facebook.html` and
+stand out in a feed of white cards. The logo art is Sea Glass on transparent, so
+it sits straight on Harbor with no reversed asset.
+
+No framed border and no Foam-to-Sand wash — the depth is two low-contrast Sea
+Glass blooms (one top-right, a fainter one behind the logo) over a single tonal
+`tideline` curve, a step up in the Harbor with a thin Sea Glass crest, in place
+of the two-path shoreline the other banners use. The eyebrow is a hairline pill,
+the CTA a flat Foam button with a trailing arrow. Palette is BRANDING §1 tokens
+only; the rgba tints are all Sea Glass or Foam at reduced alpha, no new hex.
 
 Same nowrap rule as the other pages: the headline is fixed-size and breaks only
 at its `<br>`, so keep each line about its current width or it runs into the
-flank column. Copy sits well inside the paddings on purpose — Facebook crops the
-sides and bottom of a group cover on mobile, so the headline, sub and pill stay
-within the centre.
+flank column. `group-inbox` runs the biggest headline (108px, two short lines),
+`group-follow` the smallest (80px, two long lines). Copy sits well inside the
+paddings on purpose — Facebook crops the sides and bottom of a group cover on
+mobile, so the headline, sub and button stay within the centre; the logo is
+decorative and can take the crop.
 
 To serve one from the site (embed, or an `og:image` source) copy it into
 `public/social/` after rendering, the same as `thetide-gardening-club`.
