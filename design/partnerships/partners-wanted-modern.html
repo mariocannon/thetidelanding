@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>The Tide — partners wanted (modern) 1080×1080</title>
+    <style>
+      /* Fonts from ../billboard/. This card drops Baloo 2 — the rounded
+         headline face reads friendly, not modern — and sets the headline in
+         Archivo Black instead, tight and blocky. Inter carries the label and
+         body. */
+      @font-face {
+        font-family: 'Archivo Black';
+        font-weight: 400;
+        src: url('../billboard/archivoblack.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Inter';
+        font-weight: 100 900;
+        src: url('../billboard/inter-600.woff2') format('woff2');
+      }
+
+      /* Palette from src/pages/index.astro, re-weighted dark: Ink is the
+         ground, Sky is the one accent, Sand Light is the headline. */
+      :root {
+        --ink: #23313c;
+        --ink-deep: #1b2831;
+        --sand-light: #faf5ea;
+        --sea: #45758c;
+        --sky: #a2c5d3;
+        --mist: #93a9b4;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        background: #11191f;
+      }
+
+      /* The render script crops the top-left 1080×1080 of the page. */
+      .card {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(90% 60% at 88% 6%, rgba(69, 117, 140, 0.55) 0%, rgba(69, 117, 140, 0) 60%),
+          linear-gradient(158deg, #1c2a33 0%, #23313c 52%, #1e2d37 100%);
+        font-family: 'Inter', sans-serif;
+        color: var(--sand-light);
+      }
+
+      /* A single flat wave, low contrast — the motif kept as a hint, not an
+         illustration. */
+      .waves {
+        position: absolute;
+        inset: auto 0 0;
+        width: 100%;
+        height: 150px;
+        display: block;
+        opacity: 0.16;
+      }
+
+      /* Hairline border, square corners — the rounded frame on the other cards
+         is the friendly look; this is the sharp one. */
+      .frame {
+        position: absolute;
+        inset: 30px;
+        border: 1px solid rgba(162, 197, 211, 0.28);
+      }
+
+      /* Corner brackets — a small editorial flourish, sitting just inside the
+         hairline. */
+      .tick {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border: 0 solid var(--sky);
+      }
+      .tick.tl { top: 44px; left: 44px; border-top-width: 3px; border-left-width: 3px; }
+      .tick.br { bottom: 44px; right: 44px; border-bottom-width: 3px; border-right-width: 3px; }
+
+      main {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        text-align: left;
+        padding: 84px 88px 96px;
+      }
+
+      /* Logo + label pinned to the top-left corner; the headline / CTA / contact
+         group is optically centred in the space below. */
+      .top {
+        position: absolute;
+        top: 84px;
+        left: 88px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .top img {
+        width: 56px;
+        height: auto;
+        /* The mark is Ink-coloured line art — force it to Sand Light so it
+           reads on the dark ground. */
+        filter: brightness(0) saturate(100%) invert(96%) sepia(6%) saturate(430%)
+          hue-rotate(314deg) brightness(103%) contrast(97%);
+      }
+
+      .label {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.34em;
+        text-transform: uppercase;
+        color: var(--sky);
+      }
+
+      .mid {
+        margin-top: 24px;
+      }
+
+      .rule {
+        width: 76px;
+        height: 5px;
+        background: var(--sky);
+        margin-bottom: 34px;
+      }
+
+      h1 {
+        font-family: 'Archivo Black', sans-serif;
+        font-weight: 400;
+        font-size: 110px;
+        line-height: 0.9;
+        letter-spacing: -0.025em;
+        text-transform: uppercase;
+        color: var(--sand-light);
+      }
+
+      h1 em {
+        font-style: normal;
+        color: var(--sky);
+      }
+
+      .sub {
+        margin-top: 34px;
+        max-width: 34rem;
+        font-size: 28px;
+        font-weight: 500;
+        line-height: 1.42;
+        color: var(--mist);
+      }
+
+      .contact {
+        display: inline-flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 40px;
+        padding: 16px 28px 18px;
+        font-family: 'Archivo Black', sans-serif;
+        font-size: 25px;
+        color: var(--ink);
+        background: var(--sky);
+        border-radius: 0;
+      }
+
+      .contact svg {
+        width: 22px;
+        height: 22px;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <svg class="waves" viewBox="0 0 1080 150" preserveAspectRatio="none" aria-hidden="true">
+        <path
+          fill="#a2c5d3"
+          d="M0,70 C210,120 400,20 580,44 C760,68 940,120 1080,74 L1080,150 L0,150 Z"
+        ></path>
+      </svg>
+
+      <div class="frame"></div>
+      <span class="tick tl"></span>
+      <span class="tick br"></span>
+
+      <main>
+        <div class="top">
+          <img src="../../public/logo.webp" alt="The Tide" />
+          <span class="label">Partner with The Tide</span>
+        </div>
+
+        <div class="mid">
+          <div class="rule"></div>
+          <!-- EDIT ME: four headline lines + one sub line. Archivo Black at
+               118px — keep each line roughly this width or it runs to the
+               frame. -->
+          <h1>We're<br />looking for<br /><em>local</em><br /><em>partners.</em></h1>
+          <p class="sub">
+            Message us about how we can build our presence together.
+          </p>
+        </div>
+
+        <div class="contact">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M3 6.5 12 13l9-6.5" stroke="#23313c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+            <rect x="3" y="5" width="18" height="14" rx="1.5" stroke="#23313c" stroke-width="2.2" />
+          </svg>
+          hello@thetide.co.nz
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
