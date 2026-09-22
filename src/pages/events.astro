@@ -1,0 +1,775 @@
+---
+const title = "What's on — The Tide";
+const description =
+  "Markets, music, sport and family events on the Hibiscus Coast, four weeks out at a glance. Free to browse, no account to set up.";
+const canonical = 'https://thetide.co.nz/events';
+
+// The public events calendar. Listings come from `Event` in the Newsletter ad
+// management project (tlderdsxnonhemkdxqns) — the same project /submit-event
+// and the jobs board read/write — fetched over PostgREST at build time. See
+// supabase/newsletter-ads/migrations/20260923090000_events_public_read.sql
+// for the read policy, and .../20260806090000_event_public_submissions.sql
+// (plus the featured-fee migrations) for the insert policy /submit-event
+// writes through. Built the same way as src/pages/hibiscus-coast-jobs.astro —
+// same project, same "read policy stays status-blind, the build query isn't"
+// shape.
+//
+// Event entry is manual for now (operator keys weekly events into the ad
+// manager admin as STAFF rows, DRAFT → APPROVED → PUBLISHED, same workflow as
+// Classifieds/Jobs — see drafts/plans/EVENTS-CALENDAR-PAGE.md). So this table
+// will be empty of PUBLISHED rows at launch; the empty state is not a bug.
+
+const SUPABASE_URL = 'https://tlderdsxnonhemkdxqns.supabase.co';
+// Publishable key: safe to expose; row-level security only allows anon SELECT
+// and a tightly-checked INSERT.
+const SUPABASE_KEY = 'sb_publishable_lX7NuQ4pMVbVnC0FXFNSzg_1P1jxwl9';
+
+// EVENT_CATEGORIES and their labels, from lib/enums.ts in the ad manager —
+// the same list /submit-event uses.
+const CATEGORY_LABELS = {
+  MUSIC: 'Music',
+  MARKET: 'Market',
+  SPORT: 'Sport',
+  ARTS: 'Arts',
+  FOOD: 'Food & Drink',
+  FUNDRAISER: 'Fundraiser',
+  FAMILY: 'Family',
+  COMMUNITY: 'Community',
+  OTHER: 'Other',
+};
+const CATEGORY_ORDER = [
+  'MUSIC',
+  'MARKET',
+  'SPORT',
+  'ARTS',
+  'FOOD',
+  'FUNDRAISER',
+  'FAMILY',
+  'COMMUNITY',
+  'OTHER',
+];
+
+const WINDOW_DAYS = 28;
+
+/**
+ * Published events in the upcoming ~4-week window, soonest first.
+ *
+ * The anon SELECT policy is deliberately status-blind
+ * (20260923090000_events_public_read.sql), so the status and window filters
+ * here are load-bearing.
+ *
+ * Doesn't throw on a bad response: an empty calendar is a normal state (no
+ * events keyed in yet, or none in the window), and the table's policies may
+ * not be deployed at every point in the build pipeline's life. A transport or
+ * HTTP failure logs a warning and renders the empty state; a 200 that isn't a
+ * JSON array still throws, because that means the shape changed under us.
+ */
+async function fetchEvents() {
+  const now = new Date();
+  const until = new Date(now.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const url =
+    `${SUPABASE_URL}/rest/v1/Event` +
+    `?status=eq.PUBLISHED&startsAt=gte.${encodeURIComponent(now.toISOString())}` +
+    `&startsAt=lte.${encodeURIComponent(until.toISOString())}` +
+    `&select=*&order=startsAt.asc`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+  } catch (cause) {
+    console.warn(`Events: could not reach Supabase — rendering an empty calendar. ${cause}`);
+    return [];
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.warn(
+      `Events: fetch failed with ${response.status} ${response.statusText} — rendering an empty calendar. ${body}`.trim(),
+    );
+    return [];
+  }
+
+  const rows = await response.json();
+  if (!Array.isArray(rows)) {
+    throw new Error('Events: unexpected response (not an array).');
+  }
+  return rows;
+}
+
+const rows = await fetchEvents();
+
+/** Midnight on startsAt/endsAt means "no time given" — see the Event model. */
+const hasTime = (date) => !(date.getHours() === 0 && date.getMinutes() === 0);
+
+const timeLabel = (date) =>
+  date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit' }).replace(' ', '');
+
+/** "10am–2pm", "10am", or "All day" for a date-only event. */
+function whenLabel(starts, ends) {
+  if (!hasTime(starts)) return 'All day';
+  const startLabel = timeLabel(starts);
+  if (!ends || !hasTime(ends)) return startLabel;
+  return `${startLabel}–${timeLabel(ends)}`;
+}
+
+const sameDay = (a, b) =>
+  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+const dateKey = (date) => date.toISOString().slice(0, 10);
+
+const events = rows.map((event) => {
+  const starts = new Date(event.startsAt);
+  const ends = event.endsAt ? new Date(event.endsAt) : null;
+  return {
+    ...event,
+    starts,
+    ends,
+    dateKey: dateKey(starts),
+    whenLabel: whenLabel(starts, ends),
+    multiDay: Boolean(ends) && !sameDay(starts, ends),
+    categoryLabel: CATEGORY_LABELS[event.category] ?? event.category,
+  };
+});
+
+// One group per calendar day the window covers, in date order, each holding
+// its events in the startsAt order the query already returned them in.
+const groups = [];
+for (const event of events) {
+  let group = groups.find((g) => g.key === event.dateKey);
+  if (!group) {
+    group = {
+      key: event.dateKey,
+      label: event.starts.toLocaleDateString('en-NZ', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+      }),
+      events: [],
+    };
+    groups.push(group);
+  }
+  group.events.push(event);
+}
+
+const categoriesPresent = CATEGORY_ORDER.filter((value) =>
+  events.some((event) => event.category === value),
+);
+
+const count = events.length;
+
+const eventLd = events.map((event) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: event.title,
+  description: event.body,
+  startDate: event.starts.toISOString(),
+  ...(event.ends ? { endDate: event.ends.toISOString() } : {}),
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  location: {
+    '@type': 'Place',
+    name: event.location || 'Hibiscus Coast',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Hibiscus Coast',
+      addressRegion: 'Auckland',
+      addressCountry: 'NZ',
+    },
+  },
+  ...(event.imageUrl ? { image: [event.imageUrl] } : {}),
+  ...(event.ticketUrl ? { url: event.ticketUrl } : { url: canonical }),
+}));
+---
+
+<!doctype html>
+<html lang="en-NZ">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="theme-color" content="#f0e7d6" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8A%3C/text%3E%3C/svg%3E"
+    />
+    {
+      eventLd.map((ld) => (
+        <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+      ))
+    }
+  </head>
+  <body>
+    <main>
+      <header class="head">
+        <a class="home" href="/">
+          <img src="/logo.webp" alt="The Tide — home" width="783" height="979" />
+        </a>
+        <p class="eyebrow">What&rsquo;s On &middot; from The Tide</p>
+        <h1>Events on the Coast</h1>
+        <p>
+          What&rsquo;s on around the Hibiscus Coast over the next four weeks,
+          all in one place.
+        </p>
+      </header>
+
+      {
+        count > 0 && (
+          <div class="controls">
+            {categoriesPresent.length > 1 && (
+              <div class="filters" role="group" aria-label="Filter by category">
+                <button class="chip" type="button" data-category="all" aria-pressed="true">
+                  All
+                </button>
+                {categoriesPresent.map((value) => (
+                  <button class="chip" type="button" data-category={value} aria-pressed="false">
+                    {CATEGORY_LABELS[value]}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p class="count" id="count">
+              {count} {count === 1 ? 'event' : 'events'} coming up
+            </p>
+          </div>
+        )
+      }
+
+      {
+        count > 0 ? (
+          <div class="calendar" id="calendar">
+            {groups.map((group) => (
+              <section class="date-group" data-date={group.key}>
+                <h2 class="date-heading">{group.label}</h2>
+                <ul class="listings">
+                  {group.events.map((event) => (
+                    <li
+                      class={event.featured ? 'event is-featured' : 'event'}
+                      data-category={event.category}
+                    >
+                      {event.featured && event.imageUrl && (
+                        <img class="event-image" src={event.imageUrl} alt="" loading="lazy" />
+                      )}
+                      <div class="event-top">
+                        <div>
+                          <h3>
+                            {event.title}
+                            {event.featured && <span class="tag">Featured</span>}
+                          </h3>
+                          <p class="meta">
+                            {event.whenLabel}
+                            {event.multiDay && (
+                              <>
+                                {' '}
+                                &middot; through{' '}
+                                {event.ends.toLocaleDateString('en-NZ', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                })}
+                              </>
+                            )}
+                            {event.location && (
+                              <>
+                                <span class="sep">&middot;</span>
+                                {event.location}
+                              </>
+                            )}
+                            <span class="sep">&middot;</span>
+                            {event.categoryLabel}
+                          </p>
+                        </div>
+                      </div>
+                      <p class="event-body">{event.body}</p>
+                      <div class="event-foot">
+                        {event.ticketUrl && (
+                          <a
+                            class="btn"
+                            href={event.ticketUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Tickets &amp; info
+                          </a>
+                        )}
+                        {(event.contactEmail || event.contactPhone) && (
+                          <span class="contact">
+                            {event.contactEmail ? (
+                              <a href={`mailto:${event.contactEmail}`}>{event.contactEmail}</a>
+                            ) : (
+                              <a href={`tel:${String(event.contactPhone).replace(/\s+/g, '')}`}>
+                                {event.contactPhone}
+                              </a>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <p class="empty">
+            Nothing&rsquo;s listed for the next four weeks yet &mdash; check
+            back soon, or <a href="/">get The Tide</a> and we&rsquo;ll tell
+            you what&rsquo;s on every Thursday.
+          </p>
+        )
+      }
+
+      <p class="empty" id="empty" hidden>
+        No events in that category right now &mdash; try another, or
+        <a href="/">get The Tide</a> for what&rsquo;s on every Thursday.
+      </p>
+
+      <div class="foot">
+        <p class="post">Running something? <a href="/submit-event">List an event &rarr;</a></p>
+        <div class="links">
+          <a href="/">The Tide</a>
+          <span aria-hidden="true">&middot;</span>
+          <a href="/issues">Past issues</a>
+        </div>
+      </div>
+
+      <p class="privacy-link"><a href="/privacy">How we handle your details</a></p>
+    </main>
+
+    <svg class="waves" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+      <path
+        fill="#a2c5d3"
+        opacity="0.45"
+        d="M0,96 C240,160 480,32 720,64 C960,96 1200,192 1440,128 L1440,220 L0,220 Z"
+      ></path>
+      <path
+        fill="#a2c5d3"
+        d="M0,160 C280,96 520,208 760,176 C1000,144 1240,96 1440,176 L1440,220 L0,220 Z"
+      ></path>
+    </svg>
+
+    <script is:inline>
+      (function () {
+        var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+        var events = Array.prototype.slice.call(document.querySelectorAll('.event'));
+        var groups = Array.prototype.slice.call(document.querySelectorAll('.date-group'));
+        var count = document.getElementById('count');
+        var empty = document.getElementById('empty');
+        if (chips.length === 0) return;
+
+        function apply(category) {
+          var shown = 0;
+          events.forEach(function (event) {
+            var match = category === 'all' || event.getAttribute('data-category') === category;
+            event.hidden = !match;
+            if (match) shown++;
+          });
+          groups.forEach(function (group) {
+            var visible = group.querySelectorAll('.event:not([hidden])').length;
+            group.hidden = visible === 0;
+          });
+          count.textContent = shown + (shown === 1 ? ' event coming up' : ' events coming up');
+          empty.hidden = shown !== 0;
+        }
+
+        chips.forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            chips.forEach(function (c) {
+              c.setAttribute('aria-pressed', String(c === chip));
+            });
+            apply(chip.getAttribute('data-category'));
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+
+    --foam: #faf5ea;
+    --sand: #f0e7d6;
+    --paper: #fffdf8;
+    --harbor: #23313c;
+    --slate: #5a6672;
+    --driftwood: #8a8272;
+    --mist: #9aa4ac;
+    --navy: #23415a;
+    --seaglass: #a2c5d3;
+    --steel: #45758c;
+    --kelp: #1e7a4d;
+
+    --seaglass-tint: rgba(162, 197, 211, 0.22);
+    --seaglass-glow: rgba(162, 197, 211, 0.55);
+    --navy-line: rgba(35, 65, 90, 0.22);
+    --hairline: rgba(35, 65, 90, 0.12);
+    --btn-shadow: rgba(69, 117, 140, 0.35);
+
+    --radius: 0.65rem;
+    --wave-height: clamp(90px, 18vh, 220px);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100%;
+    position: relative;
+    background-color: var(--sand);
+    background-image: radial-gradient(120% 90% at 50% 0%, var(--foam) 0%, var(--sand) 60%);
+    background-repeat: no-repeat;
+    color: var(--harbor);
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  main {
+    width: min(42rem, 100% - 3rem);
+    margin-inline: auto;
+    padding-block: 3.5rem calc(var(--wave-height) + 2rem);
+  }
+
+  .eyebrow {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--steel);
+  }
+
+  .head {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9rem;
+  }
+
+  .home {
+    text-decoration: none;
+  }
+
+  .home img {
+    width: min(7rem, 26vw);
+    height: auto;
+  }
+
+  .head h1 {
+    margin: 0.4rem 0 0;
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .head p {
+    margin: 0;
+    max-width: 32rem;
+    color: var(--slate);
+    text-wrap: pretty;
+  }
+
+  .controls {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+
+  .chip {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--steel);
+    background: transparent;
+    border: 1px solid rgba(69, 117, 140, 0.35);
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .chip:hover,
+  .chip:focus-visible {
+    border-color: var(--steel);
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--seaglass);
+    color: var(--harbor);
+    border-color: var(--seaglass);
+  }
+
+  .chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  .count {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--driftwood);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .calendar {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .date-group[hidden] {
+    display: none;
+  }
+
+  .date-heading {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--navy);
+  }
+
+  .listings {
+    margin-top: 0.75rem;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .event {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--hairline);
+  }
+
+  .listings > .event:last-child {
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .event[hidden] {
+    display: none;
+  }
+
+  .event.is-featured {
+    border-top: 0;
+    margin-bottom: 0.5rem;
+    padding: 1.25rem;
+    background: var(--seaglass-tint);
+    border-radius: var(--radius);
+  }
+
+  .event.is-featured + .event {
+    border-top: 0;
+  }
+
+  .event-image {
+    display: block;
+    width: 100%;
+    max-height: 14rem;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 0.9rem;
+  }
+
+  .event h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .tag {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--navy);
+    background: rgba(162, 197, 211, 0.4);
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    vertical-align: 0.15em;
+    white-space: nowrap;
+  }
+
+  .meta {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+    color: var(--slate);
+  }
+
+  .meta .sep {
+    margin: 0 0.45em;
+    color: var(--mist);
+  }
+
+  .event-body {
+    margin: 0.85rem 0 0;
+    color: var(--harbor);
+    white-space: pre-line;
+  }
+
+  .event-foot {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    font: inherit;
+    font-weight: 700;
+    color: var(--harbor);
+    background: var(--seaglass);
+    border: 0;
+    border-radius: var(--radius);
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .btn:hover,
+  .btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px var(--btn-shadow);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--seaglass-glow);
+  }
+
+  .contact {
+    font-size: 0.82rem;
+  }
+
+  .contact a {
+    color: var(--steel);
+    text-underline-offset: 0.15em;
+  }
+
+  .empty {
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--slate);
+  }
+
+  .empty[hidden] {
+    display: none;
+  }
+
+  .empty a {
+    color: var(--steel);
+    text-underline-offset: 0.15em;
+    margin-left: 0.25rem;
+  }
+
+  .foot {
+    margin-top: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .foot .post {
+    font-size: 0.95rem;
+  }
+
+  .foot .post a {
+    font-weight: 700;
+    color: var(--steel);
+    text-underline-offset: 0.15em;
+  }
+
+  .foot .links {
+    font-size: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 0.9rem;
+  }
+
+  .foot .links a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .foot .links a:hover,
+  .foot .links a:focus-visible {
+    color: var(--steel);
+  }
+
+  .foot .links span[aria-hidden] {
+    color: var(--mist);
+  }
+
+  .privacy-link {
+    margin: 1.25rem 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+  }
+
+  .privacy-link a {
+    color: var(--driftwood);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .privacy-link a:hover,
+  .privacy-link a:focus-visible {
+    color: var(--steel);
+  }
+
+  .waves {
+    position: absolute;
+    inset: auto 0 0;
+    width: 100%;
+    height: var(--wave-height);
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn,
+    .chip {
+      transition: none;
+    }
+  }
+</style>
