@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=block" rel="stylesheet">
+<style>
+@font-face{font-family:Anton;src:url(Anton.ttf) format("truetype");font-display:block}
+:root{--ink:#0d0d0d;--paper:#f4ecd8;--hot:#f26a21;--lime:#c7e735;--red:#e8412a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:var(--w);height:var(--h);background:var(--ink);overflow:hidden}
+body{font-family:'Space Mono',monospace;color:var(--paper);position:relative}
+/* grain + stripes */
+body::before{content:"";position:absolute;inset:0;background:
+ repeating-linear-gradient(-45deg,transparent 0 22px,rgba(255,255,255,.025) 22px 44px);}
+.wrap{position:absolute;inset:var(--pad);display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;font-weight:700;font-size:calc(var(--u)*2.2);letter-spacing:.2em;text-transform:uppercase;color:var(--hot)}
+h1{font-family:Anton,sans-serif;font-weight:400;line-height:.86;text-transform:uppercase;font-size:calc(var(--u)*17);letter-spacing:-.01em;margin-top:calc(var(--u)*2)}
+h1 .o{color:var(--hot)}
+.formats{font-family:Anton,sans-serif;font-size:calc(var(--u)*6.4);text-transform:uppercase;line-height:1;margin-top:calc(var(--u)*2.2);display:flex;gap:calc(var(--u)*1.8);flex-wrap:wrap;align-items:center}
+.formats .dot{width:calc(var(--u)*1.4);height:calc(var(--u)*1.4);border-radius:50%;background:var(--lime)}
+.genres{margin-top:auto;padding-top:calc(var(--u)*3);display:flex;flex-direction:column;gap:calc(var(--u)*1.4);align-items:flex-start}
+.after{font-weight:700;font-size:calc(var(--u)*2.4);letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.8}
+.tag{font-family:Anton,sans-serif;text-transform:uppercase;font-size:calc(var(--u)*7.2);line-height:1;padding:calc(var(--u)*.9) calc(var(--u)*2.2) calc(var(--u)*1.1);color:var(--ink)}
+.t1{background:var(--lime);transform:rotate(-2deg)}
+.t2{background:var(--hot);transform:rotate(1.5deg)}
+.t3{background:var(--paper);transform:rotate(-1deg)}
+.cta{margin-top:calc(var(--u)*4);border-top:calc(var(--u)*.5) solid var(--paper);padding-top:calc(var(--u)*2.4);display:flex;justify-content:space-between;align-items:flex-end;gap:calc(var(--u)*2)}
+.cta b{display:block;font-family:Anton,sans-serif;font-weight:400;font-size:calc(var(--u)*6);text-transform:uppercase;line-height:1}
+.cta span{display:block;font-weight:700;font-size:calc(var(--u)*3);color:var(--lime);margin-top:calc(var(--u)*1)}
+.cta small{font-size:calc(var(--u)*2);text-align:right;opacity:.75;line-height:1.35;text-transform:uppercase;letter-spacing:.1em}
+/* vinyl */
+.vinyl{position:absolute;width:var(--rec);height:var(--rec);right:var(--recx);top:var(--recy);border-radius:50%;
+ background:radial-gradient(circle,var(--hot) 0 15%,#111 15.3% 16.5%,transparent 16.6%),
+ repeating-radial-gradient(circle,#1b1b1b 0 2px,#0a0a0a 2px 5px);
+ box-shadow:0 0 0 calc(var(--u)*.3) #2a2a2a, 0 30px 80px rgba(0,0,0,.6)}
+.vinyl::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 20deg,transparent 0 10%,rgba(255,255,255,.12) 13%,transparent 18% 60%,rgba(255,255,255,.08) 63%,transparent 68%)}
+.vinyl::after{content:"";position:absolute;left:50%;top:50%;width:3%;height:3%;transform:translate(-50%,-50%);border-radius:50%;background:var(--ink)}
+.label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-18deg);font-family:Anton;color:var(--ink);font-size:calc(var(--rec)*.026);text-align:center;line-height:1;display:flex;flex-direction:column;gap:calc(var(--rec)*.04);z-index:2;letter-spacing:.05em}
+/* cassette */
+.tape{position:absolute;width:var(--tw);height:calc(var(--tw)*.63);left:var(--tx);top:var(--ty);transform:rotate(var(--tr));background:var(--red);border-radius:calc(var(--tw)*.04);box-shadow:0 20px 50px rgba(0,0,0,.6);padding:calc(var(--tw)*.06)}
+.tape .lab{background:var(--paper);height:62%;border-radius:calc(var(--tw)*.02);position:relative;padding:calc(var(--tw)*.03) calc(var(--tw)*.05);font-family:Anton;color:var(--ink);font-size:calc(var(--tw)*.07);text-transform:uppercase}
+.tape .win{position:absolute;left:20%;right:20%;bottom:12%;height:42%;background:#1a1a1a;border-radius:999px;display:flex;justify-content:space-between;align-items:center;padding:0 6%}
+.tape .win i{width:calc(var(--tw)*.13);height:calc(var(--tw)*.13);border-radius:50%;background:radial-gradient(circle,var(--paper) 0 30%,#5a3a22 32% 100%)}
+.tape .bot{position:absolute;left:22%;right:22%;bottom:0;height:22%;background:#b8301f;clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)}
+</style></head>
+<body>
+<div class="vinyl"><div class="label"><span>RAP · HIP HOP</span><span>HEAVY METAL</span></div></div>
+<div class="tape"><div class="lab">Mixtape vol.1<div class="win"><i></i><i></i></div></div><div class="bot"></div></div>
+<div class="wrap">
+  <div class="top"><span>Wanted</span><span>Collections welcome</span></div>
+  <h1>We're<br><span class="o">buying</span></h1>
+  <div class="formats"><span style="text-transform:none">CDs</span><span class="dot"></span>Vinyl<span class="dot"></span>Cassettes</div>
+  <div class="genres">
+    <div class="after">We're after:</div>
+    <div class="tag t1">Rap</div>
+    <div class="tag t2">Hip hop</div>
+    <div class="tag t3">Heavy metal</div>
+  </div>
+  <div class="cta">
+    <div><b>DM us or email</b><span>hello@thetide.co.nz</span></div>
+    <small>Send pics<br>or a list</small>
+  </div>
+</div>
+</body></html>
